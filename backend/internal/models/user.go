@@ -13,14 +13,17 @@ const (
 )
 
 type User struct {
-	ID           string    `json:"id"`
-	Email        string    `json:"email"`
-	Phone        *string   `json:"phone,omitempty"`
-	PasswordHash string    `json:"-"`
-	UserType     UserType  `json:"user_type"`
-	Name         string    `json:"name"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	ID                         string     `json:"id"`
+	Email                      string     `json:"email"`
+	Phone                      *string    `json:"phone,omitempty"`
+	PasswordHash               string     `json:"-"`
+	UserType                   UserType   `json:"user_type"`
+	Name                       string     `json:"name"`
+	EmailVerified              bool       `json:"email_verified"`
+	VerificationToken          *string    `json:"-"`
+	VerificationTokenExpiresAt *time.Time `json:"-"`
+	CreatedAt                  time.Time  `json:"created_at"`
+	UpdatedAt                  time.Time  `json:"updated_at"`
 }
 
 type RegisterRequest struct {

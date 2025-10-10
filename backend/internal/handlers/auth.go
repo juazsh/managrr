@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"regexp"
+	"time"
 
 	"github.com/juazsh/managrr/internal/database"
 	"github.com/juazsh/managrr/internal/middleware"
@@ -50,17 +51,25 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	verificationToken, err := utils.GenerateVerificationToken()
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to generate verification token")
+		return
+	}
+
+	tokenExpiry := time.Now().Add(24 * time.Hour)
+
 	db := database.GetDB()
 	var user models.User
 
 	query := `
-		INSERT INTO users (email, password_hash, name, phone, user_type)
-		VALUES ($1, $2, $3, $4, $5)
-		RETURNING id, email, name, phone, user_type, created_at, updated_at
+		INSERT INTO users (email, password_hash, name, phone, user_type, email_verified, verification_token, verification_token_expires_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		RETURNING id, email, name, phone, user_type, email_verified, created_at, updated_at
 	`
 
-	err = db.QueryRow(query, req.Email, string(hashedPassword), req.Name, req.Phone, req.UserType).
-		Scan(&user.ID, &user.Email, &user.Name, &user.Phone, &user.UserType, &user.CreatedAt, &user.UpdatedAt)
+	err = db.QueryRow(query, req.Email, string(hashedPassword), req.Name, req.Phone, req.UserType, false, verificationToken, tokenExpiry).
+		Scan(&user.ID, &user.Email, &user.Name, &user.Phone, &user.UserType, &user.EmailVerified, &user.CreatedAt, &user.UpdatedAt)
 
 	if err != nil {
 		if err.Error() == "pq: duplicate key value violates unique constraint \"users_email_key\"" {
@@ -71,15 +80,14 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := utils.GenerateToken(user.ID, user.Email, string(user.UserType))
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Failed to generate token")
+	if err := utils.SendVerificationEmail(user.Email, verificationToken); err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to send verification email")
 		return
 	}
 
-	respondWithJSON(w, http.StatusCreated, models.AuthResponse{
-		Token: token,
-		User:  user,
+	respondWithJSON(w, http.StatusCreated, map[string]interface{}{
+		"message": "Registration successful. Please check your email to verify your account.",
+		"user":    user,
 	})
 }
 
@@ -100,13 +108,13 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	var passwordHash string
 
 	query := `
-		SELECT id, email, password_hash, name, phone, user_type, created_at, updated_at
+		SELECT id, email, password_hash, name, phone, user_type, email_verified, created_at, updated_at
 		FROM users
 		WHERE email = $1
 	`
 
 	err := db.QueryRow(query, req.Email).
-		Scan(&user.ID, &user.Email, &passwordHash, &user.Name, &user.Phone, &user.UserType, &user.CreatedAt, &user.UpdatedAt)
+		Scan(&user.ID, &user.Email, &passwordHash, &user.Name, &user.Phone, &user.UserType, &user.EmailVerified, &user.CreatedAt, &user.UpdatedAt)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -122,6 +130,11 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !user.EmailVerified {
+		respondWithError(w, http.StatusForbidden, "Please verify your email before logging in")
+		return
+	}
+
 	token, err := utils.GenerateToken(user.ID, user.Email, string(user.UserType))
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to generate token")
@@ -131,6 +144,44 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, models.AuthResponse{
 		Token: token,
 		User:  user,
+	})
+}
+
+func VerifyEmail(w http.ResponseWriter, r *http.Request) {
+	token := r.URL.Query().Get("token")
+	if token == "" {
+		respondWithError(w, http.StatusBadRequest, "Verification token is required")
+		return
+	}
+
+	db := database.GetDB()
+
+	query := `
+		UPDATE users
+		SET email_verified = true,
+		    verification_token = NULL,
+		    verification_token_expires_at = NULL,
+		    updated_at = NOW()
+		WHERE verification_token = $1
+		  AND verification_token_expires_at > NOW()
+		  AND email_verified = false
+		RETURNING id, email
+	`
+
+	var userID, email string
+	err := db.QueryRow(query, token).Scan(&userID, &email)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			respondWithError(w, http.StatusBadRequest, "Invalid or expired verification token")
+			return
+		}
+		respondWithError(w, http.StatusInternalServerError, "Failed to verify email")
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, map[string]string{
+		"message": "Email verified successfully. You can now log in.",
 	})
 }
 
