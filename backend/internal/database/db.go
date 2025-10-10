@@ -19,6 +19,8 @@ func Init() error {
 		return fmt.Errorf("DATABASE_URL environment variable not set")
 	}
 
+	connStr += "?sslmode=require"
+
 	var err error
 	db, err = sql.Open("postgres", connStr)
 	if err != nil {

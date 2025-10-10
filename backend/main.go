@@ -9,6 +9,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/juazsh/managrr/internal/database"
 	"github.com/juazsh/managrr/internal/handlers"
+	"github.com/juazsh/managrr/internal/middleware"
 )
 
 func main() {
@@ -26,6 +27,10 @@ func main() {
 
 	api.HandleFunc("/auth/register", handlers.Register).Methods("POST")
 	api.HandleFunc("/auth/login", handlers.Login).Methods("POST")
+
+	protected := api.PathPrefix("").Subrouter()
+	protected.Use(middleware.AuthMiddleware)
+	protected.HandleFunc("/auth/me", handlers.GetCurrentUser).Methods("GET")
 
 	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

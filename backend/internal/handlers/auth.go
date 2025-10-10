@@ -7,6 +7,7 @@ import (
 	"regexp"
 
 	"github.com/juazsh/managrr/internal/database"
+	"github.com/juazsh/managrr/internal/middleware"
 	"github.com/juazsh/managrr/internal/models"
 	"github.com/juazsh/managrr/internal/utils"
 	"golang.org/x/crypto/bcrypt"
@@ -135,6 +136,37 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 func respondWithError(w http.ResponseWriter, code int, message string) {
 	respondWithJSON(w, code, map[string]string{"error": message})
+}
+
+func GetCurrentUser(w http.ResponseWriter, r *http.Request) {
+	userCtx, ok := middleware.GetUserFromContext(r.Context())
+	if !ok {
+		respondWithError(w, http.StatusUnauthorized, "User not found in context")
+		return
+	}
+
+	db := database.GetDB()
+	var user models.User
+
+	query := `
+		SELECT id, email, name, phone, user_type, created_at, updated_at
+		FROM users
+		WHERE id = $1
+	`
+
+	err := db.QueryRow(query, userCtx.UserID).
+		Scan(&user.ID, &user.Email, &user.Name, &user.Phone, &user.UserType, &user.CreatedAt, &user.UpdatedAt)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			respondWithError(w, http.StatusNotFound, "User not found")
+			return
+		}
+		respondWithError(w, http.StatusInternalServerError, "Failed to query user")
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, user)
 }
 
 func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
