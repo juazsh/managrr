@@ -36,6 +36,9 @@ func main() {
 	protected.HandleFunc("/auth/me", handlers.GetCurrentUser).Methods("GET")
 	protected.HandleFunc("/projects", handlers.CreateProject).Methods("POST")
 	protected.HandleFunc("/projects", handlers.ListProjects).Methods("GET")
+	protected.HandleFunc("/projects/{id}", handlers.GetProject).Methods("GET")
+	protected.HandleFunc("/projects/{id}", handlers.UpdateProject).Methods("PUT")
+	protected.HandleFunc("/projects/{id}", handlers.DeleteProject).Methods("DELETE")
 
 	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

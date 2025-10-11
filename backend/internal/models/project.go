@@ -31,3 +31,11 @@ type CreateProjectRequest struct {
 	EstimatedCost float64 `json:"estimated_cost"`
 	Address       *string `json:"address,omitempty"`
 }
+
+type UpdateProjectRequest struct {
+	Title         *string        `json:"title,omitempty"`
+	Description   *string        `json:"description,omitempty"`
+	EstimatedCost *float64       `json:"estimated_cost,omitempty"`
+	Address       *string        `json:"address,omitempty"`
+	Status        *ProjectStatus `json:"status,omitempty"`
+}
