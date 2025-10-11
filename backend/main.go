@@ -44,6 +44,10 @@ func main() {
 	protected.HandleFunc("/projects/{id}/photos", handlers.GetProjectPhotos).Methods("GET")
 	protected.HandleFunc("/employees", handlers.AddEmployee).Methods("POST")
 	protected.HandleFunc("/employees", handlers.ListEmployees).Methods("GET")
+	protected.HandleFunc("/employees/{id}", handlers.GetEmployee).Methods("GET")
+	protected.HandleFunc("/employees/{id}", handlers.UpdateEmployee).Methods("PUT")
+	protected.HandleFunc("/employees/{id}", handlers.DeleteEmployee).Methods("DELETE")
+	protected.HandleFunc("/employees/{id}/assign-project", handlers.AssignProject).Methods("POST")
 
 	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
