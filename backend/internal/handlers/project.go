@@ -385,3 +385,95 @@ func DeleteProject(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusNoContent)
 }
+
+func AssignContractor(w http.ResponseWriter, r *http.Request) {
+	userCtx, ok := middleware.GetUserFromContext(r.Context())
+	if !ok {
+		respondWithError(w, http.StatusUnauthorized, "User not found in context")
+		return
+	}
+
+	vars := mux.Vars(r)
+	projectID := vars["id"]
+
+	db := database.GetDB()
+
+	var ownerID string
+	err := db.QueryRow("SELECT owner_id FROM projects WHERE id = $1", projectID).Scan(&ownerID)
+
+	if err == sql.ErrNoRows {
+		respondWithError(w, http.StatusNotFound, "Project not found")
+		return
+	}
+
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to fetch project")
+		return
+	}
+
+	if ownerID != userCtx.UserID {
+		respondWithError(w, http.StatusForbidden, "Only the project owner can assign a contractor")
+		return
+	}
+
+	var req models.AssignContractorRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	if req.ContractorEmail == "" {
+		respondWithError(w, http.StatusBadRequest, "Contractor email is required")
+		return
+	}
+
+	var contractorID string
+	var userType string
+	err = db.QueryRow(
+		"SELECT id, user_type FROM users WHERE email = $1",
+		req.ContractorEmail,
+	).Scan(&contractorID, &userType)
+
+	if err == sql.ErrNoRows {
+		respondWithError(w, http.StatusNotFound, "Contractor not found")
+		return
+	}
+
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to lookup contractor")
+		return
+	}
+
+	if userType != string(models.UserTypeContractor) {
+		respondWithError(w, http.StatusBadRequest, "User is not a contractor")
+		return
+	}
+
+	query := `
+		UPDATE projects 
+		SET contractor_id = $1, updated_at = NOW()
+		WHERE id = $2
+		RETURNING id, owner_id, contractor_id, title, description, estimated_cost, address, status, created_at, updated_at
+	`
+
+	var project models.Project
+	err = db.QueryRow(query, contractorID, projectID).Scan(
+		&project.ID,
+		&project.OwnerID,
+		&project.ContractorID,
+		&project.Title,
+		&project.Description,
+		&project.EstimatedCost,
+		&project.Address,
+		&project.Status,
+		&project.CreatedAt,
+		&project.UpdatedAt,
+	)
+
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to assign contractor")
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, project)
+}

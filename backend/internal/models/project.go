@@ -39,3 +39,7 @@ type UpdateProjectRequest struct {
 	Address       *string        `json:"address,omitempty"`
 	Status        *ProjectStatus `json:"status,omitempty"`
 }
+
+type AssignContractorRequest struct {
+	ContractorEmail string `json:"contractor_email"`
+}
