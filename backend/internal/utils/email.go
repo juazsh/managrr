@@ -58,3 +58,54 @@ Construction Management Platform Team
 
 	return nil
 }
+
+func GenerateResetToken() (string, error) {
+	bytes := make([]byte, 32)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(bytes), nil
+}
+
+func SendPasswordResetEmail(toEmail, token string) error {
+	smtpHost := os.Getenv("SMTP_HOST")
+	smtpPort := os.Getenv("SMTP_PORT")
+	smtpUser := os.Getenv("SMTP_USER")
+	smtpPass := os.Getenv("SMTP_PASS")
+	fromEmail := os.Getenv("FROM_EMAIL")
+	appURL := os.Getenv("APP_URL")
+
+	if smtpHost == "" || smtpPort == "" || smtpUser == "" || smtpPass == "" {
+		return fmt.Errorf("SMTP configuration missing")
+	}
+
+	resetLink := fmt.Sprintf("%s/reset-password?token=%s", appURL, token)
+
+	subject := "Reset Your Password"
+	body := fmt.Sprintf(`
+Hello,
+
+You requested to reset your password. Click the link below to reset it:
+
+%s
+
+This link will expire in 1 hour.
+
+If you didn't request a password reset, please ignore this email.
+
+Thanks,
+Construction Management Platform Team
+`, resetLink)
+
+	message := []byte(fmt.Sprintf("Subject: %s\r\n\r\n%s", subject, body))
+
+	auth := smtp.PlainAuth("", smtpUser, smtpPass, smtpHost)
+	addr := fmt.Sprintf("%s:%s", smtpHost, smtpPort)
+
+	err := smtp.SendMail(addr, auth, fromEmail, []string{toEmail}, message)
+	if err != nil {
+		return fmt.Errorf("failed to send email: %w", err)
+	}
+
+	return nil
+}

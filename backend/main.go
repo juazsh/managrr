@@ -34,6 +34,8 @@ func main() {
 	protected := api.PathPrefix("").Subrouter()
 	protected.Use(middleware.AuthMiddleware)
 	protected.HandleFunc("/auth/me", handlers.GetCurrentUser).Methods("GET")
+	protected.HandleFunc("/projects", handlers.CreateProject).Methods("POST")
+	protected.HandleFunc("/projects", handlers.ListProjects).Methods("GET")
 
 	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
