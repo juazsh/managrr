@@ -27,7 +27,9 @@ func main() {
 
 	api.HandleFunc("/auth/register", handlers.Register).Methods("POST")
 	api.HandleFunc("/auth/login", handlers.Login).Methods("POST")
-	api.HandleFunc("/api/auth/verify-email", handlers.VerifyEmail).Methods("GET")
+	api.HandleFunc("/auth/verify-email", handlers.VerifyEmail).Methods("GET")
+	api.HandleFunc("/auth/forgot-password", handlers.ForgotPassword).Methods("POST")
+	api.HandleFunc("/auth/reset-password", handlers.ResetPassword).Methods("POST")
 
 	protected := api.PathPrefix("").Subrouter()
 	protected.Use(middleware.AuthMiddleware)

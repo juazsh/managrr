@@ -226,3 +226,141 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	w.WriteHeader(code)
 	w.Write(response)
 }
+
+func ForgotPassword(w http.ResponseWriter, r *http.Request) {
+	var req models.ForgotPasswordRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	if !emailRegex.MatchString(req.Email) {
+		respondWithError(w, http.StatusBadRequest, "Invalid email format")
+		return
+	}
+
+	db := database.GetDB()
+
+	var userID string
+	query := "SELECT id FROM users WHERE email = $1"
+	err := db.QueryRow(query, req.Email).Scan(&userID)
+
+	if err == sql.ErrNoRows {
+		respondWithJSON(w, http.StatusOK, map[string]string{
+			"message": "If the email exists, a password reset link has been sent.",
+		})
+		return
+	}
+
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to process request")
+		return
+	}
+
+	resetToken, err := utils.GenerateResetToken()
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to generate reset token")
+		return
+	}
+
+	expiresAt := time.Now().Add(1 * time.Hour)
+
+	insertQuery := `
+		INSERT INTO password_resets (user_id, reset_token, expires_at)
+		VALUES ($1, $2, $3)
+	`
+	_, err = db.Exec(insertQuery, userID, resetToken, expiresAt)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to create reset token")
+		return
+	}
+
+	if err := utils.SendPasswordResetEmail(req.Email, resetToken); err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to send reset email")
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, map[string]string{
+		"message": "If the email exists, a password reset link has been sent.",
+	})
+}
+
+func ResetPassword(w http.ResponseWriter, r *http.Request) {
+	var req models.ResetPasswordRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	if req.Token == "" {
+		respondWithError(w, http.StatusBadRequest, "Reset token is required")
+		return
+	}
+
+	if len(req.NewPassword) < 8 {
+		respondWithError(w, http.StatusBadRequest, "Password must be at least 8 characters")
+		return
+	}
+
+	db := database.GetDB()
+
+	var userID string
+	var usedAt *time.Time
+	query := `
+		SELECT user_id, used_at
+		FROM password_resets
+		WHERE reset_token = $1 AND expires_at > NOW()
+	`
+	err := db.QueryRow(query, req.Token).Scan(&userID, &usedAt)
+
+	if err == sql.ErrNoRows {
+		respondWithError(w, http.StatusBadRequest, "Invalid or expired reset token")
+		return
+	}
+
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to validate token")
+		return
+	}
+
+	if usedAt != nil {
+		respondWithError(w, http.StatusBadRequest, "Reset token has already been used")
+		return
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to process password")
+		return
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to start transaction")
+		return
+	}
+	defer tx.Rollback()
+
+	updateUserQuery := "UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2"
+	_, err = tx.Exec(updateUserQuery, string(hashedPassword), userID)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to update password")
+		return
+	}
+
+	markUsedQuery := "UPDATE password_resets SET used_at = NOW() WHERE reset_token = $1"
+	_, err = tx.Exec(markUsedQuery, req.Token)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to mark token as used")
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to commit transaction")
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, map[string]string{
+		"message": "Password has been reset successfully. You can now log in with your new password.",
+	})
+}
