@@ -109,3 +109,62 @@ Construction Management Platform Team
 
 	return nil
 }
+
+func GenerateRandomPassword() (string, error) {
+	const passwordLength = 12
+	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"
+
+	password := make([]byte, passwordLength)
+	for i := range password {
+		randomByte := make([]byte, 1)
+		if _, err := rand.Read(randomByte); err != nil {
+			return "", err
+		}
+		password[i] = charset[int(randomByte[0])%len(charset)]
+	}
+
+	return string(password), nil
+}
+
+func SendEmployeeWelcomeEmail(toEmail, name, tempPassword string) error {
+	smtpHost := os.Getenv("SMTP_HOST")
+	smtpPort := os.Getenv("SMTP_PORT")
+	smtpUser := os.Getenv("SMTP_USER")
+	smtpPass := os.Getenv("SMTP_PASS")
+	fromEmail := os.Getenv("FROM_EMAIL")
+	appURL := os.Getenv("APP_URL")
+
+	if smtpHost == "" || smtpPort == "" || smtpUser == "" || smtpPass == "" {
+		return fmt.Errorf("SMTP configuration missing")
+	}
+
+	subject := "Welcome to the Team"
+	body := fmt.Sprintf(`
+Hello %s,
+
+You have been added as an employee on our Construction Management Platform.
+
+Your login credentials are:
+Email: %s
+Temporary Password: %s
+
+Please log in at: %s
+
+For security, we recommend changing your password after your first login.
+
+Thanks,
+Construction Management Platform Team
+`, name, toEmail, tempPassword, appURL)
+
+	message := []byte(fmt.Sprintf("Subject: %s\r\n\r\n%s", subject, body))
+
+	auth := smtp.PlainAuth("", smtpUser, smtpPass, smtpHost)
+	addr := fmt.Sprintf("%s:%s", smtpHost, smtpPort)
+
+	err := smtp.SendMail(addr, auth, fromEmail, []string{toEmail}, message)
+	if err != nil {
+		return fmt.Errorf("failed to send email: %w", err)
+	}
+
+	return nil
+}
