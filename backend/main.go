@@ -50,6 +50,8 @@ func main() {
 	protected.HandleFunc("/employees/{id}/assign-project", handlers.AssignProject).Methods("POST")
 	protected.HandleFunc("/work-logs/check-in", handlers.CheckIn).Methods("POST")
 	protected.HandleFunc("/work-logs/check-out", handlers.CheckOut).Methods("POST")
+	protected.HandleFunc("/work-logs", handlers.ListWorkLogs).Methods("GET")
+	protected.HandleFunc("/projects/{id}/work-logs", handlers.GetProjectWorkLogs).Methods("GET")
 
 	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
