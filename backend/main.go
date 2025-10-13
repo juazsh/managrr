@@ -53,6 +53,7 @@ func main() {
 	protected.HandleFunc("/work-logs", handlers.ListWorkLogs).Methods("GET")
 	protected.HandleFunc("/projects/{id}/work-logs", handlers.GetProjectWorkLogs).Methods("GET")
 	protected.HandleFunc("/expenses", handlers.AddExpense).Methods("POST")
+	protected.HandleFunc("/projects/{id}/expenses", handlers.GetProjectExpenses).Methods("GET")
 
 	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

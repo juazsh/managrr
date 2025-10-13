@@ -8,6 +8,7 @@ import (
 
 	"strconv"
 
+	"github.com/gorilla/mux"
 	"github.com/juazsh/managrr/internal/database"
 	"github.com/juazsh/managrr/internal/middleware"
 	"github.com/juazsh/managrr/internal/models"
@@ -166,6 +167,158 @@ func AddExpense(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondWithJSON(w, http.StatusCreated, expense)
+}
+
+func GetProjectExpenses(w http.ResponseWriter, r *http.Request) {
+	userCtx, ok := middleware.GetUserFromContext(r.Context())
+	if !ok {
+		respondWithError(w, http.StatusUnauthorized, "User not found in context")
+		return
+	}
+
+	projectID := mux.Vars(r)["id"]
+	if projectID == "" {
+		respondWithError(w, http.StatusBadRequest, "Project ID is required")
+		return
+	}
+
+	db := database.GetDB()
+
+	var ownerID, contractorID sql.NullString
+	err := db.QueryRow("SELECT owner_id, contractor_id FROM projects WHERE id = $1", projectID).Scan(&ownerID, &contractorID)
+
+	if err == sql.ErrNoRows {
+		respondWithError(w, http.StatusNotFound, "Project not found")
+		return
+	}
+
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to fetch project")
+		return
+	}
+
+	isOwner := ownerID.Valid && ownerID.String == userCtx.UserID
+	isContractor := contractorID.Valid && contractorID.String == userCtx.UserID
+
+	if !isOwner && !isContractor {
+		respondWithError(w, http.StatusForbidden, "Only project owner or assigned contractor can view expenses")
+		return
+	}
+
+	paidBy := r.URL.Query().Get("paid_by")
+	category := r.URL.Query().Get("category")
+	startDate := r.URL.Query().Get("start_date")
+	endDate := r.URL.Query().Get("end_date")
+
+	if paidBy == "" {
+		paidBy = "all"
+	}
+
+	if paidBy != "all" && paidBy != string(models.ExpensePaidByOwner) && paidBy != string(models.ExpensePaidByContractor) {
+		respondWithError(w, http.StatusBadRequest, "Invalid paid_by filter")
+		return
+	}
+
+	query := `
+		SELECT e.id, e.project_id, e.amount, e.vendor, e.date, e.category, e.description, 
+		       e.paid_by, e.receipt_photo_url, e.added_by, e.created_at, u.name
+		FROM expenses e
+		JOIN users u ON e.added_by = u.id
+		WHERE e.project_id = $1
+	`
+	args := []interface{}{projectID}
+	argIndex := 2
+
+	if paidBy != "all" {
+		query += " AND e.paid_by = $" + strconv.Itoa(argIndex)
+		args = append(args, paidBy)
+		argIndex++
+	}
+
+	if category != "" {
+		query += " AND e.category = $" + strconv.Itoa(argIndex)
+		args = append(args, category)
+		argIndex++
+	}
+
+	if startDate != "" {
+		query += " AND e.date >= $" + strconv.Itoa(argIndex)
+		args = append(args, startDate)
+		argIndex++
+	}
+
+	if endDate != "" {
+		query += " AND e.date <= $" + strconv.Itoa(argIndex)
+		args = append(args, endDate)
+		argIndex++
+	}
+
+	query += " ORDER BY e.date DESC, e.created_at DESC"
+
+	rows, err := db.Query(query, args...)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to fetch expenses")
+		return
+	}
+	defer rows.Close()
+
+	type ExpenseWithUser struct {
+		models.Expense
+		AddedByName string `json:"added_by_name"`
+	}
+
+	expenses := []ExpenseWithUser{}
+	totalAmount := 0.0
+	totalByOwner := 0.0
+	totalByContractor := 0.0
+	categoryTotals := make(map[string]float64)
+
+	for rows.Next() {
+		var exp ExpenseWithUser
+		err := rows.Scan(
+			&exp.ID,
+			&exp.ProjectID,
+			&exp.Amount,
+			&exp.Vendor,
+			&exp.Date,
+			&exp.Category,
+			&exp.Description,
+			&exp.PaidBy,
+			&exp.ReceiptPhotoURL,
+			&exp.AddedBy,
+			&exp.CreatedAt,
+			&exp.AddedByName,
+		)
+		if err != nil {
+			respondWithError(w, http.StatusInternalServerError, "Failed to parse expense")
+			return
+		}
+
+		expenses = append(expenses, exp)
+		totalAmount += exp.Amount
+
+		if exp.PaidBy == models.ExpensePaidByOwner {
+			totalByOwner += exp.Amount
+		} else if exp.PaidBy == models.ExpensePaidByContractor {
+			totalByContractor += exp.Amount
+		}
+
+		categoryTotals[string(exp.Category)] += exp.Amount
+	}
+
+	summary := map[string]interface{}{
+		"total_expenses":        totalAmount,
+		"total_by_owner":        totalByOwner,
+		"total_by_contractor":   totalByContractor,
+		"breakdown_by_category": categoryTotals,
+	}
+
+	response := map[string]interface{}{
+		"expenses": expenses,
+		"summary":  summary,
+	}
+
+	respondWithJSON(w, http.StatusOK, response)
 }
 
 func nilIfEmpty(s string) *string {
