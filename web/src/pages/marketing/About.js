@@ -1,6 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { theme } from '../../theme';
+import aboutHero from '../../assets/images/undraw_building_burz.svg';
+import solutionTech from '../../assets/images/undraw_visionary-technology_f6b3.svg';
+import audienceContractors from '../../assets/images/undraw_construction-workers_z99i.svg';
+import audienceHomeowners from '../../assets/images/undraw_coming-home_jmbc.svg';
+import audienceResidential from '../../assets/images/undraw_houses_owky.svg';
 
 export const About = () => {
   return (
@@ -11,6 +16,13 @@ export const About = () => {
           <p style={styles.mission}>
             Making construction projects transparent and stress-free
           </p>
+          <div style={styles.heroImageContainer}>
+            <img 
+              src={aboutHero} 
+              alt="About Managrr" 
+              style={styles.heroImage}
+            />
+          </div>
         </div>
       </section>
 
@@ -60,6 +72,13 @@ export const About = () => {
         <div style={styles.container}>
           <div style={styles.content}>
             <h2 style={styles.sectionTitle}>Our Solution</h2>
+            <div style={styles.imageContainer}>
+              <img 
+                src={solutionTech} 
+                alt="Our Solution" 
+                style={styles.sectionImageMd}
+              />
+            </div>
             <div style={styles.solutionContent}>
               <div style={styles.solutionCard}>
                 <div style={styles.solutionIcon}>📱</div>
@@ -107,7 +126,13 @@ export const About = () => {
             <h2 style={styles.sectionTitle}>Who We Serve</h2>
             <div style={styles.audienceGrid}>
               <div style={styles.audienceCard}>
-                <div style={styles.audienceIcon}>👷</div>
+                <div style={styles.audienceIconContainer}>
+                  <img 
+                    src={audienceContractors} 
+                    alt="Small Contractors" 
+                    style={styles.audienceImage}
+                  />
+                </div>
                 <h3 style={styles.audienceTitle}>Small Contractors</h3>
                 <p style={styles.audienceText}>
                   Independent contractors and small construction companies with 1-10 employees. 
@@ -116,7 +141,13 @@ export const About = () => {
                 </p>
               </div>
               <div style={styles.audienceCard}>
-                <div style={styles.audienceIcon}>🏠</div>
+                <div style={styles.audienceIconContainer}>
+                  <img 
+                    src={audienceHomeowners} 
+                    alt="Homeowners" 
+                    style={styles.audienceImage}
+                  />
+                </div>
                 <h3 style={styles.audienceTitle}>Homeowners</h3>
                 <p style={styles.audienceText}>
                   House owners doing renovations, additions, or new construction. Those who 
@@ -125,7 +156,13 @@ export const About = () => {
                 </p>
               </div>
               <div style={styles.audienceCard}>
-                <div style={styles.audienceIcon}>🔨</div>
+                <div style={styles.audienceIconContainer}>
+                  <img 
+                    src={audienceResidential} 
+                    alt="Residential Projects" 
+                    style={styles.audienceImage}
+                  />
+                </div>
                 <h3 style={styles.audienceTitle}>Residential Projects</h3>
                 <p style={styles.audienceText}>
                   Projects ranging from $10,000 to $100,000. Kitchen remodels, bathroom 
@@ -201,8 +238,24 @@ const styles = {
     fontWeight: '600',
     fontStyle: 'italic',
   },
+  heroImageContainer: {
+    maxWidth: '400px',
+    margin: '2rem auto 0',
+  },
+  heroImage: {
+    width: '100%',
+    height: 'auto',
+  },
   section: {
     padding: '4rem 0',
+  },
+  imageContainer: {
+    maxWidth: '350px',
+    margin: '0 auto 2rem',
+  },
+  sectionImageMd: {
+    width: '100%',
+    height: 'auto',
   },
   content: {
     maxWidth: '1100px',
@@ -272,6 +325,16 @@ const styles = {
     borderRadius: theme.borderRadius.lg,
     boxShadow: theme.shadows.md,
     textAlign: 'center',
+  },
+  audienceIconContainer: {
+    marginBottom: '1.5rem',
+  },
+  audienceImage: {
+    width: '100%',
+    height: 'auto',
+    maxWidth: '200px',
+    margin: '0 auto',
+    display: 'block',
   },
   audienceIcon: {
     fontSize: '3rem',

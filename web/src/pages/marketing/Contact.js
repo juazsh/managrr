@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { theme } from '../../theme';
+import contactHero from '../../assets/images/undraw_add-information_06qr.svg';
 
 export const Contact = () => {
   const [formData, setFormData] = useState({
@@ -47,6 +48,13 @@ export const Contact = () => {
           <p style={styles.subtitle}>
             Have questions? We're here to help
           </p>
+          <div style={styles.heroImageContainer}>
+            <img 
+              src={contactHero} 
+              alt="Contact Us" 
+              style={styles.heroImage}
+            />
+          </div>
         </div>
       </section>
 
@@ -221,6 +229,14 @@ const styles = {
   subtitle: {
     fontSize: '1.25rem',
     color: theme.colors.textLight,
+  },
+  heroImageContainer: {
+    maxWidth: '350px',
+    margin: '2rem auto 0',
+  },
+  heroImage: {
+    width: '100%',
+    height: 'auto',
   },
   section: {
     padding: '4rem 0',

@@ -1,6 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { theme } from '../../theme';
+import dashTech from '../../assets/images/undraw_visionary-technology_f6b3.svg';
+import employeesImg from '../../assets/images/undraw_construction-workers_z99i.svg';
+import timeTrackingImg from '../../assets/images/undraw_ordinary-day_ak4e.svg';
+import expenseImg from '../../assets/images/undraw_wallet_diag (1).svg';
+import photosImg from '../../assets/images/undraw_add-information_06qr.svg';
+import updatesImg from '../../assets/images/undraw_building_burz.svg';
+import transparencyImg from '../../assets/images/undraw_small-town_76a2.svg';
 
 export const Features = () => {
   return (
@@ -33,7 +40,11 @@ export const Features = () => {
               </ul>
             </div>
             <div style={styles.featureMockup}>
-              <div style={styles.mockupPlaceholder}>Dashboard Preview</div>
+              <img 
+                src={dashTech} 
+                alt="Dashboard Preview" 
+                style={styles.mockupImage}
+              />
             </div>
           </div>
         </div>
@@ -43,7 +54,11 @@ export const Features = () => {
         <div style={styles.container}>
           <div style={{...styles.feature, ...styles.featureReverse}}>
             <div style={styles.featureMockup}>
-              <div style={styles.mockupPlaceholder}>Employee Management</div>
+              <img 
+                src={employeesImg} 
+                alt="Employee Management" 
+                style={styles.mockupImage}
+              />
             </div>
             <div style={styles.featureContent}>
               <div style={styles.featureIcon}>👷</div>
@@ -84,7 +99,11 @@ export const Features = () => {
               </ul>
             </div>
             <div style={styles.featureMockup}>
-              <div style={styles.mockupPlaceholder}>📱 Mobile Check-in</div>
+              <img 
+                src={timeTrackingImg} 
+                alt="Mobile Check-in" 
+                style={styles.mockupImage}
+              />
             </div>
           </div>
         </div>
@@ -94,7 +113,11 @@ export const Features = () => {
         <div style={styles.container}>
           <div style={{...styles.feature, ...styles.featureReverse}}>
             <div style={styles.featureMockup}>
-              <div style={styles.mockupPlaceholder}>Expense Tracker</div>
+              <img 
+                src={expenseImg} 
+                alt="Expense Tracker" 
+                style={styles.mockupImage}
+              />
             </div>
             <div style={styles.featureContent}>
               <div style={styles.featureIcon}>💰</div>
@@ -137,7 +160,11 @@ export const Features = () => {
               </ul>
             </div>
             <div style={styles.featureMockup}>
-              <div style={styles.mockupPlaceholder}>Photo Gallery</div>
+              <img 
+                src={photosImg} 
+                alt="Photo Gallery" 
+                style={styles.mockupImage}
+              />
             </div>
           </div>
         </div>
@@ -147,7 +174,11 @@ export const Features = () => {
         <div style={styles.container}>
           <div style={{...styles.feature, ...styles.featureReverse}}>
             <div style={styles.featureMockup}>
-              <div style={styles.mockupPlaceholder}>Daily Updates</div>
+              <img 
+                src={updatesImg} 
+                alt="Daily Updates" 
+                style={styles.mockupImage}
+              />
             </div>
             <div style={styles.featureContent}>
               <div style={styles.featureIcon}>📅</div>
@@ -189,7 +220,11 @@ export const Features = () => {
               </ul>
             </div>
             <div style={styles.featureMockup}>
-              <div style={styles.mockupPlaceholder}>Transparency Dashboard</div>
+              <img 
+                src={transparencyImg} 
+                alt="Transparency Dashboard" 
+                style={styles.mockupImage}
+              />
             </div>
           </div>
         </div>
@@ -276,6 +311,13 @@ const styles = {
   },
   featureMockup: {
     direction: 'ltr',
+  },
+  mockupImage: {
+    width: '100%',
+    height: 'auto',
+    maxWidth: '400px',
+    margin: '0 auto',
+    display: 'block',
   },
   mockupPlaceholder: {
     backgroundColor: theme.colors.backgroundLight,

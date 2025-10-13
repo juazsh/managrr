@@ -1,6 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { theme } from '../../theme';
+import ownersImg from '../../assets/images/undraw_house-searching_g2b8.svg';
+import contractorsImg from '../../assets/images/undraw_construction-workers_z99i.svg';
+import employeesImg from '../../assets/images/undraw_ordinary-day_ak4e.svg';
 
 export const HowItWorks = () => {
   return (
@@ -17,6 +20,13 @@ export const HowItWorks = () => {
       <section style={styles.section}>
         <div style={styles.container}>
           <h2 style={styles.sectionTitle}>For House Owners</h2>
+          <div style={styles.imageContainer}>
+            <img 
+              src={ownersImg} 
+              alt="For House Owners" 
+              style={styles.sectionImage}
+            />
+          </div>
           <div style={styles.steps}>
             <div style={styles.step}>
               <div style={styles.stepNumber}>1</div>
@@ -55,6 +65,13 @@ export const HowItWorks = () => {
       <section style={{...styles.section, backgroundColor: theme.colors.backgroundLight}}>
         <div style={styles.container}>
           <h2 style={styles.sectionTitle}>For Contractors</h2>
+          <div style={styles.imageContainer}>
+            <img 
+              src={contractorsImg} 
+              alt="For Contractors" 
+              style={styles.sectionImage}
+            />
+          </div>
           <div style={styles.steps}>
             <div style={styles.step}>
               <div style={styles.stepNumber}>1</div>
@@ -103,6 +120,13 @@ export const HowItWorks = () => {
       <section style={styles.section}>
         <div style={styles.container}>
           <h2 style={styles.sectionTitle}>For Employees</h2>
+          <div style={styles.imageContainer}>
+            <img 
+              src={employeesImg} 
+              alt="For Employees" 
+              style={styles.sectionImage}
+            />
+          </div>
           <div style={styles.mobileSection}>
             <div style={styles.mobileSteps}>
               <div style={styles.step}>
@@ -190,6 +214,14 @@ const styles = {
   },
   section: {
     padding: '4rem 0',
+  },
+  imageContainer: {
+    maxWidth: '400px',
+    margin: '0 auto 3rem',
+  },
+  sectionImage: {
+    width: '100%',
+    height: 'auto',
   },
   sectionTitle: {
     fontSize: '2.5rem',

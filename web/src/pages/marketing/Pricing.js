@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { theme } from '../../theme';
+import pricingHero from '../../assets/images/undraw_wallet_diag (1).svg';
 
 export const Pricing = () => {
   const [openFaq, setOpenFaq] = useState(null);
@@ -40,6 +41,13 @@ export const Pricing = () => {
           <p style={styles.subtitle}>
             Start free, upgrade when you're ready. No credit card required to start.
           </p>
+          <div style={styles.heroImageContainer}>
+            <img 
+              src={pricingHero} 
+              alt="Pricing Plans" 
+              style={styles.heroImage}
+            />
+          </div>
         </div>
       </section>
 
@@ -248,6 +256,14 @@ const styles = {
     color: theme.colors.textLight,
     maxWidth: '600px',
     margin: '0 auto',
+  },
+  heroImageContainer: {
+    maxWidth: '350px',
+    margin: '2rem auto 0',
+  },
+  heroImage: {
+    width: '100%',
+    height: 'auto',
   },
   section: {
     padding: '4rem 0',

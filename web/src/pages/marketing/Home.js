@@ -1,6 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { theme } from '../../theme';
+import heroConstruction from '../../assets/images/undraw_under-construction_c2y1.svg';
+import sectionBudget from '../../assets/images/undraw_wallet_diag (1).svg';
+import sectionTech from '../../assets/images/undraw_visionary-technology_f6b3.svg';
+import sectionHouses from '../../assets/images/undraw_houses_owky.svg';
 
 const Home = () => {
   return (
@@ -14,6 +18,13 @@ const Home = () => {
             <p style={styles.heroSubtitle}>
               Track projects, manage employees, and control expenses—all in one place.
             </p>
+            <div style={styles.heroImage}>
+              <img 
+                src={heroConstruction} 
+                alt="Construction Management" 
+                style={styles.heroSvg}
+              />
+            </div>
             <div style={styles.heroButtons}>
               <Link to="/register" style={styles.primaryButton}>
                 Get Started Free
@@ -29,6 +40,13 @@ const Home = () => {
       <section style={styles.section}>
         <div style={styles.container}>
           <h2 style={styles.sectionTitle}>Construction Projects Are Hard to Track</h2>
+          <div style={styles.problemImageContainer}>
+            <img 
+              src={sectionBudget} 
+              alt="Budget Management Challenges" 
+              style={styles.sectionImage}
+            />
+          </div>
           <div style={styles.problemGrid}>
             <div style={styles.problemCard}>
               <div style={styles.problemIcon}>💸</div>
@@ -49,6 +67,13 @@ const Home = () => {
       <section style={{...styles.section, backgroundColor: theme.colors.backgroundLight}}>
         <div style={styles.container}>
           <h2 style={styles.sectionTitle}>Managrr Makes Construction Transparent</h2>
+          <div style={styles.problemImageContainer}>
+            <img 
+              src={sectionTech} 
+              alt="Modern Construction Technology" 
+              style={styles.sectionImage}
+            />
+          </div>
           <div style={styles.solutionGrid}>
             <div style={styles.solutionCard}>
               <div style={styles.solutionIcon}>📊</div>
@@ -72,6 +97,13 @@ const Home = () => {
       <section style={styles.section}>
         <div style={styles.container}>
           <h2 style={styles.sectionTitle}>How It Works</h2>
+          <div style={styles.problemImageContainer}>
+            <img 
+              src={sectionHouses} 
+              alt="House Owners and Projects" 
+              style={styles.sectionImage}
+            />
+          </div>
           <div style={styles.stepsGrid}>
             <div style={styles.stepCard}>
               <div style={styles.stepNumber}>1</div>
@@ -206,6 +238,14 @@ const styles = {
     marginBottom: '2rem',
     lineHeight: '1.6',
   },
+  heroImage: {
+    maxWidth: '500px',
+    margin: '2rem auto',
+  },
+  heroSvg: {
+    width: '100%',
+    height: 'auto',
+  },
   heroButtons: {
     display: 'flex',
     gap: theme.spacing.element,
@@ -244,6 +284,14 @@ const styles = {
     color: theme.colors.text,
     textAlign: 'center',
     marginBottom: '3rem',
+  },
+  problemImageContainer: {
+    maxWidth: '400px',
+    margin: '0 auto 3rem',
+  },
+  sectionImage: {
+    width: '100%',
+    height: 'auto',
   },
   problemGrid: {
     display: 'grid',
