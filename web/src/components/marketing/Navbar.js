@@ -17,12 +17,18 @@ const Navbar = () => {
     { path: '/contact', label: 'Contact' },
   ];
 
+  const handleLinkClick = () => {
+    setIsMobileMenuOpen(false);
+  };
+
   return (
     <nav style={styles.navbar}>
+      <style>{mediaQueries}</style>
       <div style={styles.container}>
         <Link to="/" style={styles.brand}>Managrr</Link>
 
         <button 
+          className="hamburger"
           style={styles.hamburger}
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           aria-label="Toggle menu"
@@ -32,14 +38,15 @@ const Navbar = () => {
           <span style={styles.hamburgerLine}></span>
         </button>
 
-        <div style={{
-          ...styles.navLinks,
-          ...(isMobileMenuOpen ? styles.navLinksMobile : {}),
-        }}>
+        <div 
+          className={`nav-links ${isMobileMenuOpen ? 'mobile-open' : ''}`}
+          style={styles.navLinks}
+        >
           {navLinks.map(link => (
             <Link
               key={link.path}
               to={link.path}
+              onClick={handleLinkClick}
               style={{
                 ...styles.navLink,
                 ...(isActive(link.path) ? styles.navLinkActive : {}),
@@ -48,9 +55,18 @@ const Navbar = () => {
               {link.label}
             </Link>
           ))}
+          
+          <div className="mobile-cta-buttons" style={styles.mobileCtaButtons}>
+            <Link to="/login" style={styles.mobileSignInButton} onClick={handleLinkClick}>
+              Sign In
+            </Link>
+            <Link to="/register" style={styles.mobileGetStartedButton} onClick={handleLinkClick}>
+              Get Started
+            </Link>
+          </div>
         </div>
 
-        <div style={styles.ctaButtons}>
+        <div className="cta-buttons" style={styles.ctaButtons}>
           <Link to="/login" style={styles.signInButton}>
             Sign In
           </Link>
@@ -62,6 +78,60 @@ const Navbar = () => {
     </nav>
   );
 };
+
+const mediaQueries = `
+  @media (max-width: 768px) {
+    .hamburger {
+      display: flex !important;
+    }
+    
+    .nav-links {
+      display: none !important;
+    }
+    
+    .nav-links.mobile-open {
+      display: flex !important;
+      flex-direction: column;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background-color: white;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      padding: 1rem;
+      gap: 0;
+      z-index: 1000;
+    }
+    
+    .cta-buttons {
+      display: none !important;
+    }
+    
+    .mobile-cta-buttons {
+      display: flex !important;
+      flex-direction: column;
+      gap: 0.75rem;
+      padding-top: 1rem;
+      border-top: 1px solid #f0f0f0;
+      margin-top: 1rem;
+    }
+    
+    .nav-links.mobile-open a {
+      padding: 0.75rem 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+  }
+  
+  @media (min-width: 769px) {
+    .hamburger {
+      display: none !important;
+    }
+    
+    .mobile-cta-buttons {
+      display: none !important;
+    }
+  }
+`;
 
 const styles = {
   navbar: {
@@ -78,6 +148,7 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
+    position: 'relative',
   },
   brand: {
     fontSize: '1.5rem',
@@ -104,18 +175,6 @@ const styles = {
     display: 'flex',
     gap: theme.spacing.component,
     alignItems: 'center',
-  },
-  navLinksMobile: {
-    display: 'flex',
-    flexDirection: 'column',
-    position: 'absolute',
-    top: '100%',
-    left: 0,
-    right: 0,
-    backgroundColor: theme.colors.white,
-    boxShadow: theme.shadows.md,
-    padding: theme.spacing.component,
-    gap: theme.spacing.element,
   },
   navLink: {
     color: theme.colors.text,
@@ -146,6 +205,29 @@ const styles = {
     padding: `0.75rem 1.5rem`,
     borderRadius: theme.borderRadius.md,
     fontWeight: '500',
+  },
+  mobileCtaButtons: {
+    display: 'none',
+    flexDirection: 'column',
+    gap: '0.75rem',
+  },
+  mobileSignInButton: {
+    color: theme.colors.primary,
+    textDecoration: 'none',
+    fontSize: theme.typography.body.fontSize,
+    padding: '0.75rem 0',
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  mobileGetStartedButton: {
+    backgroundColor: theme.colors.primary,
+    color: theme.colors.white,
+    textDecoration: 'none',
+    fontSize: theme.typography.body.fontSize,
+    padding: '0.75rem 1.5rem',
+    borderRadius: theme.borderRadius.md,
+    fontWeight: '500',
+    textAlign: 'center',
   },
 };
 
