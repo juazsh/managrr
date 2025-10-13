@@ -30,14 +30,18 @@ const Login = () => {
   return (
     <div style={styles.container}>
       <div style={styles.card}>
-        <h2 style={styles.title}>Login</h2>
+        <div style={styles.header}>
+          <h2 style={styles.title}>Welcome back</h2>
+          <p style={styles.subtitle}>Sign in to your Managrr account</p>
+        </div>
         {error && <div style={styles.error}>{error}</div>}
         <form onSubmit={handleSubmit} style={styles.form}>
           <div style={styles.formGroup}>
-            <label style={styles.label}>Email</label>
+            <label style={styles.label}>Email Address</label>
             <input
               type="email"
               name="email"
+              placeholder="Enter your email"
               value={formData.email}
               onChange={handleChange}
               required
@@ -49,16 +53,17 @@ const Login = () => {
             <input
               type="password"
               name="password"
+              placeholder="Enter your password"
               value={formData.password}
               onChange={handleChange}
               required
               style={styles.input}
             />
           </div>
-          <button type="submit" style={styles.button}>Login</button>
+          <button type="submit" style={styles.button}>Sign In</button>
         </form>
         <p style={styles.linkText}>
-          Don't have an account? <Link to="/register" style={styles.link}>Register</Link>
+          Don't have an account? <Link to="/register" style={styles.link}>Create account</Link>
         </p>
       </div>
     </div>
@@ -78,22 +83,31 @@ const styles = {
   card: {
     backgroundColor: theme.colors.white,
     padding: theme.spacing.section,
-    borderRadius: theme.borderRadius.lg,
+    borderRadius: theme.borderRadius.xl,
     boxShadow: theme.shadows.lg,
     width: '100%',
-    maxWidth: '400px',
+    maxWidth: '440px',
+    border: `1px solid ${theme.colors.borderLight}`,
+  },
+  header: {
+    marginBottom: theme.spacing.component,
+    textAlign: 'center',
   },
   title: {
     color: theme.colors.text,
-    fontSize: theme.typography.h2.fontSize,
-    fontWeight: theme.typography.h2.fontWeight,
-    marginBottom: theme.spacing.component,
-    textAlign: 'center',
+    fontSize: theme.typography.h3.fontSize,
+    fontWeight: theme.typography.h3.fontWeight,
+    marginBottom: '0.5rem',
+    letterSpacing: '-0.02em',
+  },
+  subtitle: {
+    color: theme.colors.textLight,
+    fontSize: theme.typography.body.fontSize,
   },
   form: {
     display: 'flex',
     flexDirection: 'column',
-    gap: theme.spacing.element,
+    gap: '1.25rem',
   },
   formGroup: {
     display: 'flex',
@@ -102,34 +116,37 @@ const styles = {
   label: {
     marginBottom: '0.5rem',
     color: theme.colors.text,
-    fontWeight: '500',
+    fontWeight: '600',
     fontSize: theme.typography.small.fontSize,
   },
   input: {
-    padding: `0.75rem ${theme.spacing.element}`,
+    padding: '0.875rem 1rem',
     border: `1px solid ${theme.colors.border}`,
     borderRadius: theme.borderRadius.md,
     fontSize: theme.typography.body.fontSize,
     fontFamily: theme.typography.fontFamily,
+    backgroundColor: theme.colors.inputBg,
+    transition: 'all 0.2s ease',
   },
   button: {
-    backgroundColor: theme.colors.primary,
+    backgroundColor: theme.colors.black,
     color: theme.colors.white,
-    padding: `0.75rem ${theme.spacing.element}`,
+    padding: '0.875rem',
     border: 'none',
     borderRadius: theme.borderRadius.md,
     fontSize: theme.typography.body.fontSize,
-    fontWeight: '500',
+    fontWeight: '600',
     cursor: 'pointer',
-    marginTop: theme.spacing.element,
+    marginTop: '0.5rem',
   },
   error: {
     backgroundColor: theme.colors.errorLight,
     color: theme.colors.error,
-    padding: `0.75rem ${theme.spacing.element}`,
+    padding: '0.875rem',
     borderRadius: theme.borderRadius.md,
     marginBottom: theme.spacing.element,
     fontSize: theme.typography.small.fontSize,
+    border: `1px solid ${theme.colors.error}`,
   },
   linkText: {
     textAlign: 'center',
@@ -138,9 +155,9 @@ const styles = {
     fontSize: theme.typography.small.fontSize,
   },
   link: {
-    color: theme.colors.primary,
+    color: theme.colors.text,
     textDecoration: 'none',
-    fontWeight: '500',
+    fontWeight: '600',
   },
 };
 

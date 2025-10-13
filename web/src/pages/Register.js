@@ -35,6 +35,7 @@ const Register = () => {
     return (
       <div style={styles.container}>
         <div style={styles.card}>
+          <div style={styles.successIcon}>✓</div>
           <h2 style={styles.title}>Registration Successful!</h2>
           <p style={styles.successMessage}>
             Please check your email to verify your account. Redirecting to login...
@@ -47,14 +48,18 @@ const Register = () => {
   return (
     <div style={styles.container}>
       <div style={styles.card}>
-        <h2 style={styles.title}>Register</h2>
+        <div style={styles.header}>
+          <h2 style={styles.title}>Create your account</h2>
+          <p style={styles.subtitle}>Join Managrr to manage your construction projects</p>
+        </div>
         {error && <div style={styles.error}>{error}</div>}
         <form onSubmit={handleSubmit} style={styles.form}>
           <div style={styles.formGroup}>
-            <label style={styles.label}>Name</label>
+            <label style={styles.label}>Full Name</label>
             <input
               type="text"
               name="name"
+              placeholder="Enter your full name"
               value={formData.name}
               onChange={handleChange}
               required
@@ -62,10 +67,11 @@ const Register = () => {
             />
           </div>
           <div style={styles.formGroup}>
-            <label style={styles.label}>Email</label>
+            <label style={styles.label}>Email Address</label>
             <input
               type="email"
               name="email"
+              placeholder="Enter your email"
               value={formData.email}
               onChange={handleChange}
               required
@@ -77,6 +83,7 @@ const Register = () => {
             <input
               type="password"
               name="password"
+              placeholder="Create a password"
               value={formData.password}
               onChange={handleChange}
               required
@@ -84,7 +91,7 @@ const Register = () => {
             />
           </div>
           <div style={styles.formGroup}>
-            <label style={styles.label}>User Type</label>
+            <label style={styles.label}>Account Type</label>
             <select
               name="userType"
               value={formData.userType}
@@ -96,10 +103,10 @@ const Register = () => {
               <option value="employee">Employee</option>
             </select>
           </div>
-          <button type="submit" style={styles.button}>Register</button>
+          <button type="submit" style={styles.button}>Create Account</button>
         </form>
         <p style={styles.linkText}>
-          Already have an account? <Link to="/login" style={styles.link}>Login</Link>
+          Already have an account? <Link to="/login" style={styles.link}>Sign in</Link>
         </p>
       </div>
     </div>
@@ -119,22 +126,31 @@ const styles = {
   card: {
     backgroundColor: theme.colors.white,
     padding: theme.spacing.section,
-    borderRadius: theme.borderRadius.lg,
+    borderRadius: theme.borderRadius.xl,
     boxShadow: theme.shadows.lg,
     width: '100%',
-    maxWidth: '400px',
+    maxWidth: '440px',
+    border: `1px solid ${theme.colors.borderLight}`,
+  },
+  header: {
+    marginBottom: theme.spacing.component,
+    textAlign: 'center',
   },
   title: {
     color: theme.colors.text,
-    fontSize: theme.typography.h2.fontSize,
-    fontWeight: theme.typography.h2.fontWeight,
-    marginBottom: theme.spacing.component,
-    textAlign: 'center',
+    fontSize: theme.typography.h3.fontSize,
+    fontWeight: theme.typography.h3.fontWeight,
+    marginBottom: '0.5rem',
+    letterSpacing: '-0.02em',
+  },
+  subtitle: {
+    color: theme.colors.textLight,
+    fontSize: theme.typography.body.fontSize,
   },
   form: {
     display: 'flex',
     flexDirection: 'column',
-    gap: theme.spacing.element,
+    gap: '1.25rem',
   },
   formGroup: {
     display: 'flex',
@@ -143,39 +159,56 @@ const styles = {
   label: {
     marginBottom: '0.5rem',
     color: theme.colors.text,
-    fontWeight: '500',
+    fontWeight: '600',
     fontSize: theme.typography.small.fontSize,
   },
   input: {
-    padding: `0.75rem ${theme.spacing.element}`,
+    padding: '0.875rem 1rem',
     border: `1px solid ${theme.colors.border}`,
     borderRadius: theme.borderRadius.md,
     fontSize: theme.typography.body.fontSize,
     fontFamily: theme.typography.fontFamily,
+    backgroundColor: theme.colors.inputBg,
+    transition: 'all 0.2s ease',
   },
   button: {
-    backgroundColor: theme.colors.primary,
+    backgroundColor: theme.colors.black,
     color: theme.colors.white,
-    padding: `0.75rem ${theme.spacing.element}`,
+    padding: '0.875rem',
     border: 'none',
     borderRadius: theme.borderRadius.md,
     fontSize: theme.typography.body.fontSize,
-    fontWeight: '500',
+    fontWeight: '600',
     cursor: 'pointer',
-    marginTop: theme.spacing.element,
+    marginTop: '0.5rem',
   },
   error: {
     backgroundColor: theme.colors.errorLight,
     color: theme.colors.error,
-    padding: `0.75rem ${theme.spacing.element}`,
+    padding: '0.875rem',
     borderRadius: theme.borderRadius.md,
     marginBottom: theme.spacing.element,
     fontSize: theme.typography.small.fontSize,
+    border: `1px solid ${theme.colors.error}`,
+  },
+  successIcon: {
+    width: '60px',
+    height: '60px',
+    borderRadius: '50%',
+    backgroundColor: theme.colors.successLight,
+    color: theme.colors.success,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '2rem',
+    margin: '0 auto 1.5rem',
+    fontWeight: 'bold',
   },
   successMessage: {
-    color: theme.colors.text,
+    color: theme.colors.textLight,
     textAlign: 'center',
     fontSize: theme.typography.body.fontSize,
+    lineHeight: '1.6',
   },
   linkText: {
     textAlign: 'center',
@@ -184,9 +217,9 @@ const styles = {
     fontSize: theme.typography.small.fontSize,
   },
   link: {
-    color: theme.colors.primary,
+    color: theme.colors.text,
     textDecoration: 'none',
-    fontWeight: '500',
+    fontWeight: '600',
   },
 };
 
