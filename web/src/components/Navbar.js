@@ -37,13 +37,13 @@ const Navbar = () => {
 const styles = {
   navbar: {
     backgroundColor: theme.colors.primary,
-    padding: `${theme.spacing.md} 0`,
+    padding: `${theme.spacing.element} 0`,
     boxShadow: theme.shadows.md,
   },
   container: {
     maxWidth: '1200px',
     margin: '0 auto',
-    padding: `0 ${theme.spacing.md}`,
+    padding: `0 ${theme.spacing.component}`,
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -57,7 +57,7 @@ const styles = {
   menu: {
     display: 'flex',
     alignItems: 'center',
-    gap: theme.spacing.md,
+    gap: theme.spacing.element,
   },
   link: {
     color: theme.colors.white,
@@ -72,7 +72,7 @@ const styles = {
     backgroundColor: theme.colors.white,
     color: theme.colors.primary,
     border: 'none',
-    padding: `${theme.spacing.sm} ${theme.spacing.md}`,
+    padding: `0.5rem ${theme.spacing.element}`,
     borderRadius: theme.borderRadius.md,
     cursor: 'pointer',
     fontSize: theme.typography.body.fontSize,
