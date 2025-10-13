@@ -54,6 +54,9 @@ func main() {
 	protected.HandleFunc("/projects/{id}/work-logs", handlers.GetProjectWorkLogs).Methods("GET")
 	protected.HandleFunc("/expenses", handlers.AddExpense).Methods("POST")
 	protected.HandleFunc("/projects/{id}/expenses", handlers.GetProjectExpenses).Methods("GET")
+	protected.HandleFunc("/expenses/{id}", handlers.GetExpenseByID).Methods("GET")
+	protected.HandleFunc("/expenses/{id}", handlers.UpdateExpense).Methods("PUT")
+	protected.HandleFunc("/expenses/{id}", handlers.DeleteExpense).Methods("DELETE")
 
 	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
