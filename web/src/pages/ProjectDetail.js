@@ -1,227 +1,167 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import projectService from '../services/projectService';
-import { theme } from '../theme';
+import AssignContractorModal from '../components/AssignContractorModal';
+import EditProjectForm from '../components/EditProjectForm';
+import PhotoUploadSection from '../components/PhotoUploadSection';
+import { projectDetailStyles as styles } from './ProjectDetailStyles';
 
 const ProjectDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [project, setProject] = useState(null);
+  const [photos, setPhotos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
-    fetchProject();
+    loadProjectDetails();
   }, [id]);
 
-  const fetchProject = async () => {
+  const loadProjectDetails = async () => {
     try {
       setLoading(true);
-      const data = await projectService.getProjectById(id);
-      setProject(data.project);
+      const [projectData, photosData] = await Promise.all([
+        projectService.getProjectById(id),
+        projectService.getProjectPhotos(id)
+      ]);
+      setProject(projectData.project);
+      setPhotos(photosData.photos || []);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to load project');
+      if (err.response?.status === 403) {
+        setError('You do not have permission to view this project.');
+      } else {
+        setError('Failed to load project details');
+      }
     } finally {
       setLoading(false);
     }
   };
 
+  const handleAssignContractor = async (contractorEmail) => {
+    try {
+      await projectService.assignContractor(id, contractorEmail);
+      await loadProjectDetails();
+      setShowAssignModal(false);
+    } catch (err) {
+      throw new Error(err.response?.data?.error || 'Failed to assign contractor');
+    }
+  };
+
+  const handleUpdateProject = async (projectData) => {
+    try {
+      const updatedProject = await projectService.updateProject(id, projectData);
+      setProject(updatedProject);
+      setIsEditing(false);
+    } catch (err) {
+      throw new Error(err.response?.data?.error || 'Failed to update project');
+    }
+  };
+
+  const handlePhotoUploaded = (newPhoto) => {
+    setPhotos([newPhoto, ...photos]);
+  };
+
+  const getStatusStyle = (status) => {
+    switch (status) {
+      case 'draft':
+        return styles.statusDraft;
+      case 'active':
+        return styles.statusActive;
+      case 'completed':
+        return styles.statusCompleted;
+      default:
+        return {};
+    }
+  };
+
   if (loading) {
-    return (
-      <div style={styles.container}>
-        <p style={styles.message}>Loading project...</p>
-      </div>
-    );
+    return <div style={styles.loading}>Loading project details...</div>;
   }
 
-  if (error || !project) {
+  if (error) {
     return (
-      <div style={styles.container}>
-        <div style={styles.error}>{error || 'Project not found'}</div>
-        <button onClick={() => navigate('/dashboard')} style={styles.backButton}>
-          Back to Dashboard
+      <div style={styles.error}>
+        <p>{error}</p>
+        <button onClick={() => navigate('/dashboard')} style={styles.errorButton}>
+          Back to Projects
         </button>
       </div>
     );
   }
 
-  const getStatusColor = (status) => {
-    const colors = {
-      draft: '#6B7280',
-      active: '#10B981',
-      completed: '#3B82F6',
-    };
-    return colors[status] || '#6B7280';
-  };
+  if (!project) {
+    return <div style={styles.error}>Project not found</div>;
+  }
 
   return (
     <div style={styles.container}>
-      <button onClick={() => navigate('/dashboard')} style={styles.backButton}>
-        ← Back to Dashboard
-      </button>
-
       <div style={styles.header}>
-        <div>
-          <h1 style={styles.title}>{project.title}</h1>
-          <p style={styles.address}>📍 {project.address}</p>
-        </div>
-        <span
-          style={{
-            ...styles.statusBadge,
-            backgroundColor: getStatusColor(project.status),
-          }}
-        >
-          {project.status}
-        </span>
+        <button onClick={() => navigate('/dashboard')} style={styles.backButton}>
+          ← Back to Projects
+        </button>
+        <button onClick={() => setIsEditing(true)} style={styles.editButton}>
+          Edit Project
+        </button>
       </div>
 
-      <div style={styles.content}>
-        <div style={styles.section}>
-          <h2 style={styles.sectionTitle}>Description</h2>
-          <p style={styles.description}>{project.description}</p>
-        </div>
-
-        <div style={styles.section}>
-          <h2 style={styles.sectionTitle}>Project Details</h2>
-          <div style={styles.detailsGrid}>
-            <div style={styles.detailItem}>
-              <span style={styles.detailLabel}>Estimated Cost:</span>
-              <span style={styles.detailValue}>
-                ${parseFloat(project.estimated_cost).toLocaleString()}
+      {isEditing ? (
+        <EditProjectForm
+          project={project}
+          onSave={handleUpdateProject}
+          onCancel={() => setIsEditing(false)}
+        />
+      ) : (
+        <>
+          <div style={styles.infoCard}>
+            <h1 style={styles.title}>{project.title}</h1>
+            <div style={styles.meta}>
+              <span style={{ ...styles.statusBadge, ...getStatusStyle(project.status) }}>
+                {project.status}
+              </span>
+              <span style={styles.cost}>
+                Estimated Cost: ${Number(project.estimated_cost).toLocaleString()}
               </span>
             </div>
-            <div style={styles.detailItem}>
-              <span style={styles.detailLabel}>Created:</span>
-              <span style={styles.detailValue}>
-                {new Date(project.created_at).toLocaleDateString()}
-              </span>
-            </div>
-            <div style={styles.detailItem}>
-              <span style={styles.detailLabel}>Status:</span>
-              <span style={styles.detailValue}>{project.status}</span>
-            </div>
+            <p style={styles.description}>{project.description}</p>
+            <p style={styles.address}><strong>Address:</strong> {project.address}</p>
           </div>
-        </div>
 
-        {project.contractor_id && (
-          <div style={styles.section}>
+          <div style={styles.contractorSection}>
             <h2 style={styles.sectionTitle}>Contractor</h2>
-            <p style={styles.placeholder}>Contractor information will appear here</p>
+            {project.contractor_id ? (
+              <div style={styles.contractorInfo}>
+                <p><strong>Name:</strong> {project.contractor_name}</p>
+                <p><strong>Email:</strong> {project.contractor_email}</p>
+              </div>
+            ) : (
+              <div style={styles.noContractor}>
+                <p style={styles.noContractorText}>No contractor assigned yet</p>
+                <button onClick={() => setShowAssignModal(true)} style={styles.assignButton}>
+                  Assign Contractor
+                </button>
+              </div>
+            )}
           </div>
-        )}
 
-        <div style={styles.section}>
-          <h2 style={styles.sectionTitle}>Updates & Progress</h2>
-          <p style={styles.placeholder}>Project updates and progress tracking coming soon</p>
-        </div>
-      </div>
+          <PhotoUploadSection
+            projectId={id}
+            photos={photos}
+            onPhotoUploaded={handlePhotoUploaded}
+          />
+        </>
+      )}
+
+      {showAssignModal && (
+        <AssignContractorModal
+          onAssign={handleAssignContractor}
+          onClose={() => setShowAssignModal(false)}
+        />
+      )}
     </div>
   );
-};
-
-const styles = {
-  container: {
-    maxWidth: '1200px',
-    margin: '0 auto',
-    padding: '2rem',
-  },
-  message: {
-    textAlign: 'center',
-    color: theme.colors.textLight,
-    fontSize: '1.125rem',
-    padding: '3rem',
-  },
-  error: {
-    backgroundColor: '#FEE2E2',
-    color: '#DC2626',
-    padding: '1rem',
-    borderRadius: theme.borderRadius.md,
-    marginBottom: '1rem',
-  },
-  backButton: {
-    padding: '0.5rem 1rem',
-    fontSize: '0.95rem',
-    fontWeight: '600',
-    backgroundColor: theme.colors.white,
-    color: theme.colors.black,
-    border: `1px solid ${theme.colors.black}`,
-    borderRadius: theme.borderRadius.md,
-    cursor: 'pointer',
-    marginBottom: '1.5rem',
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: '2rem',
-    paddingBottom: '1.5rem',
-    borderBottom: `2px solid ${theme.colors.backgroundLight}`,
-  },
-  title: {
-    fontSize: '2rem',
-    fontWeight: '700',
-    color: theme.colors.text,
-    margin: '0 0 0.5rem 0',
-  },
-  address: {
-    fontSize: '1rem',
-    color: theme.colors.textLight,
-    margin: 0,
-  },
-  statusBadge: {
-    padding: '0.5rem 1.25rem',
-    borderRadius: '999px',
-    fontSize: '0.95rem',
-    fontWeight: '600',
-    color: theme.colors.white,
-    textTransform: 'capitalize',
-  },
-  content: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '2rem',
-  },
-  section: {
-    backgroundColor: theme.colors.white,
-    padding: '1.5rem',
-    borderRadius: theme.borderRadius.lg,
-    boxShadow: theme.shadows.sm,
-  },
-  sectionTitle: {
-    fontSize: '1.25rem',
-    fontWeight: '600',
-    color: theme.colors.text,
-    marginBottom: '1rem',
-  },
-  description: {
-    fontSize: '1rem',
-    color: theme.colors.text,
-    lineHeight: '1.6',
-  },
-  detailsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: '1.5rem',
-  },
-  detailItem: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.5rem',
-  },
-  detailLabel: {
-    fontSize: '0.875rem',
-    color: theme.colors.textLight,
-    fontWeight: '500',
-  },
-  detailValue: {
-    fontSize: '1.125rem',
-    color: theme.colors.text,
-    fontWeight: '600',
-  },
-  placeholder: {
-    color: theme.colors.textLight,
-    fontStyle: 'italic',
-  },
 };
 
 export default ProjectDetail;
