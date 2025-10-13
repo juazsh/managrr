@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { theme } from '../theme';
@@ -9,8 +9,14 @@ const Login = () => {
     password: '',
   });
   const [error, setError] = useState('');
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -21,7 +27,7 @@ const Login = () => {
     setError('');
     try {
       await login(formData.email, formData.password);
-      navigate('/');
+      navigate('/dashboard');
     } catch (err) {
       setError(err.response?.data?.error || 'Login failed');
     }
@@ -63,7 +69,8 @@ const Login = () => {
           <button type="submit" style={styles.button}>Sign In</button>
         </form>
         <p style={styles.linkText}>
-          Don't have an account? <Link to="/register" style={styles.link}>Create account</Link>
+          Don't have an account?{' '}
+          <Link to="/register" style={styles.link}>Create account</Link>
         </p>
       </div>
     </div>

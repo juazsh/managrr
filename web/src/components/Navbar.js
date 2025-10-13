@@ -15,7 +15,7 @@ const Navbar = () => {
   return (
     <nav style={styles.navbar}>
       <div style={styles.container}>
-        <Link to="/" style={styles.brand}>
+        <Link to={isAuthenticated ? '/dashboard' : '/'} style={styles.brand}>
           <span style={styles.logo}>managrr</span>
         </Link>
         <div style={styles.menu}>

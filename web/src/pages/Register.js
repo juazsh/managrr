@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { theme } from '../theme';
@@ -12,8 +12,14 @@ const Register = () => {
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  const { register } = useAuth();
+  const { register, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -38,7 +44,7 @@ const Register = () => {
           <div style={styles.successIcon}>✓</div>
           <h2 style={styles.title}>Registration Successful!</h2>
           <p style={styles.successMessage}>
-            Please check your email to verify your account. Redirecting to login...
+            Please check your email to verify your account.
           </p>
         </div>
       </div>
@@ -50,7 +56,7 @@ const Register = () => {
       <div style={styles.card}>
         <div style={styles.header}>
           <h2 style={styles.title}>Create your account</h2>
-          <p style={styles.subtitle}>Join Managrr to manage your construction projects</p>
+          <p style={styles.subtitle}>Get started with Managrr today</p>
         </div>
         {error && <div style={styles.error}>{error}</div>}
         <form onSubmit={handleSubmit} style={styles.form}>
@@ -91,7 +97,7 @@ const Register = () => {
             />
           </div>
           <div style={styles.formGroup}>
-            <label style={styles.label}>Account Type</label>
+            <label style={styles.label}>I am a...</label>
             <select
               name="userType"
               value={formData.userType}
@@ -100,13 +106,13 @@ const Register = () => {
             >
               <option value="house_owner">House Owner</option>
               <option value="contractor">Contractor</option>
-              <option value="employee">Employee</option>
             </select>
           </div>
           <button type="submit" style={styles.button}>Create Account</button>
         </form>
         <p style={styles.linkText}>
-          Already have an account? <Link to="/login" style={styles.link}>Sign in</Link>
+          Already have an account?{' '}
+          <Link to="/login" style={styles.link}>Sign in</Link>
         </p>
       </div>
     </div>

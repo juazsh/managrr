@@ -10,7 +10,9 @@ import { HowItWorks, Features, Pricing, About, Contact } from './pages/marketing
 import Login from './pages/Login';
 import Register from './pages/Register';
 import VerifyEmail from './pages/VerifyEmail';
-import Home from './pages/Home';
+import Dashboard from './pages/Dashboard';
+import CreateProject from './pages/CreateProject';
+import ProjectDetail from './pages/ProjectDetail';
 
 function App() {
   return (
@@ -46,10 +48,34 @@ function App() {
           <Route
             path="/dashboard"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['house_owner']}>
                 <div>
                   <Navbar />
-                  <Home />
+                  <Dashboard />
+                </div>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/projects/new"
+            element={
+              <ProtectedRoute allowedRoles={['house_owner']}>
+                <div>
+                  <Navbar />
+                  <CreateProject />
+                </div>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/projects/:id"
+            element={
+              <ProtectedRoute allowedRoles={['house_owner']}>
+                <div>
+                  <Navbar />
+                  <ProjectDetail />
                 </div>
               </ProtectedRoute>
             }

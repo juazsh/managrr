@@ -4,11 +4,15 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"path/filepath"
+	"strconv"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/juazsh/managrr/internal/database"
 	"github.com/juazsh/managrr/internal/middleware"
 	"github.com/juazsh/managrr/internal/models"
+	"github.com/juazsh/managrr/internal/storage"
 )
 
 func CreateProject(w http.ResponseWriter, r *http.Request) {
@@ -23,25 +27,39 @@ func CreateProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req models.CreateProjectRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid request body")
+	if err := r.ParseMultipartForm(32 << 20); err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid multipart form data")
 		return
 	}
 
-	if req.Title == "" {
+	title := r.FormValue("title")
+	if title == "" {
 		respondWithError(w, http.StatusBadRequest, "Title is required")
 		return
 	}
 
-	if req.Description == "" {
+	description := r.FormValue("description")
+	if description == "" {
 		respondWithError(w, http.StatusBadRequest, "Description is required")
 		return
 	}
 
-	if req.EstimatedCost <= 0 {
+	estimatedCostStr := r.FormValue("estimated_cost")
+	if estimatedCostStr == "" {
+		respondWithError(w, http.StatusBadRequest, "Estimated cost is required")
+		return
+	}
+
+	estimatedCost, err := strconv.ParseFloat(estimatedCostStr, 64)
+	if err != nil || estimatedCost <= 0 {
 		respondWithError(w, http.StatusBadRequest, "Estimated cost must be a positive number")
 		return
+	}
+
+	address := r.FormValue("address")
+	var addressPtr *string
+	if address != "" {
+		addressPtr = &address
 	}
 
 	db := database.GetDB()
@@ -53,13 +71,13 @@ func CreateProject(w http.ResponseWriter, r *http.Request) {
 		RETURNING id, owner_id, contractor_id, title, description, estimated_cost, address, status, created_at, updated_at
 	`
 
-	err := db.QueryRow(
+	err = db.QueryRow(
 		query,
 		userCtx.UserID,
-		req.Title,
-		req.Description,
-		req.EstimatedCost,
-		req.Address,
+		title,
+		description,
+		estimatedCost,
+		addressPtr,
 		models.ProjectStatusDraft,
 	).Scan(
 		&project.ID,
@@ -79,7 +97,46 @@ func CreateProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondWithJSON(w, http.StatusCreated, project)
+	files := r.MultipartForm.File["photos"]
+	if len(files) > 0 {
+		supabaseStorage := storage.NewSupabaseStorage()
+
+		for _, fileHeader := range files {
+			file, err := fileHeader.Open()
+			if err != nil {
+				continue
+			}
+			defer file.Close()
+
+			if fileHeader.Size > 5*1024*1024 {
+				continue
+			}
+
+			ext := strings.ToLower(filepath.Ext(fileHeader.Filename))
+			allowedExts := map[string]bool{".jpg": true, ".jpeg": true, ".png": true}
+			if !allowedExts[ext] {
+				continue
+			}
+
+			photoURL, err := supabaseStorage.UploadFile(file, fileHeader, project.ID)
+			if err != nil {
+				continue
+			}
+
+			_, err = db.Exec(`
+				INSERT INTO project_photos (project_id, photo_url, uploaded_by)
+				VALUES ($1, $2, $3)
+			`, project.ID, photoURL, userCtx.UserID)
+
+			if err != nil {
+				continue
+			}
+		}
+	}
+
+	respondWithJSON(w, http.StatusCreated, map[string]interface{}{
+		"project": project,
+	})
 }
 
 func ListProjects(w http.ResponseWriter, r *http.Request) {
