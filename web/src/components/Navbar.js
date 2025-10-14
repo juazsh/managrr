@@ -12,16 +12,27 @@ const Navbar = () => {
     navigate('/login');
   };
 
+  const getDashboardLink = () => {
+    if (!isAuthenticated || !user) return '/';
+    if (user.user_type === 'contractor') return '/contractor/dashboard';
+    return '/dashboard';
+  };
+
   return (
     <nav style={styles.navbar}>
       <div style={styles.container}>
-        <Link to={isAuthenticated ? '/dashboard' : '/'} style={styles.brand}>
+        <Link to={getDashboardLink()} style={styles.brand}>
           <span style={styles.logo}>managrr</span>
         </Link>
         <div style={styles.menu}>
           {isAuthenticated ? (
             <>
               <span style={styles.username}>{user?.name}</span>
+              {user?.user_type === 'contractor' && (
+                <Link to="/contractor/employees" style={styles.link}>
+                  Employees
+                </Link>
+              )}
               <button onClick={handleLogout} style={styles.button}>Logout</button>
             </>
           ) : (

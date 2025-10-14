@@ -12,14 +12,18 @@ const Register = () => {
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  const { register, isAuthenticated } = useAuth();
+  const { register, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/dashboard');
+    if (isAuthenticated && user) {
+      if (user.user_type === 'contractor') {
+        navigate('/contractor/dashboard');
+      } else {
+        navigate('/dashboard');
+      }
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, user, navigate]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -44,7 +48,7 @@ const Register = () => {
           <div style={styles.successIcon}>✓</div>
           <h2 style={styles.title}>Registration Successful!</h2>
           <p style={styles.successMessage}>
-            Please check your email to verify your account.
+            Please check your email to verify your account. You'll be redirected to login shortly.
           </p>
         </div>
       </div>
@@ -55,8 +59,8 @@ const Register = () => {
     <div style={styles.container}>
       <div style={styles.card}>
         <div style={styles.header}>
-          <h2 style={styles.title}>Create your account</h2>
-          <p style={styles.subtitle}>Get started with Managrr today</p>
+          <h2 style={styles.title}>Create an account</h2>
+          <p style={styles.subtitle}>Get started with Managrr</p>
         </div>
         {error && <div style={styles.error}>{error}</div>}
         <form onSubmit={handleSubmit} style={styles.form}>
@@ -93,16 +97,18 @@ const Register = () => {
               value={formData.password}
               onChange={handleChange}
               required
+              minLength={8}
               style={styles.input}
             />
           </div>
           <div style={styles.formGroup}>
-            <label style={styles.label}>I am a...</label>
+            <label style={styles.label}>I am a</label>
             <select
               name="userType"
               value={formData.userType}
               onChange={handleChange}
-              style={styles.input}
+              style={styles.select}
+              required
             >
               <option value="house_owner">House Owner</option>
               <option value="contractor">Contractor</option>
@@ -177,6 +183,15 @@ const styles = {
     backgroundColor: theme.colors.inputBg,
     transition: 'all 0.2s ease',
   },
+  select: {
+    padding: '0.875rem 1rem',
+    border: `1px solid ${theme.colors.border}`,
+    borderRadius: theme.borderRadius.md,
+    fontSize: theme.typography.body.fontSize,
+    fontFamily: theme.typography.fontFamily,
+    backgroundColor: theme.colors.inputBg,
+    cursor: 'pointer',
+  },
   button: {
     backgroundColor: theme.colors.black,
     color: theme.colors.white,
@@ -197,25 +212,6 @@ const styles = {
     fontSize: theme.typography.small.fontSize,
     border: `1px solid ${theme.colors.error}`,
   },
-  successIcon: {
-    width: '60px',
-    height: '60px',
-    borderRadius: '50%',
-    backgroundColor: theme.colors.successLight,
-    color: theme.colors.success,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '2rem',
-    margin: '0 auto 1.5rem',
-    fontWeight: 'bold',
-  },
-  successMessage: {
-    color: theme.colors.textLight,
-    textAlign: 'center',
-    fontSize: theme.typography.body.fontSize,
-    lineHeight: '1.6',
-  },
   linkText: {
     textAlign: 'center',
     marginTop: theme.spacing.component,
@@ -226,6 +222,18 @@ const styles = {
     color: theme.colors.text,
     textDecoration: 'none',
     fontWeight: '600',
+  },
+  successIcon: {
+    fontSize: '4rem',
+    color: theme.colors.success,
+    textAlign: 'center',
+    marginBottom: '1rem',
+  },
+  successMessage: {
+    textAlign: 'center',
+    color: theme.colors.textLight,
+    fontSize: theme.typography.body.fontSize,
+    lineHeight: '1.6',
   },
 };
 

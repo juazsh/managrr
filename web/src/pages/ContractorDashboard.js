@@ -1,23 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import projectService from '../services/projectService';
-import { useAuth } from '../context/AuthContext';
 import { theme } from '../theme';
 
-const Dashboard = () => {
-  const { user } = useAuth();
-  const navigate = useNavigate();
+const ContractorDashboard = () => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (user?.user_type === 'contractor') {
-      navigate('/contractor/dashboard');
-      return;
-    }
     fetchProjects();
-  }, [user, navigate]);
+  }, []);
 
   const fetchProjects = async () => {
     try {
@@ -33,11 +26,11 @@ const Dashboard = () => {
 
   const getStatusColor = (status) => {
     const colors = {
-      draft: '#6B7280',
-      active: '#10B981',
-      completed: '#3B82F6',
+      draft: theme.colors.textLight,
+      active: theme.colors.success,
+      completed: theme.colors.primary,
     };
-    return colors[status] || '#6B7280';
+    return colors[status] || theme.colors.textLight;
   };
 
   if (loading) {
@@ -51,56 +44,46 @@ const Dashboard = () => {
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <h1 style={styles.title}>My Projects</h1>
-        {user?.user_type === 'house_owner' && (
-          <Link to="/projects/new" style={styles.createButton}>
-            + Create New Project
-          </Link>
-        )}
+        <h1 style={styles.title}>My Assigned Projects</h1>
+        <Link to="/contractor/employees" style={styles.manageButton}>
+          👥 Manage Employees
+        </Link>
       </div>
 
       {error && <div style={styles.error}>{error}</div>}
 
       {projects.length === 0 ? (
         <div style={styles.emptyState}>
-          <p style={styles.emptyText}>No projects yet. Create your first project to get started!</p>
-          {user?.user_type === 'house_owner' && (
-            <Link to="/projects/new" style={styles.emptyButton}>
-              Create Project
-            </Link>
-          )}
+          <p style={styles.emptyText}>No projects assigned yet.</p>
         </div>
       ) : (
         <div style={styles.grid}>
           {projects.map((project) => (
-            <Link
-              key={project.id}
-              to={`/projects/${project.id}`}
+            <Link 
+              key={project.id} 
+              to={`/projects/${project.id}/dashboard`}
               style={styles.card}
             >
               <div style={styles.cardHeader}>
                 <h3 style={styles.projectTitle}>{project.title}</h3>
-                <span
-                  style={{
-                    ...styles.statusBadge,
-                    backgroundColor: getStatusColor(project.status),
-                  }}
-                >
+                <span style={{
+                  ...styles.statusBadge,
+                  backgroundColor: getStatusColor(project.status)
+                }}>
                   {project.status}
                 </span>
               </div>
+
               {project.description && (
-                <p style={styles.description}>
-                  {project.description.length > 100
-                    ? `${project.description.substring(0, 100)}...`
-                    : project.description}
-                </p>
+                <p style={styles.description}>{project.description}</p>
               )}
+
               {project.estimated_cost && (
                 <div style={styles.cost}>
                   Budget: ${project.estimated_cost.toLocaleString()}
                 </div>
               )}
+
               {project.address && (
                 <div style={styles.address}>📍 {project.address}</div>
               )}
@@ -116,114 +99,108 @@ const styles = {
   container: {
     maxWidth: '1200px',
     margin: '0 auto',
-    padding: '3rem 2rem',
+    padding: '40px 20px',
   },
   header: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '2rem',
+    marginBottom: '32px',
+    gap: '16px',
     flexWrap: 'wrap',
-    gap: '1rem',
   },
   title: {
-    fontSize: '2.5rem',
+    fontSize: '32px',
     fontWeight: '700',
     color: theme.colors.text,
-    margin: 0,
+    margin: '0',
   },
-  createButton: {
-    padding: '0.875rem 1.5rem',
-    backgroundColor: theme.colors.black,
+  manageButton: {
+    padding: '12px 24px',
+    backgroundColor: theme.colors.primary,
     color: theme.colors.white,
-    textDecoration: 'none',
+    border: 'none',
     borderRadius: theme.borderRadius.md,
+    fontSize: '16px',
     fontWeight: '600',
-    fontSize: '1rem',
+    cursor: 'pointer',
+    textDecoration: 'none',
+    display: 'inline-block',
   },
   message: {
     textAlign: 'center',
     color: theme.colors.textLight,
-    fontSize: '1.125rem',
+    fontSize: '16px',
   },
   error: {
-    backgroundColor: theme.colors.errorLight,
-    color: theme.colors.error,
-    padding: '1rem',
+    backgroundColor: '#FEE',
+    color: '#C00',
+    padding: '16px',
     borderRadius: theme.borderRadius.md,
-    marginBottom: '2rem',
-    border: `1px solid ${theme.colors.error}`,
+    marginBottom: '24px',
+    border: '1px solid #FCC',
   },
   emptyState: {
     textAlign: 'center',
-    padding: '4rem 2rem',
+    padding: '60px 20px',
   },
   emptyText: {
     color: theme.colors.textLight,
-    fontSize: '1.125rem',
-    marginBottom: '1.5rem',
-  },
-  emptyButton: {
-    display: 'inline-block',
-    padding: '0.875rem 2rem',
-    backgroundColor: theme.colors.black,
-    color: theme.colors.white,
-    textDecoration: 'none',
-    borderRadius: theme.borderRadius.md,
-    fontWeight: '600',
-    fontSize: '1rem',
+    fontSize: '18px',
   },
   grid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-    gap: '1.5rem',
+    gap: '24px',
   },
   card: {
     backgroundColor: theme.colors.white,
     border: `1px solid ${theme.colors.borderLight}`,
     borderRadius: theme.borderRadius.lg,
-    padding: '1.5rem',
+    padding: '24px',
     textDecoration: 'none',
-    transition: 'box-shadow 0.3s ease',
+    display: 'block',
+    transition: 'all 0.2s',
+    cursor: 'pointer',
   },
   cardHeader: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: '1rem',
-    gap: '1rem',
+    marginBottom: '16px',
+    gap: '12px',
   },
   projectTitle: {
-    fontSize: '1.25rem',
+    fontSize: '20px',
     fontWeight: '600',
     color: theme.colors.text,
-    margin: 0,
+    margin: '0',
     flex: 1,
   },
   statusBadge: {
-    padding: '0.25rem 0.75rem',
+    padding: '4px 12px',
     borderRadius: theme.borderRadius.sm,
-    fontSize: '0.75rem',
+    fontSize: '12px',
     fontWeight: '600',
     color: theme.colors.white,
     textTransform: 'capitalize',
   },
   description: {
-    fontSize: '0.938rem',
+    fontSize: '15px',
     color: theme.colors.textLight,
-    marginBottom: '1rem',
+    marginBottom: '16px',
     lineHeight: '1.5',
   },
   cost: {
-    fontSize: '1.125rem',
+    fontSize: '18px',
     fontWeight: '600',
     color: theme.colors.text,
-    marginBottom: '0.5rem',
+    marginBottom: '8px',
   },
   address: {
-    fontSize: '0.875rem',
+    fontSize: '14px',
     color: theme.colors.textLight,
   },
 };
 
-export default Dashboard;
+export default ContractorDashboard;

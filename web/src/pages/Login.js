@@ -9,14 +9,20 @@ const Login = () => {
     password: '',
   });
   const [error, setError] = useState('');
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/dashboard');
+    if (isAuthenticated && user) {
+      if (user.user_type === 'contractor') {
+        navigate('/contractor/dashboard');
+      } else if (user.user_type === 'house_owner') {
+        navigate('/dashboard');
+      } else if (user.user_type === 'employee') {
+        navigate('/dashboard');
+      }
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, user, navigate]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -26,8 +32,16 @@ const Login = () => {
     e.preventDefault();
     setError('');
     try {
-      await login(formData.email, formData.password);
-      navigate('/dashboard');
+      const response = await login(formData.email, formData.password);
+      const loggedInUser = response.user;
+      
+      if (loggedInUser.user_type === 'contractor') {
+        navigate('/contractor/dashboard');
+      } else if (loggedInUser.user_type === 'house_owner') {
+        navigate('/dashboard');
+      } else if (loggedInUser.user_type === 'employee') {
+        navigate('/dashboard');
+      }
     } catch (err) {
       setError(err.response?.data?.error || 'Login failed');
     }

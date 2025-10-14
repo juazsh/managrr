@@ -14,6 +14,9 @@ import Dashboard from './pages/Dashboard';
 import CreateProject from './pages/CreateProject';
 import ProjectDetail from './pages/ProjectDetail';
 import ProjectDashboard from './pages/ProjectDashboard';
+import ContractorDashboard from './pages/ContractorDashboard';
+import Employees from './pages/Employees';
+import EmployeeDetail from './pages/EmployeeDetail';
 
 function App() {
   return (
@@ -89,6 +92,42 @@ function App() {
                 <div>
                   <Navbar />
                   <ProjectDashboard />
+                </div>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/contractor/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={['contractor']}>
+                <div>
+                  <Navbar />
+                  <ContractorDashboard />
+                </div>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/contractor/employees"
+            element={
+              <ProtectedRoute allowedRoles={['contractor']}>
+                <div>
+                  <Navbar />
+                  <Employees />
+                </div>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/contractor/employees/:id"
+            element={
+              <ProtectedRoute allowedRoles={['contractor']}>
+                <div>
+                  <Navbar />
+                  <EmployeeDetail />
                 </div>
               </ProtectedRoute>
             }
