@@ -45,9 +45,14 @@ const ContractorDashboard = () => {
     <div style={styles.container}>
       <div style={styles.header}>
         <h1 style={styles.title}>My Assigned Projects</h1>
-        <Link to="/contractor/employees" style={styles.manageButton}>
-          👥 Manage Employees
-        </Link>
+        <div style={styles.headerActions}>
+          <Link to="/contractor/employees" style={styles.manageButton}>
+            👥 Manage Employees
+          </Link>
+          <Link to="/contractor/work-logs" style={styles.workLogsLink}>
+            Work Logs
+          </Link>
+        </div>
       </div>
 
       {error && <div style={styles.error}>{error}</div>}
@@ -115,6 +120,11 @@ const styles = {
     color: theme.colors.text,
     margin: '0',
   },
+  headerActions: {
+    display: 'flex',
+    gap: '12px',
+    alignItems: 'center',
+  },
   manageButton: {
     padding: '12px 24px',
     backgroundColor: theme.colors.primary,
@@ -126,6 +136,19 @@ const styles = {
     cursor: 'pointer',
     textDecoration: 'none',
     display: 'inline-block',
+  },
+  workLogsLink: {
+    padding: '12px 24px',
+    backgroundColor: 'transparent',
+    color: theme.colors.primary,
+    border: `2px solid ${theme.colors.primary}`,
+    borderRadius: theme.borderRadius.md,
+    fontSize: '16px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    textDecoration: 'none',
+    display: 'inline-block',
+    transition: 'all 0.2s',
   },
   message: {
     textAlign: 'center',

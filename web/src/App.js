@@ -17,6 +17,8 @@ import ProjectDashboard from './pages/ProjectDashboard';
 import ContractorDashboard from './pages/ContractorDashboard';
 import Employees from './pages/Employees';
 import EmployeeDetail from './pages/EmployeeDetail';
+import ContractorWorkLogs from './pages/ContractorWorkLogs';
+import WorkLogDetail from './pages/WorkLogDetail';
 
 function App() {
   return (
@@ -132,6 +134,22 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+  path="/contractor/work-logs"
+  element={
+    <ProtectedRoute allowedRoles={['contractor']}>
+      <ContractorWorkLogs />
+    </ProtectedRoute>
+  }
+/>
+<Route
+  path="/contractor/work-logs/:id"
+  element={
+    <ProtectedRoute allowedRoles={['contractor']}>
+      <WorkLogDetail />
+    </ProtectedRoute>
+  }
+/>
         </Routes>
       </AuthProvider>
     </Router>

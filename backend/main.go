@@ -36,7 +36,9 @@ func main() {
 
 	protected := api.PathPrefix("").Subrouter()
 	protected.Use(middleware.AuthMiddleware)
+
 	protected.HandleFunc("/auth/me", handlers.GetCurrentUser).Methods("GET", "OPTIONS")
+
 	protected.HandleFunc("/projects", handlers.CreateProject).Methods("POST", "OPTIONS")
 	protected.HandleFunc("/projects", handlers.ListProjects).Methods("GET", "OPTIONS")
 	protected.HandleFunc("/projects/{id}", handlers.GetProject).Methods("GET", "OPTIONS")
@@ -45,24 +47,31 @@ func main() {
 	protected.HandleFunc("/projects/{id}/assign-contractor", handlers.AssignContractor).Methods("POST", "OPTIONS")
 	protected.HandleFunc("/projects/{id}/photos", handlers.UploadProjectPhoto).Methods("POST", "OPTIONS")
 	protected.HandleFunc("/projects/{id}/photos", handlers.GetProjectPhotos).Methods("GET", "OPTIONS")
+	protected.HandleFunc("/projects/{id}/work-logs", handlers.GetProjectWorkLogs).Methods("GET", "OPTIONS")
+	protected.HandleFunc("/projects/{id}/expenses", handlers.GetProjectExpenses).Methods("GET", "OPTIONS")
+	protected.HandleFunc("/projects/{id}/updates", handlers.CreateProjectUpdate).Methods("POST", "OPTIONS")
+	protected.HandleFunc("/projects/{id}/updates", handlers.GetProjectUpdates).Methods("GET", "OPTIONS")
+	protected.HandleFunc("/projects/{id}/dashboard", handlers.GetProjectDashboard).Methods("GET", "OPTIONS")
+
 	protected.HandleFunc("/employees", handlers.AddEmployee).Methods("POST", "OPTIONS")
 	protected.HandleFunc("/employees", handlers.ListEmployees).Methods("GET", "OPTIONS")
 	protected.HandleFunc("/employees/{id}", handlers.GetEmployee).Methods("GET", "OPTIONS")
 	protected.HandleFunc("/employees/{id}", handlers.UpdateEmployee).Methods("PUT", "OPTIONS")
 	protected.HandleFunc("/employees/{id}", handlers.DeleteEmployee).Methods("DELETE", "OPTIONS")
 	protected.HandleFunc("/employees/{id}/assign-project", handlers.AssignProject).Methods("POST", "OPTIONS")
+
+	protected.HandleFunc("/work-logs/summary/weekly", handlers.GetWeeklySummary).Methods("GET", "OPTIONS")
+	protected.HandleFunc("/work-logs/summary/by-employee", handlers.GetSummaryByEmployee).Methods("GET", "OPTIONS")
+	protected.HandleFunc("/work-logs/summary/by-project", handlers.GetSummaryByProject).Methods("GET", "OPTIONS")
 	protected.HandleFunc("/work-logs/check-in", handlers.CheckIn).Methods("POST", "OPTIONS")
 	protected.HandleFunc("/work-logs/check-out", handlers.CheckOut).Methods("POST", "OPTIONS")
+	protected.HandleFunc("/work-logs/{id}", handlers.GetWorkLogDetail).Methods("GET", "OPTIONS")
 	protected.HandleFunc("/work-logs", handlers.ListWorkLogs).Methods("GET", "OPTIONS")
-	protected.HandleFunc("/projects/{id}/work-logs", handlers.GetProjectWorkLogs).Methods("GET", "OPTIONS")
+
 	protected.HandleFunc("/expenses", handlers.AddExpense).Methods("POST", "OPTIONS")
-	protected.HandleFunc("/projects/{id}/expenses", handlers.GetProjectExpenses).Methods("GET", "OPTIONS")
 	protected.HandleFunc("/expenses/{id}", handlers.GetExpenseByID).Methods("GET", "OPTIONS")
 	protected.HandleFunc("/expenses/{id}", handlers.UpdateExpense).Methods("PUT", "OPTIONS")
 	protected.HandleFunc("/expenses/{id}", handlers.DeleteExpense).Methods("DELETE", "OPTIONS")
-	protected.HandleFunc("/projects/{id}/updates", handlers.CreateProjectUpdate).Methods("POST", "OPTIONS")
-	protected.HandleFunc("/projects/{id}/updates", handlers.GetProjectUpdates).Methods("GET", "OPTIONS")
-	protected.HandleFunc("/projects/{id}/dashboard", handlers.GetProjectDashboard).Methods("GET", "OPTIONS")
 
 	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

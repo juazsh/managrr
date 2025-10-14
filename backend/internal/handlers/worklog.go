@@ -1,10 +1,14 @@
 package handlers
 
 import (
+	"database/sql"
+	"fmt"
+	"log"
 	"net/http"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/juazsh/managrr/internal/database"
@@ -323,84 +327,81 @@ func ListWorkLogs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	projectID := r.URL.Query().Get("project_id")
+	employeeID := r.URL.Query().Get("employee_id")
+	startDate := r.URL.Query().Get("start_date")
+	endDate := r.URL.Query().Get("end_date")
+
 	db := database.GetDB()
 
 	var query string
 	var args []interface{}
+	argCount := 0
+
+	baseQuery := `
+		SELECT wl.id, wl.employee_id, wl.project_id, wl.check_in_time, wl.check_out_time,
+		       wl.check_in_photo_url, wl.check_out_photo_url,
+		       wl.check_in_latitude, wl.check_in_longitude,
+		       wl.check_out_latitude, wl.check_out_longitude,
+		       wl.hours_worked, wl.created_at,
+		       u.name as employee_name, p.title as project_name
+		FROM work_logs wl
+		JOIN users u ON wl.employee_id = u.id
+		JOIN projects p ON wl.project_id = p.id
+	`
+
+	var whereClauses []string
 
 	if userCtx.UserType == string(models.UserTypeEmployee) {
-		if projectID != "" {
-			query = `
-				SELECT wl.id, wl.employee_id, wl.project_id, wl.check_in_time, wl.check_out_time,
-				       wl.check_in_photo_url, wl.check_out_photo_url,
-				       wl.check_in_latitude, wl.check_in_longitude,
-				       wl.check_out_latitude, wl.check_out_longitude,
-				       wl.hours_worked, wl.created_at,
-				       u.name as employee_name, p.title as project_name
-				FROM work_logs wl
-				JOIN users u ON wl.employee_id = u.id
-				JOIN projects p ON wl.project_id = p.id
-				WHERE wl.employee_id = $1 AND wl.project_id = $2
-				ORDER BY wl.check_in_time DESC
-			`
-			args = []interface{}{userCtx.UserID, projectID}
-		} else {
-			query = `
-				SELECT wl.id, wl.employee_id, wl.project_id, wl.check_in_time, wl.check_out_time,
-				       wl.check_in_photo_url, wl.check_out_photo_url,
-				       wl.check_in_latitude, wl.check_in_longitude,
-				       wl.check_out_latitude, wl.check_out_longitude,
-				       wl.hours_worked, wl.created_at,
-				       u.name as employee_name, p.title as project_name
-				FROM work_logs wl
-				JOIN users u ON wl.employee_id = u.id
-				JOIN projects p ON wl.project_id = p.id
-				WHERE wl.employee_id = $1
-				ORDER BY wl.check_in_time DESC
-			`
-			args = []interface{}{userCtx.UserID}
-		}
+		argCount++
+		whereClauses = append(whereClauses, fmt.Sprintf("wl.employee_id = $%d", argCount))
+		args = append(args, userCtx.UserID)
 	} else if userCtx.UserType == string(models.UserTypeContractor) {
-		if projectID != "" {
-			query = `
-				SELECT wl.id, wl.employee_id, wl.project_id, wl.check_in_time, wl.check_out_time,
-				       wl.check_in_photo_url, wl.check_out_photo_url,
-				       wl.check_in_latitude, wl.check_in_longitude,
-				       wl.check_out_latitude, wl.check_out_longitude,
-				       wl.hours_worked, wl.created_at,
-				       u.name as employee_name, p.title as project_name
-				FROM work_logs wl
-				JOIN users u ON wl.employee_id = u.id
-				JOIN projects p ON wl.project_id = p.id
-				JOIN employees e ON wl.employee_id = e.user_id
-				WHERE e.contractor_id = $1 AND wl.project_id = $2
-				ORDER BY wl.check_in_time DESC
-			`
-			args = []interface{}{userCtx.UserID, projectID}
-		} else {
-			query = `
-				SELECT wl.id, wl.employee_id, wl.project_id, wl.check_in_time, wl.check_out_time,
-				       wl.check_in_photo_url, wl.check_out_photo_url,
-				       wl.check_in_latitude, wl.check_in_longitude,
-				       wl.check_out_latitude, wl.check_out_longitude,
-				       wl.hours_worked, wl.created_at,
-				       u.name as employee_name, p.title as project_name
-				FROM work_logs wl
-				JOIN users u ON wl.employee_id = u.id
-				JOIN projects p ON wl.project_id = p.id
-				JOIN employees e ON wl.employee_id = e.user_id
-				WHERE e.contractor_id = $1
-				ORDER BY wl.check_in_time DESC
-			`
-			args = []interface{}{userCtx.UserID}
-		}
+		baseQuery += " JOIN employees e ON wl.employee_id = e.user_id"
+		argCount++
+		whereClauses = append(whereClauses, fmt.Sprintf("e.contractor_id = $%d", argCount))
+		args = append(args, userCtx.UserID)
 	} else {
 		respondWithError(w, http.StatusForbidden, "Access denied")
 		return
 	}
 
+	if projectID != "" {
+		argCount++
+		whereClauses = append(whereClauses, fmt.Sprintf("wl.project_id = $%d", argCount))
+		args = append(args, projectID)
+	}
+
+	if employeeID != "" && userCtx.UserType == string(models.UserTypeContractor) {
+		argCount++
+		whereClauses = append(whereClauses, fmt.Sprintf("wl.employee_id = $%d", argCount))
+		args = append(args, employeeID)
+	}
+
+	if startDate != "" {
+		argCount++
+		whereClauses = append(whereClauses, fmt.Sprintf("wl.check_in_time >= $%d", argCount))
+		args = append(args, startDate)
+	}
+
+	if endDate != "" {
+		argCount++
+		whereClauses = append(whereClauses, fmt.Sprintf("wl.check_in_time <= $%d", argCount))
+		args = append(args, endDate+" 23:59:59")
+	}
+
+	if len(whereClauses) > 0 {
+		query = baseQuery + " WHERE " + strings.Join(whereClauses, " AND ")
+	} else {
+		query = baseQuery
+	}
+
+	query += " ORDER BY wl.check_in_time DESC"
+
+	log.Printf("INFO ListWorkLogs: Executing query with %d args", len(args))
+
 	rows, err := db.Query(query, args...)
 	if err != nil {
+		log.Printf("ERROR ListWorkLogs: Failed to fetch work logs: %v", err)
 		respondWithError(w, http.StatusInternalServerError, "Failed to fetch work logs")
 		return
 	}
@@ -433,6 +434,7 @@ func ListWorkLogs(w http.ResponseWriter, r *http.Request) {
 			&wl.ProjectName,
 		)
 		if err != nil {
+			log.Printf("ERROR ListWorkLogs: Failed to scan work log: %v", err)
 			respondWithError(w, http.StatusInternalServerError, "Failed to scan work log")
 			return
 		}
@@ -547,4 +549,238 @@ func GetProjectWorkLogs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondWithJSON(w, http.StatusOK, workLogs)
+}
+
+func GetWorkLogDetail(w http.ResponseWriter, r *http.Request) {
+	userCtx, ok := middleware.GetUserFromContext(r.Context())
+	if !ok {
+		respondWithError(w, http.StatusUnauthorized, "User not found in context")
+		return
+	}
+
+	vars := mux.Vars(r)
+	workLogID := vars["id"]
+
+	db := database.GetDB()
+
+	query := `
+		SELECT wl.id, wl.employee_id, wl.project_id, wl.check_in_time, wl.check_out_time,
+		       wl.check_in_photo_url, wl.check_out_photo_url,
+		       wl.check_in_latitude, wl.check_in_longitude,
+		       wl.check_out_latitude, wl.check_out_longitude,
+		       wl.hours_worked, wl.created_at,
+		       u.name as employee_name, p.title as project_title
+		FROM work_logs wl
+		JOIN users u ON wl.employee_id = u.id
+		JOIN projects p ON wl.project_id = p.id
+		WHERE wl.id = $1
+	`
+
+	type WorkLogDetailResponse struct {
+		models.WorkLog
+		EmployeeName string `json:"employee_name"`
+		ProjectTitle string `json:"project_title"`
+	}
+
+	var wl WorkLogDetailResponse
+	err := db.QueryRow(query, workLogID).Scan(
+		&wl.ID,
+		&wl.EmployeeID,
+		&wl.ProjectID,
+		&wl.CheckInTime,
+		&wl.CheckOutTime,
+		&wl.CheckInPhotoURL,
+		&wl.CheckOutPhotoURL,
+		&wl.CheckInLatitude,
+		&wl.CheckInLongitude,
+		&wl.CheckOutLatitude,
+		&wl.CheckOutLongitude,
+		&wl.HoursWorked,
+		&wl.CreatedAt,
+		&wl.EmployeeName,
+		&wl.ProjectTitle,
+	)
+
+	if err == sql.ErrNoRows {
+		respondWithError(w, http.StatusNotFound, "Work log not found")
+		return
+	}
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to fetch work log")
+		return
+	}
+
+	if userCtx.UserType == string(models.UserTypeContractor) {
+		var hasAccess bool
+		err := db.QueryRow(`
+			SELECT EXISTS(
+				SELECT 1 FROM employees e 
+				WHERE e.contractor_id = $1 AND e.user_id = $2
+			)
+		`, userCtx.UserID, wl.EmployeeID).Scan(&hasAccess)
+
+		if err != nil || !hasAccess {
+			respondWithError(w, http.StatusForbidden, "Access denied")
+			return
+		}
+	} else if userCtx.UserType == string(models.UserTypeEmployee) {
+		if wl.EmployeeID != userCtx.UserID {
+			respondWithError(w, http.StatusForbidden, "Access denied")
+			return
+		}
+	} else {
+		respondWithError(w, http.StatusForbidden, "Access denied")
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, wl)
+}
+
+func GetWeeklySummary(w http.ResponseWriter, r *http.Request) {
+	userCtx, ok := middleware.GetUserFromContext(r.Context())
+	if !ok {
+		respondWithError(w, http.StatusUnauthorized, "User not found in context")
+		return
+	}
+
+	if userCtx.UserType != string(models.UserTypeContractor) {
+		respondWithError(w, http.StatusForbidden, "Only contractors can view summaries")
+		return
+	}
+
+	db := database.GetDB()
+
+	weekStart := time.Now().AddDate(0, 0, -int(time.Now().Weekday()))
+	weekStart = time.Date(weekStart.Year(), weekStart.Month(), weekStart.Day(), 0, 0, 0, 0, weekStart.Location())
+
+	var totalHours float64
+	err := db.QueryRow(`
+		SELECT COALESCE(SUM(wl.hours_worked), 0)
+		FROM work_logs wl
+		JOIN employees e ON wl.employee_id = e.user_id
+		WHERE e.contractor_id = $1 AND wl.check_in_time >= $2
+	`, userCtx.UserID, weekStart).Scan(&totalHours)
+
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to fetch weekly summary")
+		return
+	}
+
+	summary := map[string]interface{}{
+		"total_hours": totalHours,
+		"week_start":  weekStart,
+	}
+
+	respondWithJSON(w, http.StatusOK, summary)
+}
+
+func GetSummaryByEmployee(w http.ResponseWriter, r *http.Request) {
+	userCtx, ok := middleware.GetUserFromContext(r.Context())
+	if !ok {
+		respondWithError(w, http.StatusUnauthorized, "User not found in context")
+		return
+	}
+
+	if userCtx.UserType != string(models.UserTypeContractor) {
+		respondWithError(w, http.StatusForbidden, "Only contractors can view summaries")
+		return
+	}
+
+	db := database.GetDB()
+
+	query := `
+		SELECT e.user_id as employee_id, u.name as employee_name, 
+		       COALESCE(SUM(wl.hours_worked), 0) as total_hours
+		FROM employees e
+		JOIN users u ON e.user_id = u.id
+		LEFT JOIN work_logs wl ON wl.employee_id = e.user_id
+		WHERE e.contractor_id = $1 AND e.is_active = true
+		GROUP BY e.user_id, u.name
+		ORDER BY total_hours DESC
+	`
+
+	rows, err := db.Query(query, userCtx.UserID)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to fetch employee summary")
+		return
+	}
+	defer rows.Close()
+
+	type EmployeeSummary struct {
+		EmployeeID   string  `json:"employee_id"`
+		EmployeeName string  `json:"employee_name"`
+		TotalHours   float64 `json:"total_hours"`
+	}
+
+	var summaries []EmployeeSummary
+	for rows.Next() {
+		var summary EmployeeSummary
+		err := rows.Scan(&summary.EmployeeID, &summary.EmployeeName, &summary.TotalHours)
+		if err != nil {
+			respondWithError(w, http.StatusInternalServerError, "Failed to scan employee summary")
+			return
+		}
+		summaries = append(summaries, summary)
+	}
+
+	if summaries == nil {
+		summaries = []EmployeeSummary{}
+	}
+
+	respondWithJSON(w, http.StatusOK, summaries)
+}
+
+func GetSummaryByProject(w http.ResponseWriter, r *http.Request) {
+	userCtx, ok := middleware.GetUserFromContext(r.Context())
+	if !ok {
+		respondWithError(w, http.StatusUnauthorized, "User not found in context")
+		return
+	}
+
+	if userCtx.UserType != string(models.UserTypeContractor) {
+		respondWithError(w, http.StatusForbidden, "Only contractors can view summaries")
+		return
+	}
+
+	db := database.GetDB()
+
+	query := `
+		SELECT p.id as project_id, p.title as project_title, 
+		       COALESCE(SUM(wl.hours_worked), 0) as total_hours
+		FROM projects p
+		LEFT JOIN work_logs wl ON wl.project_id = p.id
+		WHERE p.contractor_id = $1
+		GROUP BY p.id, p.title
+		ORDER BY total_hours DESC
+	`
+
+	rows, err := db.Query(query, userCtx.UserID)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to fetch project summary")
+		return
+	}
+	defer rows.Close()
+
+	type ProjectSummary struct {
+		ProjectID    string  `json:"project_id"`
+		ProjectTitle string  `json:"project_title"`
+		TotalHours   float64 `json:"total_hours"`
+	}
+
+	var summaries []ProjectSummary
+	for rows.Next() {
+		var summary ProjectSummary
+		err := rows.Scan(&summary.ProjectID, &summary.ProjectTitle, &summary.TotalHours)
+		if err != nil {
+			respondWithError(w, http.StatusInternalServerError, "Failed to scan project summary")
+			return
+		}
+		summaries = append(summaries, summary)
+	}
+
+	if summaries == nil {
+		summaries = []ProjectSummary{}
+	}
+
+	respondWithJSON(w, http.StatusOK, summaries)
 }
