@@ -13,6 +13,7 @@ import VerifyEmail from './pages/VerifyEmail';
 import Dashboard from './pages/Dashboard';
 import CreateProject from './pages/CreateProject';
 import ProjectDetail from './pages/ProjectDetail';
+import ProjectDashboard from './pages/ProjectDashboard';
 
 function App() {
   return (
@@ -48,7 +49,7 @@ function App() {
           <Route
             path="/dashboard"
             element={
-              <ProtectedRoute allowedRoles={['house_owner']}>
+              <ProtectedRoute allowedRoles={['house_owner', 'contractor', 'employee']}>
                 <div>
                   <Navbar />
                   <Dashboard />
@@ -76,6 +77,18 @@ function App() {
                 <div>
                   <Navbar />
                   <ProjectDetail />
+                </div>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/projects/:id/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={['house_owner', 'contractor', 'employee']}>
+                <div>
+                  <Navbar />
+                  <ProjectDashboard />
                 </div>
               </ProtectedRoute>
             }

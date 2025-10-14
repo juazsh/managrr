@@ -62,11 +62,7 @@ const Dashboard = () => {
       ) : (
         <div style={styles.projectsGrid}>
           {projects.map((project) => (
-            <Link
-              key={project.id}
-              to={`/projects/${project.id}`}
-              style={styles.projectCard}
-            >
+            <div key={project.id} style={styles.projectCard}>
               <div style={styles.cardHeader}>
                 <h3 style={styles.projectTitle}>{project.title}</h3>
                 <span
@@ -93,7 +89,16 @@ const Dashboard = () => {
                   <span style={styles.address}>{project.address}</span>
                 </div>
               </div>
-            </Link>
+
+              <div style={styles.cardActions}>
+                <Link to={`/projects/${project.id}/dashboard`} style={styles.dashboardButton}>
+                  📊 View Dashboard
+                </Link>
+                <Link to={`/projects/${project.id}`} style={styles.detailsButton}>
+                  Details →
+                </Link>
+              </div>
+            </div>
           ))}
         </div>
       )}

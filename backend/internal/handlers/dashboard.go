@@ -12,20 +12,22 @@ import (
 )
 
 type ProjectDashboard struct {
-	Project         models.Project  `json:"project"`
-	Contractor      *ContractorInfo `json:"contractor,omitempty"`
-	RecentPhotos    []ProjectPhoto  `json:"recent_photos"`
-	LatestUpdates   LatestUpdates   `json:"latest_updates"`
-	WorkLogsSummary WorkLogsSummary `json:"work_logs_summary"`
-	ExpenseSummary  ExpenseSummary  `json:"expense_summary"`
-	RecentExpenses  []RecentExpense `json:"recent_expenses"`
+	Project         models.Project     `json:"project"`
+	OwnerInfo       UserInfo           `json:"owner_info"`
+	Contractor      *UserInfo          `json:"contractor,omitempty"`
+	RecentPhotos    []ProjectPhoto     `json:"recent_photos"`
+	LatestUpdates   []UpdateWithPhotos `json:"latest_updates"`
+	WorkLogsSummary WorkLogsSummary    `json:"work_logs_summary"`
+	RecentCheckIns  []CheckInInfo      `json:"recent_check_ins"`
+	ExpenseSummary  ExpenseSummary     `json:"expense_summary"`
+	RecentExpenses  []RecentExpense    `json:"recent_expenses"`
 }
 
-type ContractorInfo struct {
-	ID    string `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
-	Phone string `json:"phone"`
+type UserInfo struct {
+	ID    string  `json:"id"`
+	Name  string  `json:"name"`
+	Email string  `json:"email"`
+	Phone *string `json:"phone,omitempty"`
 }
 
 type ProjectPhoto struct {
@@ -35,37 +37,53 @@ type ProjectPhoto struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
-type LatestUpdates struct {
-	DailySummary *ProjectUpdate `json:"daily_summary,omitempty"`
-	WeeklyPlan   *ProjectUpdate `json:"weekly_plan,omitempty"`
+type UpdateWithPhotos struct {
+	ID          string        `json:"id"`
+	UpdateType  string        `json:"update_type"`
+	Content     string        `json:"content"`
+	CreatorName string        `json:"creator_name"`
+	CreatedAt   time.Time     `json:"created_at"`
+	Photos      []UpdatePhoto `json:"photos"`
 }
 
-type ProjectUpdate struct {
-	ID        string    `json:"id"`
-	Content   string    `json:"content"`
-	CreatedBy string    `json:"created_by"`
-	CreatedAt time.Time `json:"created_at"`
+type UpdatePhoto struct {
+	ID           string    `json:"id"`
+	PhotoURL     string    `json:"photo_url"`
+	Caption      *string   `json:"caption,omitempty"`
+	DisplayOrder int       `json:"display_order"`
+	CreatedAt    time.Time `json:"created_at"`
 }
 
 type WorkLogsSummary struct {
 	TotalHoursThisWeek float64 `json:"total_hours_this_week"`
-	EmployeeCount      int     `json:"employee_count"`
+	ActiveEmployees    int     `json:"active_employees"`
+}
+
+type CheckInInfo struct {
+	ID              string    `json:"id"`
+	EmployeeName    string    `json:"employee_name"`
+	CheckInTime     time.Time `json:"check_in_time"`
+	CheckInPhotoURL string    `json:"check_in_photo_url"`
 }
 
 type ExpenseSummary struct {
-	TotalSpent float64            `json:"total_spent"`
-	ByCategory map[string]float64 `json:"by_category"`
-	ByPayer    map[string]float64 `json:"by_payer"`
+	TotalSpent        float64            `json:"total_spent"`
+	TotalByOwner      float64            `json:"total_by_owner"`
+	TotalByContractor float64            `json:"total_by_contractor"`
+	ByCategory        map[string]float64 `json:"by_category"`
 }
 
 type RecentExpense struct {
-	ID          string    `json:"id"`
-	Amount      float64   `json:"amount"`
-	Vendor      string    `json:"vendor"`
-	Date        time.Time `json:"date"`
-	Category    string    `json:"category"`
-	Description *string   `json:"description,omitempty"`
-	PaidBy      string    `json:"paid_by"`
+	ID              string    `json:"id"`
+	Amount          float64   `json:"amount"`
+	Vendor          *string   `json:"vendor,omitempty"`
+	Date            string    `json:"date"`
+	Category        string    `json:"category"`
+	Description     *string   `json:"description,omitempty"`
+	PaidBy          string    `json:"paid_by"`
+	ReceiptPhotoURL *string   `json:"receipt_photo_url,omitempty"`
+	AddedByName     string    `json:"added_by_name"`
+	CreatedAt       time.Time `json:"created_at"`
 }
 
 func GetProjectDashboard(w http.ResponseWriter, r *http.Request) {
@@ -107,6 +125,7 @@ func GetProjectDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	hasAccess := false
+	isEmployee := false
 	switch models.UserType(userCtx.UserType) {
 	case models.UserTypeHouseOwner:
 		hasAccess = project.OwnerID == userCtx.UserID
@@ -118,6 +137,7 @@ func GetProjectDashboard(w http.ResponseWriter, r *http.Request) {
 			SELECT EXISTS(SELECT 1 FROM employee_projects WHERE employee_id = $1 AND project_id = $2)
 		`, userCtx.UserID, projectID).Scan(&employeeAccess)
 		hasAccess = employeeAccess
+		isEmployee = employeeAccess
 	}
 
 	if !hasAccess {
@@ -129,126 +149,194 @@ func GetProjectDashboard(w http.ResponseWriter, r *http.Request) {
 		Project: project,
 	}
 
+	var ownerInfo UserInfo
+	err = db.QueryRow(`
+		SELECT id, name, email, phone FROM users WHERE id = $1
+	`, project.OwnerID).Scan(&ownerInfo.ID, &ownerInfo.Name, &ownerInfo.Email, &ownerInfo.Phone)
+	if err == nil {
+		dashboard.OwnerInfo = ownerInfo
+	}
+
 	if project.ContractorID != nil {
-		var contractor ContractorInfo
+		var contractorInfo UserInfo
 		err = db.QueryRow(`
 			SELECT id, name, email, phone FROM users WHERE id = $1
-		`, *project.ContractorID).Scan(&contractor.ID, &contractor.Name, &contractor.Email, &contractor.Phone)
+		`, *project.ContractorID).Scan(&contractorInfo.ID, &contractorInfo.Name, &contractorInfo.Email, &contractorInfo.Phone)
 		if err == nil {
-			dashboard.Contractor = &contractor
+			dashboard.Contractor = &contractorInfo
 		}
 	}
 
-	rows, err := db.Query(`
-		SELECT id, photo_url, caption, created_at
-		FROM project_photos
-		WHERE project_id = $1
-		ORDER BY created_at DESC
-		LIMIT 10
-	`, projectID)
-	if err == nil {
-		defer rows.Close()
-		for rows.Next() {
-			var photo ProjectPhoto
-			rows.Scan(&photo.ID, &photo.PhotoURL, &photo.Caption, &photo.CreatedAt)
-			dashboard.RecentPhotos = append(dashboard.RecentPhotos, photo)
+	if !isEmployee {
+		rows, err := db.Query(`
+			SELECT id, photo_url, caption, created_at
+			FROM project_photos
+			WHERE project_id = $1
+			ORDER BY created_at DESC
+			LIMIT 10
+		`, projectID)
+		if err == nil {
+			defer rows.Close()
+			for rows.Next() {
+				var photo ProjectPhoto
+				rows.Scan(&photo.ID, &photo.PhotoURL, &photo.Caption, &photo.CreatedAt)
+				dashboard.RecentPhotos = append(dashboard.RecentPhotos, photo)
+			}
+		}
+
+		updateRows, err := db.Query(`
+			SELECT pu.id, pu.update_type, pu.content, u.name, pu.created_at
+			FROM project_updates pu
+			JOIN users u ON pu.created_by = u.id
+			WHERE pu.project_id = $1
+			ORDER BY pu.created_at DESC
+			LIMIT 5
+		`, projectID)
+		if err == nil {
+			defer updateRows.Close()
+			for updateRows.Next() {
+				var update UpdateWithPhotos
+				updateRows.Scan(&update.ID, &update.UpdateType, &update.Content, &update.CreatorName, &update.CreatedAt)
+
+				photoRows, err := db.Query(`
+					SELECT id, photo_url, caption, display_order, created_at
+					FROM project_update_photos
+					WHERE project_update_id = $1
+					ORDER BY display_order ASC, created_at ASC
+				`, update.ID)
+				if err == nil {
+					for photoRows.Next() {
+						var photo UpdatePhoto
+						photoRows.Scan(&photo.ID, &photo.PhotoURL, &photo.Caption, &photo.DisplayOrder, &photo.CreatedAt)
+						update.Photos = append(update.Photos, photo)
+					}
+					photoRows.Close()
+				}
+
+				dashboard.LatestUpdates = append(dashboard.LatestUpdates, update)
+			}
 		}
 	}
 
-	var dailySummary ProjectUpdate
-	err = db.QueryRow(`
-		SELECT id, content, created_by, created_at
-		FROM project_updates
-		WHERE project_id = $1 AND update_type = 'daily_summary'
-		ORDER BY created_at DESC
-		LIMIT 1
-	`, projectID).Scan(&dailySummary.ID, &dailySummary.Content, &dailySummary.CreatedBy, &dailySummary.CreatedAt)
-	if err == nil {
-		dashboard.LatestUpdates.DailySummary = &dailySummary
-	}
+	weekStart := time.Now().AddDate(0, 0, -int(time.Now().Weekday()))
+	weekStart = time.Date(weekStart.Year(), weekStart.Month(), weekStart.Day(), 0, 0, 0, 0, weekStart.Location())
 
-	var weeklyPlan ProjectUpdate
-	err = db.QueryRow(`
-		SELECT id, content, created_by, created_at
-		FROM project_updates
-		WHERE project_id = $1 AND update_type = 'weekly_plan'
-		ORDER BY created_at DESC
-		LIMIT 1
-	`, projectID).Scan(&weeklyPlan.ID, &weeklyPlan.Content, &weeklyPlan.CreatedBy, &weeklyPlan.CreatedAt)
-	if err == nil {
-		dashboard.LatestUpdates.WeeklyPlan = &weeklyPlan
-	}
+	if isEmployee {
+		var totalHours float64
+		db.QueryRow(`
+			SELECT COALESCE(SUM(hours_worked), 0)
+			FROM work_logs
+			WHERE project_id = $1 AND employee_id = $2 AND check_in_time >= $3
+		`, projectID, userCtx.UserID, weekStart).Scan(&totalHours)
 
-	var totalHours float64
-	var employeeCount int
-	db.QueryRow(`
-		SELECT COALESCE(SUM(hours_worked), 0), COUNT(DISTINCT employee_id)
-		FROM work_logs
-		WHERE project_id = $1 AND check_in_time >= NOW() - INTERVAL '7 days'
-	`, projectID).Scan(&totalHours, &employeeCount)
-	dashboard.WorkLogsSummary = WorkLogsSummary{
-		TotalHoursThisWeek: totalHours,
-		EmployeeCount:      employeeCount,
-	}
-
-	var totalSpent float64
-	db.QueryRow(`
-		SELECT COALESCE(SUM(amount), 0) FROM expenses WHERE project_id = $1
-	`, projectID).Scan(&totalSpent)
-
-	byCategory := make(map[string]float64)
-	catRows, err := db.Query(`
-		SELECT category, COALESCE(SUM(amount), 0)
-		FROM expenses
-		WHERE project_id = $1
-		GROUP BY category
-	`, projectID)
-	if err == nil {
-		defer catRows.Close()
-		for catRows.Next() {
-			var category string
-			var amount float64
-			catRows.Scan(&category, &amount)
-			byCategory[category] = amount
+		dashboard.WorkLogsSummary = WorkLogsSummary{
+			TotalHoursThisWeek: totalHours,
+			ActiveEmployees:    1,
 		}
-	}
 
-	byPayer := make(map[string]float64)
-	payerRows, err := db.Query(`
-		SELECT paid_by, COALESCE(SUM(amount), 0)
-		FROM expenses
-		WHERE project_id = $1
-		GROUP BY paid_by
-	`, projectID)
-	if err == nil {
-		defer payerRows.Close()
-		for payerRows.Next() {
-			var payer string
-			var amount float64
-			payerRows.Scan(&payer, &amount)
-			byPayer[payer] = amount
+		checkInRows, err := db.Query(`
+			SELECT wl.id, u.name, wl.check_in_time, wl.check_in_photo_url
+			FROM work_logs wl
+			JOIN users u ON wl.employee_id = u.id
+			WHERE wl.project_id = $1 AND wl.employee_id = $2
+			ORDER BY wl.check_in_time DESC
+			LIMIT 5
+		`, projectID, userCtx.UserID)
+		if err == nil {
+			defer checkInRows.Close()
+			for checkInRows.Next() {
+				var checkIn CheckInInfo
+				checkInRows.Scan(&checkIn.ID, &checkIn.EmployeeName, &checkIn.CheckInTime, &checkIn.CheckInPhotoURL)
+				dashboard.RecentCheckIns = append(dashboard.RecentCheckIns, checkIn)
+			}
 		}
-	}
+	} else {
+		var totalHours float64
+		var employeeCount int
+		db.QueryRow(`
+			SELECT COALESCE(SUM(hours_worked), 0), COUNT(DISTINCT employee_id)
+			FROM work_logs
+			WHERE project_id = $1 AND check_in_time >= $2
+		`, projectID, weekStart).Scan(&totalHours, &employeeCount)
 
-	dashboard.ExpenseSummary = ExpenseSummary{
-		TotalSpent: totalSpent,
-		ByCategory: byCategory,
-		ByPayer:    byPayer,
-	}
+		dashboard.WorkLogsSummary = WorkLogsSummary{
+			TotalHoursThisWeek: totalHours,
+			ActiveEmployees:    employeeCount,
+		}
 
-	expRows, err := db.Query(`
-		SELECT id, amount, vendor, date, category, description, paid_by
-		FROM expenses
-		WHERE project_id = $1
-		ORDER BY date DESC
-		LIMIT 5
-	`, projectID)
-	if err == nil {
-		defer expRows.Close()
-		for expRows.Next() {
-			var expense RecentExpense
-			expRows.Scan(&expense.ID, &expense.Amount, &expense.Vendor, &expense.Date, &expense.Category, &expense.Description, &expense.PaidBy)
-			dashboard.RecentExpenses = append(dashboard.RecentExpenses, expense)
+		checkInRows, err := db.Query(`
+			SELECT wl.id, u.name, wl.check_in_time, wl.check_in_photo_url
+			FROM work_logs wl
+			JOIN users u ON wl.employee_id = u.id
+			WHERE wl.project_id = $1
+			ORDER BY wl.check_in_time DESC
+			LIMIT 5
+		`, projectID)
+		if err == nil {
+			defer checkInRows.Close()
+			for checkInRows.Next() {
+				var checkIn CheckInInfo
+				checkInRows.Scan(&checkIn.ID, &checkIn.EmployeeName, &checkIn.CheckInTime, &checkIn.CheckInPhotoURL)
+				dashboard.RecentCheckIns = append(dashboard.RecentCheckIns, checkIn)
+			}
+		}
+
+		var totalSpent float64
+		db.QueryRow(`
+			SELECT COALESCE(SUM(amount), 0) FROM expenses WHERE project_id = $1
+		`, projectID).Scan(&totalSpent)
+
+		var totalByOwner, totalByContractor float64
+		db.QueryRow(`
+			SELECT COALESCE(SUM(amount), 0) FROM expenses WHERE project_id = $1 AND paid_by = 'owner'
+		`, projectID).Scan(&totalByOwner)
+
+		db.QueryRow(`
+			SELECT COALESCE(SUM(amount), 0) FROM expenses WHERE project_id = $1 AND paid_by = 'contractor'
+		`, projectID).Scan(&totalByContractor)
+
+		byCategory := make(map[string]float64)
+		catRows, err := db.Query(`
+			SELECT category, COALESCE(SUM(amount), 0)
+			FROM expenses
+			WHERE project_id = $1
+			GROUP BY category
+		`, projectID)
+		if err == nil {
+			defer catRows.Close()
+			for catRows.Next() {
+				var category string
+				var amount float64
+				catRows.Scan(&category, &amount)
+				byCategory[category] = amount
+			}
+		}
+
+		dashboard.ExpenseSummary = ExpenseSummary{
+			TotalSpent:        totalSpent,
+			TotalByOwner:      totalByOwner,
+			TotalByContractor: totalByContractor,
+			ByCategory:        byCategory,
+		}
+
+		expRows, err := db.Query(`
+			SELECT e.id, e.amount, e.vendor, e.date, e.category, e.description, 
+			       e.paid_by, e.receipt_photo_url, u.name, e.created_at
+			FROM expenses e
+			JOIN users u ON e.added_by = u.id
+			WHERE e.project_id = $1
+			ORDER BY e.created_at DESC
+			LIMIT 5
+		`, projectID)
+		if err == nil {
+			defer expRows.Close()
+			for expRows.Next() {
+				var expense RecentExpense
+				expRows.Scan(&expense.ID, &expense.Amount, &expense.Vendor, &expense.Date,
+					&expense.Category, &expense.Description, &expense.PaidBy,
+					&expense.ReceiptPhotoURL, &expense.AddedByName, &expense.CreatedAt)
+				dashboard.RecentExpenses = append(dashboard.RecentExpenses, expense)
+			}
 		}
 	}
 

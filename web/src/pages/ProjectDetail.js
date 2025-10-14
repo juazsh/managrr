@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import projectService from '../services/projectService';
 import AssignContractorModal from '../components/AssignContractorModal';
 import EditProjectForm from '../components/EditProjectForm';
 import PhotoUploadSection from '../components/PhotoUploadSection';
 import { projectDetailStyles as styles } from './ProjectDetailStyles';
+import { theme } from '../theme';
 
 const ProjectDetail = () => {
   const { id } = useParams();
@@ -32,6 +33,8 @@ const ProjectDetail = () => {
     } catch (err) {
       if (err.response?.status === 403) {
         setError('You do not have permission to view this project.');
+      } else if (err.response?.status === 404) {
+        setError('Project not found.');
       } else {
         setError('Failed to load project details');
       }
@@ -102,9 +105,14 @@ const ProjectDetail = () => {
         <button onClick={() => navigate('/dashboard')} style={styles.backButton}>
           ← Back to Projects
         </button>
-        <button onClick={() => setIsEditing(true)} style={styles.editButton}>
-          Edit Project
-        </button>
+        <div style={headerActionStyles.container}>
+          <Link to={`/projects/${id}/dashboard`} style={headerActionStyles.dashboardLink}>
+            📊 View Dashboard
+          </Link>
+          <button onClick={() => setIsEditing(true)} style={styles.editButton}>
+            Edit Project
+          </button>
+        </div>
       </div>
 
       {isEditing ? (
@@ -132,9 +140,13 @@ const ProjectDetail = () => {
           <div style={styles.contractorSection}>
             <h2 style={styles.sectionTitle}>Contractor</h2>
             {project.contractor_id ? (
-              <div style={styles.contractorInfo}>
-                <p><strong>Name:</strong> {project.contractor_name}</p>
-                <p><strong>Email:</strong> {project.contractor_email}</p>
+              <div>
+                <p style={styles.contractorInfo}>
+                  <strong>Name:</strong> {project.contractor_name}
+                </p>
+                <p style={styles.contractorInfo}>
+                  <strong>Email:</strong> {project.contractor_email}
+                </p>
               </div>
             ) : (
               <div style={styles.noContractor}>
@@ -156,12 +168,30 @@ const ProjectDetail = () => {
 
       {showAssignModal && (
         <AssignContractorModal
-          onAssign={handleAssignContractor}
           onClose={() => setShowAssignModal(false)}
+          onAssign={handleAssignContractor}
         />
       )}
     </div>
   );
+};
+
+const headerActionStyles = {
+  container: {
+    display: 'flex',
+    gap: '1rem',
+    alignItems: 'center',
+  },
+  dashboardLink: {
+    padding: '0.75rem 1.5rem',
+    backgroundColor: theme.colors.primary,
+    color: theme.colors.white,
+    textDecoration: 'none',
+    borderRadius: theme.borderRadius.md,
+    fontSize: '1rem',
+    fontWeight: '600',
+    transition: 'background-color 0.2s',
+  },
 };
 
 export default ProjectDetail;
