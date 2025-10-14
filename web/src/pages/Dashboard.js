@@ -246,6 +246,42 @@ const styles = {
     fontSize: '0.875rem',
     color: theme.colors.textLight,
   },
+  cardActions: {
+    display: 'flex',
+    gap: '12px',
+    marginTop: '1rem',
+    paddingTop: '1rem',
+    borderTop: `1px solid ${theme.colors.backgroundLight}`,
+  },
+  dashboardButton: {
+    flex: 1,
+    padding: '10px 16px',
+    backgroundColor: theme.colors.primary,
+    color: theme.colors.white,
+    border: 'none',
+    borderRadius: '6px',
+    textDecoration: 'none',
+    fontSize: '14px',
+    fontWeight: '600',
+    textAlign: 'center',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+  },
+  detailsButton: {
+    flex: 1,
+    padding: '10px 16px',
+    backgroundColor: theme.colors.white,
+    color: theme.colors.text,
+    border: `1px solid ${theme.colors.backgroundDark}`,
+    borderRadius: '6px',
+    textDecoration: 'none',
+    fontSize: '14px',
+    fontWeight: '600',
+    textAlign: 'center',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+  },
+  
 };
 
 export default Dashboard;

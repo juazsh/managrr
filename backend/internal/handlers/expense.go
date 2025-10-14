@@ -2,11 +2,12 @@ package handlers
 
 import (
 	"database/sql"
+	"fmt"
+	"log"
 	"net/http"
 	"path/filepath"
-	"strings"
-
 	"strconv"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/juazsh/managrr/internal/database"
@@ -16,37 +17,51 @@ import (
 )
 
 func AddExpense(w http.ResponseWriter, r *http.Request) {
+	log.Println("=== AddExpense Handler Started ===")
+
 	userCtx, ok := middleware.GetUserFromContext(r.Context())
 	if !ok {
+		log.Println("ERROR: User not found in context")
 		respondWithError(w, http.StatusUnauthorized, "User not found in context")
 		return
 	}
+	log.Printf("User ID: %s, User Type: %s", userCtx.UserID, userCtx.UserType)
 
 	if err := r.ParseMultipartForm(maxFileSize); err != nil {
+		log.Printf("ERROR: Failed to parse multipart form: %v", err)
 		respondWithError(w, http.StatusBadRequest, "File too large. Maximum size is 5MB")
 		return
 	}
+	log.Println("Multipart form parsed successfully")
 
 	projectID := r.FormValue("project_id")
+	log.Printf("Project ID: %s", projectID)
 	if projectID == "" {
+		log.Println("ERROR: project_id is missing")
 		respondWithError(w, http.StatusBadRequest, "project_id is required")
 		return
 	}
 
 	amount := r.FormValue("amount")
+	log.Printf("Amount: %s", amount)
 	if amount == "" {
+		log.Println("ERROR: amount is missing")
 		respondWithError(w, http.StatusBadRequest, "amount is required")
 		return
 	}
 
 	date := r.FormValue("date")
+	log.Printf("Date: %s", date)
 	if date == "" {
+		log.Println("ERROR: date is missing")
 		respondWithError(w, http.StatusBadRequest, "date is required")
 		return
 	}
 
 	category := r.FormValue("category")
+	log.Printf("Category: %s", category)
 	if category == "" {
+		log.Println("ERROR: category is missing")
 		respondWithError(w, http.StatusBadRequest, "category is required")
 		return
 	}
@@ -55,80 +70,100 @@ func AddExpense(w http.ResponseWriter, r *http.Request) {
 		category != string(models.ExpenseCategoryLabor) &&
 		category != string(models.ExpenseCategoryEquipment) &&
 		category != string(models.ExpenseCategoryOther) {
+		log.Printf("ERROR: Invalid category: %s", category)
 		respondWithError(w, http.StatusBadRequest, "Invalid category. Must be one of: materials, labor, equipment, other")
 		return
 	}
 
 	paidBy := r.FormValue("paid_by")
+	log.Printf("Paid By: %s", paidBy)
 	if paidBy == "" {
+		log.Println("ERROR: paid_by is missing")
 		respondWithError(w, http.StatusBadRequest, "paid_by is required")
 		return
 	}
 
 	if paidBy != string(models.ExpensePaidByContractor) &&
 		paidBy != string(models.ExpensePaidByOwner) {
-		respondWithError(w, http.StatusBadRequest, "Invalid paid_by. Must be either: contractor or owner")
-		return
-	}
-
-	var amountFloat float64
-	if _, err := strconv.ParseFloat(amount, 64); err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid amount format")
-		return
-	}
-	amountFloat, _ = strconv.ParseFloat(amount, 64)
-
-	if amountFloat <= 0 {
-		respondWithError(w, http.StatusBadRequest, "Amount must be positive")
+		log.Printf("ERROR: Invalid paid_by: %s", paidBy)
+		respondWithError(w, http.StatusBadRequest, "Invalid paid_by. Must be 'owner' or 'contractor'")
 		return
 	}
 
 	db := database.GetDB()
-
 	var ownerID, contractorID sql.NullString
 	err := db.QueryRow("SELECT owner_id, contractor_id FROM projects WHERE id = $1", projectID).Scan(&ownerID, &contractorID)
-
-	if err == sql.ErrNoRows {
-		respondWithError(w, http.StatusNotFound, "Project not found")
-		return
-	}
-
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Failed to fetch project")
+		log.Printf("ERROR: Failed to fetch project: %v", err)
+		respondWithError(w, http.StatusInternalServerError, "Failed to verify project access")
 		return
 	}
+	log.Printf("Project found - Owner ID: %v, Contractor ID: %v", ownerID, contractorID)
 
 	isOwner := ownerID.Valid && ownerID.String == userCtx.UserID
 	isContractor := contractorID.Valid && contractorID.String == userCtx.UserID
+	log.Printf("Access check - isOwner: %v, isContractor: %v", isOwner, isContractor)
 
 	if !isOwner && !isContractor {
-		respondWithError(w, http.StatusForbidden, "Only project owner or assigned contractor can add expenses")
+		log.Println("ERROR: User doesn't have access to this project")
+		respondWithError(w, http.StatusForbidden, "Access denied")
 		return
 	}
+
+	amountFloat, err := parseFloat(amount)
+	if err != nil || amountFloat <= 0 {
+		log.Printf("ERROR: Invalid amount: %s, error: %v", amount, err)
+		respondWithError(w, http.StatusBadRequest, "Invalid amount")
+		return
+	}
+	log.Printf("Amount parsed: %f", amountFloat)
 
 	var receiptPhotoURL *string
 	file, header, err := r.FormFile("receipt_photo")
 	if err == nil {
 		defer file.Close()
+		log.Printf("Receipt photo found - Filename: %s, Size: %d bytes", header.Filename, header.Size)
 
 		ext := strings.ToLower(filepath.Ext(header.Filename))
+		log.Printf("File extension: %s", ext)
+
+		allowedExtensions := map[string]bool{
+			".jpg":  true,
+			".jpeg": true,
+			".png":  true,
+			".gif":  true,
+			".webp": true,
+		}
+
 		if !allowedExtensions[ext] {
+			log.Printf("ERROR: Invalid file extension: %s", ext)
 			respondWithError(w, http.StatusBadRequest, "Invalid file type. Allowed: jpg, jpeg, png, gif, webp")
 			return
 		}
 
+		log.Println("Creating Supabase storage client...")
 		supabaseStorage := storage.NewSupabaseStorage()
+		log.Printf("Supabase URL: %s", supabaseStorage.URL)
+		log.Printf("Bucket Name: %s", supabaseStorage.BucketName)
+
+		log.Println("Starting file upload...")
 		uploadedURL, err := supabaseStorage.UploadFile(file, header, projectID)
 		if err != nil {
-			respondWithError(w, http.StatusInternalServerError, "Failed to upload receipt photo")
+			log.Printf("ERROR: File upload failed: %v", err)
+			respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Failed to upload receipt photo: %v", err))
 			return
 		}
+		log.Printf("File uploaded successfully - URL: %s", uploadedURL)
 		receiptPhotoURL = &uploadedURL
+	} else {
+		log.Printf("No receipt photo provided (error: %v)", err)
 	}
 
 	vendor := r.FormValue("vendor")
 	description := r.FormValue("description")
+	log.Printf("Vendor: %s, Description: %s", vendor, description)
 
+	log.Println("Inserting expense into database...")
 	query := `
 		INSERT INTO expenses (project_id, amount, vendor, date, category, description, paid_by, receipt_photo_url, added_by)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
@@ -162,11 +197,27 @@ func AddExpense(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err != nil {
+		log.Printf("ERROR: Failed to create expense in database: %v", err)
 		respondWithError(w, http.StatusInternalServerError, "Failed to create expense")
 		return
 	}
 
+	log.Printf("Expense created successfully - ID: %s", expense.ID)
+	log.Println("=== AddExpense Handler Completed ===")
 	respondWithJSON(w, http.StatusCreated, expense)
+}
+
+func nilIfEmpty(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
+}
+
+func parseFloat(s string) (float64, error) {
+	var f float64
+	_, err := fmt.Sscanf(s, "%f", &f)
+	return f, err
 }
 
 func GetProjectExpenses(w http.ResponseWriter, r *http.Request) {
@@ -553,11 +604,4 @@ func DeleteExpense(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondWithJSON(w, http.StatusOK, map[string]string{"message": "Expense deleted successfully"})
-}
-
-func nilIfEmpty(s string) *string {
-	if s == "" {
-		return nil
-	}
-	return &s
 }
