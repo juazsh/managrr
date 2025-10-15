@@ -87,16 +87,16 @@ const projectService = {
     const formData = new FormData();
     formData.append('update_type', updateData.update_type);
     formData.append('content', updateData.content);
-
+  
     if (updateData.photos && updateData.photos.length > 0) {
       updateData.photos.forEach((photo, index) => {
-        formData.append('photos', photo.file);
+        formData.append('photos[]', photo.file);  // Changed from 'photos' to 'photos[]'
         if (photo.caption) {
           formData.append(`captions[${index}]`, photo.caption);
         }
       });
     }
-
+  
     const response = await api.post(`/projects/${id}/updates`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',

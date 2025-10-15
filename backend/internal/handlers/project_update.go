@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"database/sql"
+	"log"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -27,7 +28,11 @@ var allowedPhotoExtensions = map[string]bool{
 
 func CreateProjectUpdate(w http.ResponseWriter, r *http.Request) {
 	db := database.GetDB()
-	userCtx := r.Context().Value(middleware.UserContextKey).(*middleware.UserContext)
+	userCtx, ok := middleware.GetUserFromContext(r.Context())
+	if !ok {
+		respondWithError(w, http.StatusUnauthorized, "User not found in context")
+		return
+	}
 
 	vars := mux.Vars(r)
 	projectID := vars["id"]
@@ -113,6 +118,7 @@ func CreateProjectUpdate(w http.ResponseWriter, r *http.Request) {
 
 		photoURL, err := supabaseStorage.UploadUpdatePhoto(file, fileHeader, projectID)
 		if err != nil {
+			log.Printf("ERROR CreateProjectUpdate: Failed to upload photo: %v", err)
 			respondWithError(w, http.StatusInternalServerError, "Failed to upload photo")
 			return
 		}
@@ -129,6 +135,7 @@ func CreateProjectUpdate(w http.ResponseWriter, r *http.Request) {
 		`, photoID, updateID, photoURL, caption, i)
 
 		if err != nil {
+			log.Printf("ERROR CreateProjectUpdate: Failed to save photo metadata: %v", err)
 			respondWithError(w, http.StatusInternalServerError, "Failed to save photo metadata")
 			return
 		}
