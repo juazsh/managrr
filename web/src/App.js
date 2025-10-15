@@ -134,11 +134,14 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
+         <Route
   path="/contractor/work-logs"
   element={
     <ProtectedRoute allowedRoles={['contractor']}>
-      <ContractorWorkLogs />
+      <div>
+        <Navbar />
+        <ContractorWorkLogs />
+      </div>
     </ProtectedRoute>
   }
 />
@@ -146,7 +149,10 @@ function App() {
   path="/contractor/work-logs/:id"
   element={
     <ProtectedRoute allowedRoles={['contractor']}>
-      <WorkLogDetail />
+      <div>
+        <Navbar />
+        <WorkLogDetail />
+      </div>
     </ProtectedRoute>
   }
 />

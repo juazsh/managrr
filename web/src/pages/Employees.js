@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import employeeService from '../services/employeeService';
 import { theme } from '../theme';
 
 const Employees = () => {
+  const navigate = useNavigate(); 
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -41,6 +42,9 @@ const Employees = () => {
 
   return (
     <div style={styles.container}>
+      <button onClick={() => navigate('/contractor/dashboard')} style={styles.backButton}>
+      ← Back to Dashboard
+    </button>
       <div style={styles.header}>
         <h1 style={styles.title}>Employees</h1>
         <button 
@@ -211,9 +215,20 @@ const AddEmployeeModal = ({ onClose, onSuccess }) => {
 
 const styles = {
   container: {
-    maxWidth: '1000px',
+    maxWidth: '1200px',
     margin: '0 auto',
     padding: '40px 20px',
+  },
+  backButton: {
+    padding: '8px 16px',
+    backgroundColor: 'transparent',
+    color: theme.colors.text,
+    border: `1px solid ${theme.colors.border}`,
+    borderRadius: theme.borderRadius.md,
+    cursor: 'pointer',
+    fontSize: theme.typography.body.fontSize,
+    fontWeight: '500',
+    marginBottom: theme.spacing.element,
   },
   header: {
     display: 'flex',
