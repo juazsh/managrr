@@ -1,11 +1,5 @@
-import React from 'react';
-
 const AppLayout = ({ children }) => {
-  return (
-    <div>
-      {children}
-    </div>
-  );
-};
+  return <div style={{ minHeight: "100vh", backgroundColor: "var(--background)" }}>{children}</div>
+}
 
-export default AppLayout;
+export default AppLayout

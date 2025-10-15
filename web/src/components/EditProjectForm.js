@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
-import { theme } from '../theme';
+"use client"
+
+import { useState } from "react"
+import { theme } from "../theme"
 
 const EditProjectForm = ({ project, onSave, onCancel }) => {
   const [formData, setFormData] = useState({
@@ -7,153 +9,172 @@ const EditProjectForm = ({ project, onSave, onCancel }) => {
     description: project.description,
     estimated_cost: project.estimated_cost,
     address: project.address,
-    status: project.status
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+    status: project.status,
+  })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
+    const { name, value } = e.target
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
-    }));
-  };
+      [name]: value,
+    }))
+  }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
+    e.preventDefault()
+    setError("")
 
     if (!formData.title.trim()) {
-      setError('Title is required');
-      return;
+      setError("Title is required")
+      return
     }
 
     if (!formData.description.trim()) {
-      setError('Description is required');
-      return;
+      setError("Description is required")
+      return
     }
 
     if (formData.estimated_cost <= 0) {
-      setError('Estimated cost must be greater than 0');
-      return;
+      setError("Estimated cost must be greater than 0")
+      return
     }
 
     if (!formData.address.trim()) {
-      setError('Address is required');
-      return;
+      setError("Address is required")
+      return
     }
 
     try {
-      setLoading(true);
-      await onSave(formData);
+      setLoading(true)
+      await onSave(formData)
     } catch (err) {
-      setError(err.message);
+      setError(err.message)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const styles = {
     container: {
       background: theme.colors.white,
-      padding: '2rem',
+      padding: "2rem",
       borderRadius: theme.borderRadius.lg,
       boxShadow: theme.shadows.md,
-      marginBottom: '2rem',
+      marginBottom: "2rem",
+      border: `1px solid ${theme.colors.borderLight}`,
     },
     title: {
-      margin: '0 0 1.5rem 0',
+      margin: "0 0 1.5rem 0",
       color: theme.colors.text,
       fontSize: theme.typography.h3.fontSize,
       fontWeight: theme.typography.h3.fontWeight,
+      letterSpacing: "-0.02em",
     },
     formGroup: {
-      marginBottom: '1.5rem',
+      marginBottom: "1.5rem",
     },
     label: {
-      display: 'block',
-      marginBottom: '0.5rem',
+      display: "block",
+      marginBottom: "0.5rem",
       color: theme.colors.text,
-      fontWeight: '600',
-      fontSize: theme.typography.body.fontSize,
+      fontWeight: "600",
+      fontSize: "0.875rem",
     },
     input: {
-      width: '100%',
-      padding: '0.75rem',
+      width: "100%",
+      padding: "0.875rem 1rem",
       border: `1px solid ${theme.colors.border}`,
       borderRadius: theme.borderRadius.md,
       fontSize: theme.typography.body.fontSize,
       fontFamily: theme.typography.fontFamily,
       backgroundColor: theme.colors.inputBg,
+      transition: "all 0.2s ease",
+      boxSizing: "border-box",
     },
     textarea: {
-      width: '100%',
-      padding: '0.75rem',
+      width: "100%",
+      padding: "0.875rem 1rem",
       border: `1px solid ${theme.colors.border}`,
       borderRadius: theme.borderRadius.md,
       fontSize: theme.typography.body.fontSize,
       fontFamily: theme.typography.fontFamily,
       backgroundColor: theme.colors.inputBg,
-      resize: 'vertical',
-      minHeight: '100px',
+      resize: "vertical",
+      minHeight: "120px",
+      lineHeight: "1.6",
+      transition: "all 0.2s ease",
+      boxSizing: "border-box",
     },
     select: {
-      width: '100%',
-      padding: '0.75rem',
+      width: "100%",
+      padding: "0.875rem 1rem",
       border: `1px solid ${theme.colors.border}`,
       borderRadius: theme.borderRadius.md,
       fontSize: theme.typography.body.fontSize,
       fontFamily: theme.typography.fontFamily,
       backgroundColor: theme.colors.inputBg,
+      cursor: "pointer",
+      transition: "all 0.2s ease",
+      boxSizing: "border-box",
     },
     error: {
       backgroundColor: theme.colors.errorLight,
       color: theme.colors.error,
-      padding: '0.75rem',
+      padding: "0.875rem",
       borderRadius: theme.borderRadius.md,
-      marginBottom: '1rem',
+      marginBottom: "1rem",
       fontSize: theme.typography.small.fontSize,
       border: `1px solid ${theme.colors.error}`,
     },
     actions: {
-      display: 'flex',
-      gap: '1rem',
-      justifyContent: 'flex-end',
-      marginTop: '1.5rem',
+      display: "flex",
+      gap: "1rem",
+      justifyContent: "flex-end",
+      marginTop: "1.5rem",
+      flexWrap: "wrap",
     },
     cancelButton: {
-      padding: '0.75rem 1.5rem',
+      padding: "0.875rem 1.5rem",
       border: `1px solid ${theme.colors.border}`,
       borderRadius: theme.borderRadius.md,
-      cursor: 'pointer',
+      cursor: "pointer",
       fontSize: theme.typography.body.fontSize,
       backgroundColor: theme.colors.white,
       color: theme.colors.text,
-      fontWeight: '600',
+      fontWeight: "600",
+      transition: "all 0.2s ease",
+      flex: "1 1 auto",
+      minWidth: "120px",
     },
     saveButton: {
-      padding: '0.75rem 1.5rem',
+      padding: "0.875rem 1.5rem",
       backgroundColor: theme.colors.black,
       color: theme.colors.white,
-      border: 'none',
+      border: "none",
       borderRadius: theme.borderRadius.md,
-      cursor: 'pointer',
+      cursor: "pointer",
       fontSize: theme.typography.body.fontSize,
-      fontWeight: '600',
+      fontWeight: "600",
+      transition: "all 0.2s ease",
+      flex: "1 1 auto",
+      minWidth: "120px",
     },
     buttonDisabled: {
       opacity: 0.6,
-      cursor: 'not-allowed',
+      cursor: "not-allowed",
     },
-  };
+  }
 
   return (
     <div style={styles.container}>
       <h2 style={styles.title}>Edit Project</h2>
       <form onSubmit={handleSubmit}>
         <div style={styles.formGroup}>
-          <label htmlFor="title" style={styles.label}>Title *</label>
+          <label htmlFor="title" style={styles.label}>
+            Title *
+          </label>
           <input
             type="text"
             id="title"
@@ -166,7 +187,9 @@ const EditProjectForm = ({ project, onSave, onCancel }) => {
         </div>
 
         <div style={styles.formGroup}>
-          <label htmlFor="description" style={styles.label}>Description *</label>
+          <label htmlFor="description" style={styles.label}>
+            Description *
+          </label>
           <textarea
             id="description"
             name="description"
@@ -178,7 +201,9 @@ const EditProjectForm = ({ project, onSave, onCancel }) => {
         </div>
 
         <div style={styles.formGroup}>
-          <label htmlFor="estimated_cost" style={styles.label}>Estimated Cost *</label>
+          <label htmlFor="estimated_cost" style={styles.label}>
+            Estimated Cost *
+          </label>
           <input
             type="number"
             id="estimated_cost"
@@ -193,7 +218,9 @@ const EditProjectForm = ({ project, onSave, onCancel }) => {
         </div>
 
         <div style={styles.formGroup}>
-          <label htmlFor="address" style={styles.label}>Address *</label>
+          <label htmlFor="address" style={styles.label}>
+            Address *
+          </label>
           <input
             type="text"
             id="address"
@@ -206,7 +233,9 @@ const EditProjectForm = ({ project, onSave, onCancel }) => {
         </div>
 
         <div style={styles.formGroup}>
-          <label htmlFor="status" style={styles.label}>Status *</label>
+          <label htmlFor="status" style={styles.label}>
+            Status *
+          </label>
           <select
             id="status"
             name="status"
@@ -224,12 +253,7 @@ const EditProjectForm = ({ project, onSave, onCancel }) => {
         {error && <div style={styles.error}>{error}</div>}
 
         <div style={styles.actions}>
-          <button
-            type="button"
-            onClick={onCancel}
-            style={styles.cancelButton}
-            disabled={loading}
-          >
+          <button type="button" onClick={onCancel} style={styles.cancelButton} disabled={loading}>
             Cancel
           </button>
           <button
@@ -240,12 +264,12 @@ const EditProjectForm = ({ project, onSave, onCancel }) => {
             }}
             disabled={loading}
           >
-            {loading ? 'Saving...' : 'Save Changes'}
+            {loading ? "Saving..." : "Save Changes"}
           </button>
         </div>
       </form>
     </div>
-  );
-};
+  )
+}
 
-export default EditProjectForm;
+export default EditProjectForm

@@ -1,114 +1,70 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { theme } from '../theme';
+"use client"
+
+import { useState } from "react"
+import { Link, useNavigate } from "react-router-dom"
+import { useAuth } from "../context/AuthContext"
 
 const Navbar = () => {
-  const { user, isAuthenticated, logout } = useAuth();
-  const navigate = useNavigate();
+  const { user, isAuthenticated, logout } = useAuth()
+  const navigate = useNavigate()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
+    logout()
+    navigate("/login")
+    setMobileMenuOpen(false)
+  }
 
   const getDashboardLink = () => {
-    if (!isAuthenticated || !user) return '/';
-    if (user.user_type === 'contractor') return '/contractor/dashboard';
-    return '/dashboard';
-  };
+    if (!isAuthenticated || !user) return "/"
+    if (user.user_type === "contractor") return "/contractor/dashboard"
+    return "/dashboard"
+  }
 
   return (
-    <nav style={styles.navbar}>
-      <div style={styles.container}>
-        <Link to={getDashboardLink()} style={styles.brand}>
-          <span style={styles.logo}>managrr</span>
+    <nav className="navbar">
+      <div className="navbar-container">
+        <Link to={getDashboardLink()} className="navbar-brand">
+          <span className="navbar-logo">managrr</span>
         </Link>
-        <div style={styles.menu}>
+
+        <button
+          className="navbar-mobile-toggle"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label="Toggle menu"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            {mobileMenuOpen ? <path d="M6 18L18 6M6 6l12 12" /> : <path d="M3 12h18M3 6h18M3 18h18" />}
+          </svg>
+        </button>
+
+        <div className={`navbar-menu ${mobileMenuOpen ? "open" : ""}`}>
           {isAuthenticated ? (
             <>
-              <span style={styles.username}>{user?.name}</span>
-              {user?.user_type === 'contractor' && (
-                <Link to="/contractor/employees" style={styles.link}>
+              <span className="navbar-username">{user?.name}</span>
+              {user?.user_type === "contractor" && (
+                <Link to="/contractor/employees" className="navbar-link" onClick={() => setMobileMenuOpen(false)}>
                   Employees
                 </Link>
               )}
-              <button onClick={handleLogout} style={styles.button}>Logout</button>
+              <button onClick={handleLogout} className="navbar-button">
+                Logout
+              </button>
             </>
           ) : (
             <>
-              <Link to="/login" style={styles.link}>Login</Link>
-              <Link to="/register" style={styles.buttonLink}>Get started</Link>
+              <Link to="/login" className="navbar-link" onClick={() => setMobileMenuOpen(false)}>
+                Login
+              </Link>
+              <Link to="/register" className="navbar-button-link" onClick={() => setMobileMenuOpen(false)}>
+                Get started
+              </Link>
             </>
           )}
         </div>
       </div>
     </nav>
-  );
-};
+  )
+}
 
-const styles = {
-  navbar: {
-    backgroundColor: theme.colors.white,
-    padding: `${theme.spacing.element} 0`,
-    borderBottom: `1px solid ${theme.colors.borderLight}`,
-    position: 'sticky',
-    top: 0,
-    zIndex: 100,
-  },
-  container: {
-    maxWidth: '1200px',
-    margin: '0 auto',
-    padding: `0 ${theme.spacing.component}`,
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  brand: {
-    textDecoration: 'none',
-  },
-  logo: {
-    fontSize: '1.5rem',
-    fontWeight: '700',
-    color: theme.colors.text,
-    letterSpacing: '-0.02em',
-  },
-  menu: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing.component,
-  },
-  link: {
-    color: theme.colors.text,
-    textDecoration: 'none',
-    fontSize: theme.typography.body.fontSize,
-    fontWeight: '500',
-  },
-  username: {
-    color: theme.colors.textLight,
-    fontSize: theme.typography.body.fontSize,
-    fontWeight: '500',
-  },
-  button: {
-    backgroundColor: theme.colors.black,
-    color: theme.colors.white,
-    border: 'none',
-    padding: '0.625rem 1.25rem',
-    borderRadius: theme.borderRadius.full,
-    cursor: 'pointer',
-    fontSize: theme.typography.small.fontSize,
-    fontWeight: '600',
-  },
-  buttonLink: {
-    backgroundColor: theme.colors.black,
-    color: theme.colors.white,
-    textDecoration: 'none',
-    padding: '0.625rem 1.25rem',
-    borderRadius: theme.borderRadius.full,
-    fontSize: theme.typography.small.fontSize,
-    fontWeight: '600',
-    display: 'inline-block',
-  },
-};
-
-export default Navbar;
+export default Navbar

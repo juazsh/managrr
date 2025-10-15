@@ -1,45 +1,47 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { theme } from '../theme';
+"use client"
+
+import { useState, useEffect } from "react"
+import { useNavigate, Link } from "react-router-dom"
+import { useAuth } from "../context/AuthContext"
+import { theme } from "../theme"
 
 const Register = () => {
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    userType: 'house_owner',
-  });
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
-  const { register, isAuthenticated, user } = useAuth();
-  const navigate = useNavigate();
+    name: "",
+    email: "",
+    password: "",
+    userType: "house_owner",
+  })
+  const [error, setError] = useState("")
+  const [success, setSuccess] = useState(false)
+  const { register, isAuthenticated, user } = useAuth()
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      if (user.user_type === 'contractor') {
-        navigate('/contractor/dashboard');
+      if (user.user_type === "contractor") {
+        navigate("/contractor/dashboard")
       } else {
-        navigate('/dashboard');
+        navigate("/dashboard")
       }
     }
-  }, [isAuthenticated, user, navigate]);
+  }, [isAuthenticated, user, navigate])
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+    setFormData({ ...formData, [e.target.name]: e.target.value })
+  }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
+    e.preventDefault()
+    setError("")
     try {
-      await register(formData.name, formData.email, formData.password, formData.userType);
-      setSuccess(true);
-      setTimeout(() => navigate('/login'), 2000);
+      await register(formData.name, formData.email, formData.password, formData.userType)
+      setSuccess(true)
+      setTimeout(() => navigate("/login"), 2000)
     } catch (err) {
-      setError(err.response?.data?.error || 'Registration failed');
+      setError(err.response?.data?.error || "Registration failed")
     }
-  };
+  }
 
   if (success) {
     return (
@@ -52,7 +54,7 @@ const Register = () => {
           </p>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -93,7 +95,7 @@ const Register = () => {
             <input
               type="password"
               name="password"
-              placeholder="Create a password"
+              placeholder="Create a password (min. 8 characters)"
               value={formData.password}
               onChange={handleChange}
               required
@@ -103,138 +105,139 @@ const Register = () => {
           </div>
           <div style={styles.formGroup}>
             <label style={styles.label}>I am a</label>
-            <select
-              name="userType"
-              value={formData.userType}
-              onChange={handleChange}
-              style={styles.select}
-              required
-            >
+            <select name="userType" value={formData.userType} onChange={handleChange} style={styles.select} required>
               <option value="house_owner">House Owner</option>
               <option value="contractor">Contractor</option>
             </select>
           </div>
-          <button type="submit" style={styles.button}>Create Account</button>
+          <button type="submit" style={styles.button}>
+            Create Account
+          </button>
         </form>
         <p style={styles.linkText}>
-          Already have an account?{' '}
-          <Link to="/login" style={styles.link}>Sign in</Link>
+          Already have an account?{" "}
+          <Link to="/login" style={styles.link}>
+            Sign in
+          </Link>
         </p>
       </div>
     </div>
-  );
-};
+  )
+}
 
 const styles = {
   container: {
-    minHeight: 'calc(100vh - 100px)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
+    minHeight: "calc(100vh - 100px)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: theme.colors.background,
     fontFamily: theme.typography.fontFamily,
-    padding: theme.spacing.component,
+    padding: "1rem",
   },
   card: {
     backgroundColor: theme.colors.white,
-    padding: theme.spacing.section,
+    padding: "2.5rem",
     borderRadius: theme.borderRadius.xl,
     boxShadow: theme.shadows.lg,
-    width: '100%',
-    maxWidth: '440px',
+    width: "100%",
+    maxWidth: "440px",
     border: `1px solid ${theme.colors.borderLight}`,
   },
   header: {
-    marginBottom: theme.spacing.component,
-    textAlign: 'center',
+    marginBottom: "2rem",
+    textAlign: "center",
   },
   title: {
     color: theme.colors.text,
-    fontSize: theme.typography.h3.fontSize,
+    fontSize: "1.875rem",
     fontWeight: theme.typography.h3.fontWeight,
-    marginBottom: '0.5rem',
-    letterSpacing: '-0.02em',
+    marginBottom: "0.5rem",
+    letterSpacing: "-0.02em",
   },
   subtitle: {
     color: theme.colors.textLight,
     fontSize: theme.typography.body.fontSize,
   },
   form: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1.25rem',
+    display: "flex",
+    flexDirection: "column",
+    gap: "1.25rem",
   },
   formGroup: {
-    display: 'flex',
-    flexDirection: 'column',
+    display: "flex",
+    flexDirection: "column",
   },
   label: {
-    marginBottom: '0.5rem',
+    marginBottom: "0.5rem",
     color: theme.colors.text,
-    fontWeight: '600',
-    fontSize: theme.typography.small.fontSize,
+    fontWeight: "600",
+    fontSize: "0.875rem",
   },
   input: {
-    padding: '0.875rem 1rem',
+    padding: "0.875rem 1rem",
     border: `1px solid ${theme.colors.border}`,
     borderRadius: theme.borderRadius.md,
     fontSize: theme.typography.body.fontSize,
     fontFamily: theme.typography.fontFamily,
     backgroundColor: theme.colors.inputBg,
-    transition: 'all 0.2s ease',
+    transition: "all 0.2s ease",
   },
   select: {
-    padding: '0.875rem 1rem',
+    padding: "0.875rem 1rem",
     border: `1px solid ${theme.colors.border}`,
     borderRadius: theme.borderRadius.md,
     fontSize: theme.typography.body.fontSize,
     fontFamily: theme.typography.fontFamily,
     backgroundColor: theme.colors.inputBg,
-    cursor: 'pointer',
+    cursor: "pointer",
+    transition: "all 0.2s ease",
   },
   button: {
     backgroundColor: theme.colors.black,
     color: theme.colors.white,
-    padding: '0.875rem',
-    border: 'none',
+    padding: "0.875rem",
+    border: "none",
     borderRadius: theme.borderRadius.md,
     fontSize: theme.typography.body.fontSize,
-    fontWeight: '600',
-    cursor: 'pointer',
-    marginTop: '0.5rem',
+    fontWeight: "600",
+    cursor: "pointer",
+    marginTop: "0.5rem",
+    transition: "all 0.2s ease",
   },
   error: {
     backgroundColor: theme.colors.errorLight,
     color: theme.colors.error,
-    padding: '0.875rem',
+    padding: "0.875rem",
     borderRadius: theme.borderRadius.md,
-    marginBottom: theme.spacing.element,
+    marginBottom: "1rem",
     fontSize: theme.typography.small.fontSize,
     border: `1px solid ${theme.colors.error}`,
   },
   linkText: {
-    textAlign: 'center',
-    marginTop: theme.spacing.component,
+    textAlign: "center",
+    marginTop: "1.5rem",
     color: theme.colors.textLight,
     fontSize: theme.typography.small.fontSize,
   },
   link: {
     color: theme.colors.text,
-    textDecoration: 'none',
-    fontWeight: '600',
+    textDecoration: "none",
+    fontWeight: "600",
+    transition: "color 0.2s ease",
   },
   successIcon: {
-    fontSize: '4rem',
+    fontSize: "4rem",
     color: theme.colors.success,
-    textAlign: 'center',
-    marginBottom: '1rem',
+    textAlign: "center",
+    marginBottom: "1rem",
   },
   successMessage: {
-    textAlign: 'center',
+    textAlign: "center",
     color: theme.colors.textLight,
     fontSize: theme.typography.body.fontSize,
-    lineHeight: '1.6',
+    lineHeight: "1.6",
   },
-};
+}
 
-export default Register;
+export default Register

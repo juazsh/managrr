@@ -1,229 +1,255 @@
-import React, { useState } from 'react';
-import projectService from '../services/projectService';
-import { theme } from '../theme';
+"use client"
+
+import { useState } from "react"
+import projectService from "../services/projectService"
+import { theme } from "../theme"
 
 const PhotoUploadSection = ({ projectId, photos, onPhotoUploaded }) => {
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [caption, setCaption] = useState('');
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState('');
-  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null)
+  const [caption, setCaption] = useState("")
+  const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState("")
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(null)
 
   const handleFileSelect = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    const file = e.target.files[0]
+    if (!file) return
 
     if (file.size > 5 * 1024 * 1024) {
-      setError('File size must be less than 5MB');
-      return;
+      setError("File size must be less than 5MB")
+      return
     }
 
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    const validTypes = ["image/jpeg", "image/jpg", "image/png"]
     if (!validTypes.includes(file.type)) {
-      setError('Only JPG, JPEG, and PNG files are allowed');
-      return;
+      setError("Only JPG, JPEG, and PNG files are allowed")
+      return
     }
 
-    setError('');
-    setSelectedFile(file);
-  };
+    setError("")
+    setSelectedFile(file)
+  }
 
   const handleUpload = async () => {
     if (!selectedFile) {
-      setError('Please select a photo');
-      return;
+      setError("Please select a photo")
+      return
     }
 
     try {
-      setUploading(true);
-      setError('');
-      const photo = await projectService.uploadProjectPhoto(projectId, selectedFile, caption);
-      onPhotoUploaded(photo);
-      setSelectedFile(null);
-      setCaption('');
-      document.getElementById('photo-input').value = '';
+      setUploading(true)
+      setError("")
+      const photo = await projectService.uploadProjectPhoto(projectId, selectedFile, caption)
+      onPhotoUploaded(photo)
+      setSelectedFile(null)
+      setCaption("")
+      document.getElementById("photo-input").value = ""
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to upload photo');
+      setError(err.response?.data?.error || "Failed to upload photo")
     } finally {
-      setUploading(false);
+      setUploading(false)
     }
-  };
+  }
 
   const styles = {
     container: {
       background: theme.colors.white,
-      padding: '2rem',
+      padding: "2rem",
       borderRadius: theme.borderRadius.lg,
       boxShadow: theme.shadows.md,
+      border: `1px solid ${theme.colors.borderLight}`,
     },
     title: {
-      margin: '0 0 1.5rem 0',
+      margin: "0 0 1.5rem 0",
       color: theme.colors.text,
       fontSize: theme.typography.h3.fontSize,
       fontWeight: theme.typography.h3.fontWeight,
+      letterSpacing: "-0.02em",
     },
     uploadForm: {
-      display: 'flex',
-      gap: '1rem',
-      marginBottom: '1.5rem',
-      flexWrap: 'wrap',
+      display: "flex",
+      gap: "1rem",
+      marginBottom: "1.5rem",
+      flexWrap: "wrap",
+      alignItems: "flex-end",
     },
     fileInputWrapper: {
-      position: 'relative',
+      position: "relative",
+      flex: "1 1 200px",
+      minWidth: "200px",
     },
     fileInput: {
-      position: 'absolute',
+      position: "absolute",
       opacity: 0,
       width: 0,
       height: 0,
     },
     fileLabel: {
-      display: 'inline-block',
-      padding: '0.75rem 1.5rem',
+      display: "block",
+      padding: "0.875rem 1rem",
       backgroundColor: theme.colors.backgroundLight,
       color: theme.colors.text,
       borderRadius: theme.borderRadius.md,
-      cursor: 'pointer',
+      cursor: "pointer",
       fontSize: theme.typography.body.fontSize,
-      fontWeight: '600',
+      fontWeight: "600",
+      textAlign: "center",
+      transition: "all 0.2s ease",
+      border: `1px solid ${theme.colors.border}`,
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
     },
     captionInput: {
-      flex: 1,
-      minWidth: '200px',
-      padding: '0.75rem',
+      flex: "1 1 200px",
+      minWidth: "200px",
+      padding: "0.875rem 1rem",
       border: `1px solid ${theme.colors.border}`,
       borderRadius: theme.borderRadius.md,
       fontSize: theme.typography.body.fontSize,
       fontFamily: theme.typography.fontFamily,
+      backgroundColor: theme.colors.inputBg,
+      transition: "all 0.2s ease",
     },
     uploadButton: {
-      padding: '0.75rem 1.5rem',
+      padding: "0.875rem 1.5rem",
       backgroundColor: theme.colors.black,
       color: theme.colors.white,
-      border: 'none',
+      border: "none",
       borderRadius: theme.borderRadius.md,
-      cursor: 'pointer',
+      cursor: "pointer",
       fontSize: theme.typography.body.fontSize,
-      fontWeight: '600',
+      fontWeight: "600",
+      transition: "all 0.2s ease",
+      flex: "0 0 auto",
+      whiteSpace: "nowrap",
     },
     uploadButtonDisabled: {
       backgroundColor: theme.colors.backgroundLight,
       color: theme.colors.textMuted,
-      cursor: 'not-allowed',
+      cursor: "not-allowed",
     },
     error: {
       backgroundColor: theme.colors.errorLight,
       color: theme.colors.error,
-      padding: '0.75rem',
+      padding: "0.875rem",
       borderRadius: theme.borderRadius.md,
-      marginBottom: '1rem',
+      marginBottom: "1rem",
       fontSize: theme.typography.small.fontSize,
       border: `1px solid ${theme.colors.error}`,
     },
     grid: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-      gap: '1.5rem',
-      marginTop: '1.5rem',
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",
+      gap: "1.5rem",
+      marginTop: "1.5rem",
     },
     noPhotos: {
-      textAlign: 'center',
+      textAlign: "center",
       color: theme.colors.textMuted,
-      padding: '3rem',
+      padding: "3rem 1rem",
       fontSize: theme.typography.body.fontSize,
     },
     photoItem: {
       border: `1px solid ${theme.colors.border}`,
       borderRadius: theme.borderRadius.md,
-      overflow: 'hidden',
-      cursor: 'pointer',
-      transition: 'all 0.2s',
+      overflow: "hidden",
+      cursor: "pointer",
+      transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+      backgroundColor: theme.colors.white,
     },
     photoImage: {
-      width: '100%',
-      height: '200px',
-      objectFit: 'cover',
-      display: 'block',
+      width: "100%",
+      height: "200px",
+      objectFit: "cover",
+      display: "block",
     },
     photoCaption: {
-      padding: '0.75rem',
+      padding: "0.75rem",
       fontSize: theme.typography.small.fontSize,
       color: theme.colors.text,
+      lineHeight: "1.5",
     },
     photoDate: {
-      padding: '0 0.75rem 0.75rem',
+      padding: "0 0.75rem 0.75rem",
       fontSize: theme.typography.tiny.fontSize,
       color: theme.colors.textMuted,
     },
     modal: {
-      position: 'fixed',
+      position: "fixed",
       top: 0,
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.9)',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
+      backgroundColor: "rgba(0, 0, 0, 0.9)",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
       zIndex: 1000,
-      padding: '2rem',
+      padding: "2rem",
     },
     modalContent: {
-      position: 'relative',
-      maxWidth: '90%',
-      maxHeight: '90%',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
+      position: "relative",
+      maxWidth: "90%",
+      maxHeight: "90%",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
     },
     modalImage: {
-      maxWidth: '100%',
-      maxHeight: '70vh',
-      objectFit: 'contain',
+      maxWidth: "100%",
+      maxHeight: "70vh",
+      objectFit: "contain",
       borderRadius: theme.borderRadius.md,
     },
     closeButton: {
-      position: 'absolute',
-      top: '-40px',
+      position: "absolute",
+      top: "-40px",
       right: 0,
-      background: 'transparent',
-      border: 'none',
+      background: "transparent",
+      border: "none",
       color: theme.colors.white,
-      fontSize: '40px',
-      cursor: 'pointer',
+      fontSize: "40px",
+      cursor: "pointer",
       lineHeight: 1,
+      padding: 0,
+      transition: "opacity 0.2s ease",
     },
     modalCaption: {
       color: theme.colors.white,
-      marginTop: '1rem',
+      marginTop: "1rem",
       fontSize: theme.typography.body.fontSize,
-      textAlign: 'center',
+      textAlign: "center",
+      maxWidth: "600px",
     },
     photoNav: {
-      display: 'flex',
-      gap: '1.5rem',
-      alignItems: 'center',
-      marginTop: '1.5rem',
+      display: "flex",
+      gap: "1.5rem",
+      alignItems: "center",
+      marginTop: "1.5rem",
+      flexWrap: "wrap",
+      justifyContent: "center",
     },
     navButton: {
-      padding: '0.5rem 1rem',
+      padding: "0.625rem 1.25rem",
       backgroundColor: theme.colors.white,
       color: theme.colors.text,
-      border: 'none',
+      border: "none",
       borderRadius: theme.borderRadius.md,
-      cursor: 'pointer',
+      cursor: "pointer",
       fontSize: theme.typography.small.fontSize,
-      fontWeight: '600',
+      fontWeight: "600",
+      transition: "all 0.2s ease",
     },
     navButtonDisabled: {
       opacity: 0.5,
-      cursor: 'not-allowed',
+      cursor: "not-allowed",
     },
     navText: {
       color: theme.colors.white,
       fontSize: theme.typography.small.fontSize,
     },
-  };
+  }
 
   return (
     <div style={styles.container}>
@@ -240,7 +266,7 @@ const PhotoUploadSection = ({ projectId, photos, onPhotoUploaded }) => {
             style={styles.fileInput}
           />
           <label htmlFor="photo-input" style={styles.fileLabel}>
-            {selectedFile ? selectedFile.name : 'Choose Photo'}
+            {selectedFile ? selectedFile.name : "Choose Photo"}
           </label>
         </div>
 
@@ -261,7 +287,7 @@ const PhotoUploadSection = ({ projectId, photos, onPhotoUploaded }) => {
             ...(!selectedFile || uploading ? styles.uploadButtonDisabled : {}),
           }}
         >
-          {uploading ? 'Uploading...' : 'Upload Photo'}
+          {uploading ? "Uploading..." : "Upload"}
         </button>
       </div>
 
@@ -272,36 +298,28 @@ const PhotoUploadSection = ({ projectId, photos, onPhotoUploaded }) => {
           <p style={styles.noPhotos}>No photos uploaded yet</p>
         ) : (
           photos.map((photo, index) => (
-            <div
-              key={photo.id}
-              style={styles.photoItem}
-              onClick={() => setSelectedPhotoIndex(index)}
-            >
-              <img src={photo.photo_url} alt={photo.caption || 'Project photo'} style={styles.photoImage} />
+            <div key={photo.id} style={styles.photoItem} onClick={() => setSelectedPhotoIndex(index)}>
+              <img
+                src={photo.photo_url || "/placeholder.svg"}
+                alt={photo.caption || "Project photo"}
+                style={styles.photoImage}
+              />
               {photo.caption && <p style={styles.photoCaption}>{photo.caption}</p>}
-              <p style={styles.photoDate}>
-                {new Date(photo.created_at).toLocaleDateString()}
-              </p>
+              <p style={styles.photoDate}>{new Date(photo.created_at).toLocaleDateString()}</p>
             </div>
           ))
         )}
       </div>
 
       {selectedPhotoIndex !== null && (
-        <div
-          style={styles.modal}
-          onClick={() => setSelectedPhotoIndex(null)}
-        >
+        <div style={styles.modal} onClick={() => setSelectedPhotoIndex(null)}>
           <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <button
-              style={styles.closeButton}
-              onClick={() => setSelectedPhotoIndex(null)}
-            >
+            <button style={styles.closeButton} onClick={() => setSelectedPhotoIndex(null)}>
               ×
             </button>
             <img
-              src={photos[selectedPhotoIndex].photo_url}
-              alt={photos[selectedPhotoIndex].caption || 'Project photo'}
+              src={photos[selectedPhotoIndex].photo_url || "/placeholder.svg"}
+              alt={photos[selectedPhotoIndex].caption || "Project photo"}
               style={styles.modalImage}
             />
             {photos[selectedPhotoIndex].caption && (
@@ -310,8 +328,8 @@ const PhotoUploadSection = ({ projectId, photos, onPhotoUploaded }) => {
             <div style={styles.photoNav}>
               <button
                 onClick={(e) => {
-                  e.stopPropagation();
-                  setSelectedPhotoIndex(Math.max(0, selectedPhotoIndex - 1));
+                  e.stopPropagation()
+                  setSelectedPhotoIndex(Math.max(0, selectedPhotoIndex - 1))
                 }}
                 disabled={selectedPhotoIndex === 0}
                 style={{
@@ -321,11 +339,13 @@ const PhotoUploadSection = ({ projectId, photos, onPhotoUploaded }) => {
               >
                 ← Previous
               </button>
-              <span style={styles.navText}>{selectedPhotoIndex + 1} / {photos.length}</span>
+              <span style={styles.navText}>
+                {selectedPhotoIndex + 1} / {photos.length}
+              </span>
               <button
                 onClick={(e) => {
-                  e.stopPropagation();
-                  setSelectedPhotoIndex(Math.min(photos.length - 1, selectedPhotoIndex + 1));
+                  e.stopPropagation()
+                  setSelectedPhotoIndex(Math.min(photos.length - 1, selectedPhotoIndex + 1))
                 }}
                 disabled={selectedPhotoIndex === photos.length - 1}
                 style={{
@@ -340,7 +360,7 @@ const PhotoUploadSection = ({ projectId, photos, onPhotoUploaded }) => {
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default PhotoUploadSection;
+export default PhotoUploadSection
