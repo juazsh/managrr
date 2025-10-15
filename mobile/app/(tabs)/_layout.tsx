@@ -1,37 +1,31 @@
 import { Tabs } from 'expo-router';
-import React from 'react';
 import { Ionicons } from '@expo/vector-icons';
 
 const COLORS = {
   primary: '#2563EB',
   textLight: '#6B7280',
-  white: '#FFFFFF',
-  border: '#E5E7EB',
-  text: '#111827',
 };
 
-export default function TabLayout() {
+export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: COLORS.primary,
         tabBarInactiveTintColor: COLORS.textLight,
         tabBarStyle: {
-          backgroundColor: COLORS.white,
-          borderTopColor: COLORS.border,
           borderTopWidth: 1,
+          borderTopColor: '#E5E7EB',
           height: 60,
           paddingBottom: 8,
           paddingTop: 8,
         },
+        headerShown: true,
         headerStyle: {
-          backgroundColor: COLORS.white,
-          borderBottomColor: COLORS.border,
-          borderBottomWidth: 1,
+          backgroundColor: COLORS.primary,
         },
+        headerTintColor: '#FFFFFF',
         headerTitleStyle: {
-          fontWeight: '600',
-          color: COLORS.text,
+          fontWeight: '700',
         },
       }}
     >
@@ -41,6 +35,15 @@ export default function TabLayout() {
           title: 'Dashboard',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="projects"
+        options={{
+          title: 'Projects',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="folder" size={size} color={color} />
           ),
         }}
       />
