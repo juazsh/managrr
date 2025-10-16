@@ -8,6 +8,7 @@ import PhotosSection from "../components/dashboard/PhotosSection"
 import UpdatesSection from "../components/dashboard/UpdatesSection"
 import ExpensesSection from "../components/dashboard/ExpensesSection"
 import WorkLogsSection from "../components/dashboard/WorkLogsSection"
+import PaymentSummarySection from "../components/dashboard/PaymentSummarySection"
 import { theme } from "../theme"
 
 const ProjectDashboard = () => {
@@ -180,6 +181,12 @@ const ProjectDashboard = () => {
             >
               ⏰ Work Logs
             </button>
+            <button
+              style={activeTab === "payments" ? { ...styles.tab, ...styles.activeTab } : styles.tab}
+              onClick={() => setActiveTab("payments")}
+            >
+              💳 Payments
+            </button>
           </div>
 
           <div style={styles.content}>
@@ -213,6 +220,14 @@ const ProjectDashboard = () => {
                 projectId={id}
                 summary={dashboard.work_logs_summary}
                 recentCheckIns={dashboard.recent_check_ins}
+              />
+            )}
+            {activeTab === "payments" && (
+              <PaymentSummarySection
+                projectId={id}
+                isOwner={isOwner}
+                isContractor={isContractor}
+                onPaymentAdded={loadDashboard}
               />
             )}
           </div>
