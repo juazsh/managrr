@@ -147,34 +147,48 @@ func ListProjects(w http.ResponseWriter, r *http.Request) {
 	}
 
 	db := database.GetDB()
-	var projects []models.Project
+
 	var rows *sql.Rows
 	var err error
+
+	type ProjectWithContractor struct {
+		models.Project
+		ContractorName *string `json:"contractor_name,omitempty"`
+	}
+
+	var projects []ProjectWithContractor
 
 	switch userCtx.UserType {
 	case string(models.UserTypeHouseOwner):
 		query := `
-			SELECT id, owner_id, contractor_id, title, description, estimated_cost, address, status, created_at, updated_at
-			FROM projects
-			WHERE owner_id = $1
-			ORDER BY created_at DESC
+			SELECT p.id, p.owner_id, p.contractor_id, p.title, p.description, 
+			       p.estimated_cost, p.address, p.status, p.created_at, p.updated_at,
+			       c.name as contractor_name
+			FROM projects p
+			LEFT JOIN users c ON p.contractor_id = c.id
+			WHERE p.owner_id = $1
+			ORDER BY p.created_at DESC
 		`
 		rows, err = db.Query(query, userCtx.UserID)
 
 	case string(models.UserTypeContractor):
 		query := `
-			SELECT id, owner_id, contractor_id, title, description, estimated_cost, address, status, created_at, updated_at
-			FROM projects
-			WHERE contractor_id = $1
-			ORDER BY created_at DESC
+			SELECT p.id, p.owner_id, p.contractor_id, p.title, p.description, 
+			       p.estimated_cost, p.address, p.status, p.created_at, p.updated_at,
+			       NULL as contractor_name
+			FROM projects p
+			WHERE p.contractor_id = $1
+			ORDER BY p.created_at DESC
 		`
 		rows, err = db.Query(query, userCtx.UserID)
 
 	case string(models.UserTypeEmployee):
 		query := `
-			SELECT p.id, p.owner_id, p.contractor_id, p.title, p.description, p.estimated_cost, p.address, p.status, p.created_at, p.updated_at
+			SELECT p.id, p.owner_id, p.contractor_id, p.title, p.description, 
+			       p.estimated_cost, p.address, p.status, p.created_at, p.updated_at,
+			       NULL as contractor_name
 			FROM projects p
-			INNER JOIN employee_projects ep ON p.id = ep.project_id
+			JOIN employee_projects ep ON p.id = ep.project_id
 			WHERE ep.employee_id = $1
 			ORDER BY p.created_at DESC
 		`
@@ -192,7 +206,7 @@ func ListProjects(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var project models.Project
+		var project ProjectWithContractor
 		err := rows.Scan(
 			&project.ID,
 			&project.OwnerID,
@@ -204,6 +218,7 @@ func ListProjects(w http.ResponseWriter, r *http.Request) {
 			&project.Status,
 			&project.CreatedAt,
 			&project.UpdatedAt,
+			&project.ContractorName,
 		)
 		if err != nil {
 			respondWithError(w, http.StatusInternalServerError, "Failed to scan project")
@@ -218,7 +233,7 @@ func ListProjects(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if projects == nil {
-		projects = []models.Project{}
+		projects = []ProjectWithContractor{}
 	}
 
 	respondWithJSON(w, http.StatusOK, projects)

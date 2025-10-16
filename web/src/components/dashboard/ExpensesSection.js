@@ -466,21 +466,21 @@ const styles = {
   expenseList: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '20px',
+    gap: theme.spacing.lg,
   },
   expenseCard: {
     backgroundColor: theme.colors.white,
     border: `1px solid ${theme.colors.backgroundLight}`,
     borderRadius: '8px',
-    padding: '24px',
+    padding: theme.spacing.xl,
     transition: 'box-shadow 0.2s',
   },
   expenseHeader: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: '16px',
-    gap: '16px',
+    marginBottom: theme.spacing.lg,
+    gap: theme.spacing.lg,
   },
   expenseInfo: {
     flex: 1,

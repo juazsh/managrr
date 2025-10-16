@@ -117,7 +117,11 @@ const Dashboard = () => {
                   {project.status}
                 </span>
               </div>
-
+              {project.contractor_name && (
+                <p className="project-contractor">
+                  <span style={{ opacity: 0.7 }}>👷 Contractor:</span> {project.contractor_name}
+                </p>
+              )}
               {project.description && (
                 <p className="project-description">
                   {project.description.length > 120

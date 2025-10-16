@@ -52,6 +52,12 @@ func main() {
 	protected.HandleFunc("/projects/{id}/updates", handlers.CreateProjectUpdate).Methods("POST", "OPTIONS")
 	protected.HandleFunc("/projects/{id}/updates", handlers.GetProjectUpdates).Methods("GET", "OPTIONS")
 	protected.HandleFunc("/projects/{id}/dashboard", handlers.GetProjectDashboard).Methods("GET", "OPTIONS")
+	protected.HandleFunc("/projects/{project_id}/payments", handlers.AddPaymentSummary).Methods("POST", "OPTIONS")
+	protected.HandleFunc("/projects/{project_id}/payments", handlers.ListPaymentSummaries).Methods("GET", "OPTIONS")
+	protected.HandleFunc("/payments/{id}", handlers.UpdatePaymentSummary).Methods("PUT", "OPTIONS")
+	protected.HandleFunc("/payments/{id}", handlers.DeletePaymentSummary).Methods("DELETE", "OPTIONS")
+	protected.HandleFunc("/payments/{id}/confirm", handlers.ConfirmPayment).Methods("POST", "OPTIONS")
+	protected.HandleFunc("/payments/{id}/dispute", handlers.DisputePayment).Methods("POST", "OPTIONS")
 
 	protected.HandleFunc("/employees", handlers.AddEmployee).Methods("POST", "OPTIONS")
 	protected.HandleFunc("/employees", handlers.ListEmployees).Methods("GET", "OPTIONS")

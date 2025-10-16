@@ -564,7 +564,11 @@ func UpdateExpense(w http.ResponseWriter, r *http.Request) {
 
 func DeleteExpense(w http.ResponseWriter, r *http.Request) {
 	db := database.GetDB()
-	userCtx := r.Context().Value(middleware.UserContextKey).(*middleware.UserContext)
+	userCtx, ok := middleware.GetUserFromContext(r.Context())
+	if !ok {
+		respondWithError(w, http.StatusUnauthorized, "User not found in context")
+		return
+	}
 
 	vars := mux.Vars(r)
 	expenseID := vars["id"]
