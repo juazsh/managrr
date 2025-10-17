@@ -1,14 +1,18 @@
-import React, { useEffect, useState } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import React, { useEffect, useState, useRef } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { theme } from '../theme';
 
 const VerifyEmail = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [status, setStatus] = useState('verifying');
   const [message, setMessage] = useState('');
+  const hasVerified = useRef(false);
 
   useEffect(() => {
+    if (hasVerified.current) return;
+
     const token = searchParams.get('token');
     if (!token) {
       setStatus('error');
@@ -16,19 +20,26 @@ const VerifyEmail = () => {
       return;
     }
 
+    hasVerified.current = true;
+
     const verifyEmail = async () => {
       try {
         await api.get(`/auth/verify-email?token=${token}`);
         setStatus('success');
-        setMessage('Email verified successfully! You can now log in.');
+        setMessage('Email verified successfully! Redirecting to login...');
+        
+        setTimeout(() => {
+          navigate('/login');
+        }, 2000);
       } catch (error) {
+        if (!hasVerified.current) return;
         setStatus('error');
         setMessage(error.response?.data?.error || 'Verification failed');
       }
     };
 
     verifyEmail();
-  }, [searchParams]);
+  }, []);
 
   return (
     <div style={styles.container}>
@@ -43,14 +54,13 @@ const VerifyEmail = () => {
           <>
             <h2 style={styles.titleSuccess}>Email Verified!</h2>
             <p style={styles.message}>{message}</p>
-            <Link to="/login" style={styles.button}>Go to Login</Link>
+            <div style={styles.spinner}></div>
           </>
         )}
         {status === 'error' && (
           <>
             <h2 style={styles.titleError}>Verification Failed</h2>
             <p style={styles.messageError}>{message}</p>
-            <Link to="/register" style={styles.button}>Back to Register</Link>
           </>
         )}
       </div>
@@ -105,15 +115,14 @@ const styles = {
     fontSize: theme.typography.body.fontSize,
     marginBottom: theme.spacing.component,
   },
-  button: {
-    display: 'inline-block',
-    backgroundColor: theme.colors.primary,
-    color: theme.colors.white,
-    padding: `0.75rem ${theme.spacing.component}`,
-    borderRadius: theme.borderRadius.md,
-    textDecoration: 'none',
-    fontSize: theme.typography.body.fontSize,
-    fontWeight: '500',
+  spinner: {
+    width: '40px',
+    height: '40px',
+    margin: '0 auto',
+    border: '4px solid ' + theme.colors.border,
+    borderTop: '4px solid ' + theme.colors.primary,
+    borderRadius: '50%',
+    animation: 'spin 1s linear infinite',
   },
 };
 
