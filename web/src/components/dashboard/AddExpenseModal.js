@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { theme } from '../../theme';
 
 const AddExpenseModal = ({ projectId, onClose, onSubmit }) => {
   const [formData, setFormData] = useState({
+    project_id: projectId,
     amount: '',
     vendor: '',
     date: new Date().toISOString().split('T')[0],
@@ -15,9 +16,16 @@ const AddExpenseModal = ({ projectId, onClose, onSubmit }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, []);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleFileChange = (e) => {
@@ -29,10 +37,9 @@ const AddExpenseModal = ({ projectId, onClose, onSubmit }) => {
       }
       setReceiptFile(file);
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setReceiptPreview(reader.result);
-      };
+      reader.onloadend = () => setReceiptPreview(reader.result);
       reader.readAsDataURL(file);
+      setError('');
     }
   };
 
@@ -50,19 +57,9 @@ const AddExpenseModal = ({ projectId, onClose, onSubmit }) => {
       return;
     }
 
-    if (!formData.date) {
-      setError('Please select a date');
-      return;
-    }
-
     setLoading(true);
     try {
-      const expenseData = {
-        ...formData,
-        project_id: projectId,
-        amount: parseFloat(formData.amount),
-      };
-      await onSubmit(expenseData, receiptFile);
+      await onSubmit(formData, receiptFile);
     } catch (err) {
       setError(err.message);
       setLoading(false);
@@ -74,12 +71,14 @@ const AddExpenseModal = ({ projectId, onClose, onSubmit }) => {
       <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div style={styles.header}>
           <h2 style={styles.title}>Add Expense</h2>
-          <button style={styles.closeButton} onClick={onClose} type="button">×</button>
+          <button style={styles.closeButton} onClick={onClose} type="button">
+            ×
+          </button>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          {error && <div style={styles.error}>{error}</div>}
+        {error && <div style={styles.error}>{error}</div>}
 
+        <form onSubmit={handleSubmit} style={styles.form}>
           <div style={styles.formBody}>
             <div style={styles.formRow}>
               <div style={styles.formGroup}>
@@ -91,16 +90,18 @@ const AddExpenseModal = ({ projectId, onClose, onSubmit }) => {
                   name="amount"
                   value={formData.amount}
                   onChange={handleChange}
-                  step="0.01"
-                  min="0"
                   style={styles.input}
                   placeholder="0.00"
+                  step="0.01"
+                  min="0.01"
                   required
                 />
               </div>
 
               <div style={styles.formGroup}>
-                <label style={styles.label}>Date <span style={styles.required}>*</span></label>
+                <label style={styles.label}>
+                  Date <span style={styles.required}>*</span>
+                </label>
                 <input
                   type="date"
                   name="date"
@@ -113,14 +114,17 @@ const AddExpenseModal = ({ projectId, onClose, onSubmit }) => {
             </div>
 
             <div style={styles.formGroup}>
-              <label style={styles.label}>Vendor/Store</label>
+              <label style={styles.label}>
+                Vendor/Store <span style={styles.required}>*</span>
+              </label>
               <input
                 type="text"
                 name="vendor"
                 value={formData.vendor}
                 onChange={handleChange}
                 style={styles.input}
-                placeholder="Home Depot, Lowe's, etc."
+                placeholder="e.g., Home Depot, Contractor Name..."
+                required
               />
             </div>
 
@@ -201,7 +205,7 @@ const AddExpenseModal = ({ projectId, onClose, onSubmit }) => {
           </div>
 
           <div style={styles.footer}>
-            <button type="button" style={styles.cancelButton} onClick={onClose}>
+            <button type="button" style={styles.cancelButton} onClick={onClose} disabled={loading}>
               Cancel
             </button>
             <button type="submit" style={styles.submitButton} disabled={loading}>
@@ -226,6 +230,7 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1000,
+    padding: '1rem',
   },
   modal: {
     backgroundColor: theme.colors.white,
@@ -233,7 +238,6 @@ const styles = {
     width: '90%',
     maxWidth: '540px',
     maxHeight: '90vh',
-    overflow: 'hidden',
     display: 'flex',
     flexDirection: 'column',
     boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)',
@@ -244,6 +248,7 @@ const styles = {
     alignItems: 'center',
     padding: '20px 24px',
     borderBottom: `1px solid ${theme.colors.backgroundLight}`,
+    flexShrink: 0,
   },
   title: {
     fontSize: '18px',
@@ -272,26 +277,36 @@ const styles = {
     margin: '0 24px 16px',
     borderRadius: '6px',
     fontSize: '14px',
+    flexShrink: 0,
+  },
+  form: {
+    display: 'flex',
+    flexDirection: 'column',
+    minHeight: 0,
+    flex: 1,
   },
   formBody: {
     padding: '24px',
     overflowY: 'auto',
+    WebkitOverflowScrolling: 'touch',
     flex: 1,
+    minHeight: 0,
   },
   formRow: {
     display: 'grid',
     gridTemplateColumns: '1fr 1fr',
     gap: '16px',
+    marginBottom: '16px',
   },
   formGroup: {
-    marginBottom: '20px',
+    marginBottom: '16px',
   },
   label: {
     display: 'block',
+    marginBottom: '8px',
     fontSize: '14px',
     fontWeight: '600',
     color: theme.colors.text,
-    marginBottom: '8px',
   },
   required: {
     color: theme.colors.error,
@@ -299,35 +314,30 @@ const styles = {
   input: {
     width: '100%',
     padding: '10px 12px',
-    border: `1px solid ${theme.colors.backgroundDark}`,
+    border: `1px solid ${theme.colors.border}`,
     borderRadius: '6px',
-    fontSize: '14px',
-    fontFamily: 'inherit',
-    color: theme.colors.text,
+    fontSize: '15px',
+    fontFamily: theme.typography.fontFamily,
     boxSizing: 'border-box',
   },
   select: {
     width: '100%',
     padding: '10px 12px',
-    border: `1px solid ${theme.colors.backgroundDark}`,
+    border: `1px solid ${theme.colors.border}`,
     borderRadius: '6px',
-    fontSize: '14px',
-    fontFamily: 'inherit',
+    fontSize: '15px',
+    fontFamily: theme.typography.fontFamily,
     backgroundColor: theme.colors.white,
-    color: theme.colors.text,
-    cursor: 'pointer',
     boxSizing: 'border-box',
   },
   textarea: {
     width: '100%',
     padding: '10px 12px',
-    border: `1px solid ${theme.colors.backgroundDark}`,
+    border: `1px solid ${theme.colors.border}`,
     borderRadius: '6px',
-    fontSize: '14px',
-    fontFamily: 'inherit',
-    color: theme.colors.text,
+    fontSize: '15px',
+    fontFamily: theme.typography.fontFamily,
     resize: 'vertical',
-    minHeight: '80px',
     boxSizing: 'border-box',
   },
   fileInput: {
@@ -337,9 +347,9 @@ const styles = {
     display: 'inline-flex',
     alignItems: 'center',
     gap: '8px',
-    padding: '10px 20px',
-    backgroundColor: theme.colors.white,
-    border: `2px dashed ${theme.colors.backgroundDark}`,
+    padding: '10px 16px',
+    backgroundColor: theme.colors.backgroundLight,
+    border: `2px dashed ${theme.colors.border}`,
     borderRadius: '6px',
     cursor: 'pointer',
     fontSize: '14px',
@@ -347,7 +357,7 @@ const styles = {
     color: theme.colors.text,
   },
   fileLabelIcon: {
-    fontSize: '18px',
+    fontSize: '20px',
   },
   fileLabelText: {
     fontSize: '14px',
@@ -358,24 +368,20 @@ const styles = {
     color: theme.colors.textLight,
   },
   previewContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '12px',
+    marginTop: '8px',
   },
   preview: {
     width: '100%',
     maxHeight: '200px',
-    objectFit: 'contain',
+    objectFit: 'cover',
     borderRadius: '6px',
-    border: `1px solid ${theme.colors.backgroundLight}`,
-    backgroundColor: theme.colors.backgroundLight,
+    marginBottom: '8px',
   },
   removeButton: {
-    alignSelf: 'flex-start',
-    padding: '6px 16px',
-    backgroundColor: 'transparent',
+    padding: '8px 16px',
+    backgroundColor: theme.colors.errorLight,
     color: theme.colors.error,
-    border: `1px solid ${theme.colors.error}`,
+    border: 'none',
     borderRadius: '6px',
     fontSize: '14px',
     fontWeight: '500',
@@ -383,28 +389,30 @@ const styles = {
   },
   footer: {
     display: 'flex',
-    justifyContent: 'flex-end',
     gap: '12px',
     padding: '16px 24px',
     borderTop: `1px solid ${theme.colors.backgroundLight}`,
+    flexShrink: 0,
   },
   cancelButton: {
-    padding: '10px 24px',
+    flex: 1,
+    padding: '12px',
     backgroundColor: theme.colors.white,
     color: theme.colors.text,
-    border: `1px solid ${theme.colors.backgroundDark}`,
-    borderRadius: '6px',
-    fontSize: '14px',
+    border: `2px solid ${theme.colors.border}`,
+    borderRadius: '8px',
+    fontSize: '15px',
     fontWeight: '600',
     cursor: 'pointer',
   },
   submitButton: {
-    padding: '10px 24px',
+    flex: 1,
+    padding: '12px',
     backgroundColor: theme.colors.primary,
     color: theme.colors.white,
     border: 'none',
-    borderRadius: '6px',
-    fontSize: '14px',
+    borderRadius: '8px',
+    fontSize: '15px',
     fontWeight: '600',
     cursor: 'pointer',
   },

@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"log"
 	"net/smtp"
 	"os"
 )
@@ -21,16 +22,25 @@ func SendVerificationEmail(toEmail, token string) error {
 	smtpPort := os.Getenv("SMTP_PORT")
 	smtpUser := os.Getenv("SMTP_USER")
 	smtpPass := os.Getenv("SMTP_PASS")
-	fromEmail := os.Getenv("FROM_EMAIL")
+	fromEmail := os.Getenv("SMTP_USER")
 	appURL := os.Getenv("APP_URL")
 
+	log.Printf("📧 EMAIL CONFIG CHECK:")
+	log.Printf("  SMTP_HOST: %s", smtpHost)
+	log.Printf("  SMTP_PORT: %s", smtpPort)
+	log.Printf("  SMTP_USER: %s", smtpUser)
+	log.Printf("  SMTP_PASS: %s", maskPassword(smtpPass))
+	log.Printf("  APP_URL: %s", appURL)
+	log.Printf("  Recipient: %s", toEmail)
+
 	if smtpHost == "" || smtpPort == "" || smtpUser == "" || smtpPass == "" {
+		log.Printf("❌ ERROR: SMTP configuration missing!")
 		return fmt.Errorf("SMTP configuration missing")
 	}
 
 	verificationLink := fmt.Sprintf("%s/verify-email?token=%s", appURL, token)
 
-	subject := "Verify Your Email"
+	subject := "Verify Your Email - Managrr"
 	body := fmt.Sprintf(`
 Hello,
 
@@ -43,19 +53,24 @@ This link will expire in 24 hours.
 If you didn't create an account, please ignore this email.
 
 Thanks,
-Construction Management Platform Team
+Managrr Team
 `, verificationLink)
 
-	message := []byte(fmt.Sprintf("Subject: %s\r\n\r\n%s", subject, body))
+	message := []byte(fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n%s", fromEmail, toEmail, subject, body))
 
 	auth := smtp.PlainAuth("", smtpUser, smtpPass, smtpHost)
 	addr := fmt.Sprintf("%s:%s", smtpHost, smtpPort)
 
+	log.Printf("📤 Attempting to send verification email to %s via %s", toEmail, addr)
+
 	err := smtp.SendMail(addr, auth, fromEmail, []string{toEmail}, message)
 	if err != nil {
+		log.Printf("❌ SMTP ERROR: Failed to send verification email to %s: %v", toEmail, err)
+		log.Printf("   Host: %s, Port: %s, User: %s", smtpHost, smtpPort, smtpUser)
 		return fmt.Errorf("failed to send email: %w", err)
 	}
 
+	log.Printf("✅ Verification email sent successfully to %s", toEmail)
 	return nil
 }
 
@@ -72,16 +87,25 @@ func SendPasswordResetEmail(toEmail, token string) error {
 	smtpPort := os.Getenv("SMTP_PORT")
 	smtpUser := os.Getenv("SMTP_USER")
 	smtpPass := os.Getenv("SMTP_PASS")
-	fromEmail := os.Getenv("FROM_EMAIL")
+	fromEmail := os.Getenv("SMTP_USER")
 	appURL := os.Getenv("APP_URL")
 
+	log.Printf("📧 PASSWORD RESET EMAIL CONFIG CHECK:")
+	log.Printf("  SMTP_HOST: %s", smtpHost)
+	log.Printf("  SMTP_PORT: %s", smtpPort)
+	log.Printf("  SMTP_USER: %s", smtpUser)
+	log.Printf("  SMTP_PASS: %s", maskPassword(smtpPass))
+	log.Printf("  APP_URL: %s", appURL)
+	log.Printf("  Recipient: %s", toEmail)
+
 	if smtpHost == "" || smtpPort == "" || smtpUser == "" || smtpPass == "" {
+		log.Printf("❌ ERROR: SMTP configuration missing!")
 		return fmt.Errorf("SMTP configuration missing")
 	}
 
 	resetLink := fmt.Sprintf("%s/reset-password?token=%s", appURL, token)
 
-	subject := "Reset Your Password"
+	subject := "Reset Your Password - Managrr"
 	body := fmt.Sprintf(`
 Hello,
 
@@ -94,19 +118,24 @@ This link will expire in 1 hour.
 If you didn't request a password reset, please ignore this email.
 
 Thanks,
-Construction Management Platform Team
+Managrr Team
 `, resetLink)
 
-	message := []byte(fmt.Sprintf("Subject: %s\r\n\r\n%s", subject, body))
+	message := []byte(fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n%s", fromEmail, toEmail, subject, body))
 
 	auth := smtp.PlainAuth("", smtpUser, smtpPass, smtpHost)
 	addr := fmt.Sprintf("%s:%s", smtpHost, smtpPort)
 
+	log.Printf("📤 Attempting to send password reset email to %s via %s", toEmail, addr)
+
 	err := smtp.SendMail(addr, auth, fromEmail, []string{toEmail}, message)
 	if err != nil {
+		log.Printf("❌ SMTP ERROR: Failed to send password reset email to %s: %v", toEmail, err)
+		log.Printf("   Host: %s, Port: %s, User: %s", smtpHost, smtpPort, smtpUser)
 		return fmt.Errorf("failed to send email: %w", err)
 	}
 
+	log.Printf("✅ Password reset email sent successfully to %s", toEmail)
 	return nil
 }
 
@@ -131,18 +160,27 @@ func SendEmployeeWelcomeEmail(toEmail, name, tempPassword string) error {
 	smtpPort := os.Getenv("SMTP_PORT")
 	smtpUser := os.Getenv("SMTP_USER")
 	smtpPass := os.Getenv("SMTP_PASS")
-	fromEmail := os.Getenv("FROM_EMAIL")
+	fromEmail := os.Getenv("SMTP_USER")
 	appURL := os.Getenv("APP_URL")
 
+	log.Printf("📧 EMPLOYEE WELCOME EMAIL CONFIG CHECK:")
+	log.Printf("  SMTP_HOST: %s", smtpHost)
+	log.Printf("  SMTP_PORT: %s", smtpPort)
+	log.Printf("  SMTP_USER: %s", smtpUser)
+	log.Printf("  SMTP_PASS: %s", maskPassword(smtpPass))
+	log.Printf("  APP_URL: %s", appURL)
+	log.Printf("  Recipient: %s", toEmail)
+
 	if smtpHost == "" || smtpPort == "" || smtpUser == "" || smtpPass == "" {
+		log.Printf("❌ ERROR: SMTP configuration missing!")
 		return fmt.Errorf("SMTP configuration missing")
 	}
 
-	subject := "Welcome to the Team"
+	subject := "Welcome to Managrr - Your Account Details"
 	body := fmt.Sprintf(`
 Hello %s,
 
-You have been added as an employee on our Construction Management Platform.
+You have been added as an employee on Managrr.
 
 Your login credentials are:
 Email: %s
@@ -153,18 +191,33 @@ Please log in at: %s
 For security, we recommend changing your password after your first login.
 
 Thanks,
-Construction Management Platform Team
+Managrr Team
 `, name, toEmail, tempPassword, appURL)
 
-	message := []byte(fmt.Sprintf("Subject: %s\r\n\r\n%s", subject, body))
+	message := []byte(fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n%s", fromEmail, toEmail, subject, body))
 
 	auth := smtp.PlainAuth("", smtpUser, smtpPass, smtpHost)
 	addr := fmt.Sprintf("%s:%s", smtpHost, smtpPort)
 
+	log.Printf("📤 Attempting to send employee welcome email to %s via %s", toEmail, addr)
+
 	err := smtp.SendMail(addr, auth, fromEmail, []string{toEmail}, message)
 	if err != nil {
+		log.Printf("❌ SMTP ERROR: Failed to send employee welcome email to %s: %v", toEmail, err)
+		log.Printf("   Host: %s, Port: %s, User: %s", smtpHost, smtpPort, smtpUser)
 		return fmt.Errorf("failed to send email: %w", err)
 	}
 
+	log.Printf("✅ Employee welcome email sent successfully to %s", toEmail)
 	return nil
+}
+
+func maskPassword(pass string) string {
+	if pass == "" {
+		return "(not set)"
+	}
+	if len(pass) <= 4 {
+		return "****"
+	}
+	return pass[:2] + "************" + pass[len(pass)-2:]
 }
