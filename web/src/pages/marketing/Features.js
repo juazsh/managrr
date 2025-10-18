@@ -29,20 +29,22 @@ export const Features = () => {
               <h2 style={styles.featureTitle}>Project Dashboard</h2>
               <p style={styles.featureText}>
                 A centralized hub where house owners and contractors see the same information 
-                in real-time. View project status, recent updates, expenses, and employee activity 
+                in real-time. View project status, recent updates, expenses, payments, and employee activity 
                 all in one place. No more back-and-forth emails or wondering what's happening.
               </p>
               <ul style={styles.featureList}>
-                <li>Real-time project status updates</li>
-                <li>Shared view for owners and contractors</li>
-                <li>Photo timeline of progress</li>
-                <li>Quick access to all project details</li>
+                <li>✓ Real-time project overview</li>
+                <li>✓ Progress photos timeline</li>
+                <li>✓ Daily and weekly updates</li>
+                <li>✓ Expense tracking</li>
+                <li>✓ Payment history</li>
+                <li>✓ Work log summaries</li>
               </ul>
             </div>
             <div style={styles.featureMockup}>
               <img 
                 src={dashTech} 
-                alt="Dashboard Preview" 
+                alt="Project Dashboard" 
                 style={styles.mockupImage}
               />
             </div>
@@ -64,15 +66,15 @@ export const Features = () => {
               <div style={styles.featureIcon}>👷</div>
               <h2 style={styles.featureTitle}>Employee Management</h2>
               <p style={styles.featureText}>
-                Add employees to your team and assign them to specific projects. Set hourly 
-                rates for each employee, and their work hours are automatically tracked and 
-                calculated when they check in and out.
+                Contractors can add employees to their account, assign them to specific projects, 
+                and set hourly rates. Keep track of your entire crew in one system.
               </p>
               <ul style={styles.featureList}>
-                <li>Add unlimited employees</li>
-                <li>Assign to multiple projects</li>
-                <li>Set custom hourly rates</li>
-                <li>Track hours automatically</li>
+                <li>✓ Add unlimited employees</li>
+                <li>✓ Assign to multiple projects</li>
+                <li>✓ Set hourly rates</li>
+                <li>✓ Track employee activity</li>
+                <li>✓ View work history</li>
               </ul>
             </div>
           </div>
@@ -84,24 +86,24 @@ export const Features = () => {
           <div style={styles.feature}>
             <div style={styles.featureContent}>
               <div style={styles.featureIcon}>⏰</div>
-              <h2 style={styles.featureTitle}>Time Tracking</h2>
+              <h2 style={styles.featureTitle}>Time Tracking with Photo Verification</h2>
               <p style={styles.featureText}>
-                Employees check in with a photo when they arrive at the work site, and check 
-                out with another photo when they leave. GPS location is automatically captured 
-                for verification. Hours are calculated automatically—no manual timesheets needed.
+                Employees check in and out with photo verification and optional GPS tracking. 
+                Automatic calculation of hours worked ensures accurate time records and reduces disputes.
               </p>
               <ul style={styles.featureList}>
-                <li>Photo verification on check-in/out</li>
-                <li>GPS location tracking</li>
-                <li>Automatic hour calculation</li>
-                <li>View daily, weekly, or total hours</li>
-                <li>Instant earnings calculation</li>
+                <li>✓ Photo check-in/check-out</li>
+                <li>✓ GPS location stamps</li>
+                <li>✓ Automatic hours calculation</li>
+                <li>✓ Daily work logs</li>
+                <li>✓ Weekly summaries</li>
+                <li>✓ Accountability through transparency</li>
               </ul>
             </div>
             <div style={styles.featureMockup}>
               <img 
                 src={timeTrackingImg} 
-                alt="Mobile Check-in" 
+                alt="Time Tracking" 
                 style={styles.mockupImage}
               />
             </div>
@@ -115,25 +117,25 @@ export const Features = () => {
             <div style={styles.featureMockup}>
               <img 
                 src={expenseImg} 
-                alt="Expense Tracker" 
+                alt="Expense Tracking" 
                 style={styles.mockupImage}
               />
             </div>
             <div style={styles.featureContent}>
               <div style={styles.featureIcon}>💰</div>
-              <h2 style={styles.featureTitle}>Expense Tracking</h2>
+              <h2 style={styles.featureTitle}>Complete Expense Tracking</h2>
               <p style={styles.featureText}>
-                Upload receipt photos for every expense. Track who paid (owner or contractor), 
-                categorize expenses (materials, labor, equipment), and see running totals. 
-                Everyone sees the same numbers—complete transparency.
+                Upload receipt photos and track every expense with detailed categorization. 
+                See running totals, filter by category or payer, and keep a complete financial record 
+                of your project. No more lost receipts or forgotten costs.
               </p>
               <ul style={styles.featureList}>
-                <li>Upload receipt photos</li>
-                <li>Track who paid for each expense</li>
-                <li>Categorize by type</li>
-                <li>Filter and search expenses</li>
-                <li>Running totals vs. estimated cost</li>
-                <li>Export expense reports</li>
+                <li>✓ Receipt photo uploads</li>
+                <li>✓ Categorize by materials, labor, equipment</li>
+                <li>✓ Track who paid (owner/contractor)</li>
+                <li>✓ Running totals by category</li>
+                <li>✓ Date range filtering</li>
+                <li>✓ Expense breakdown reports</li>
               </ul>
             </div>
           </div>
@@ -144,25 +146,27 @@ export const Features = () => {
         <div style={styles.container}>
           <div style={styles.feature}>
             <div style={styles.featureContent}>
-              <div style={styles.featureIcon}>📸</div>
-              <h2 style={styles.featureTitle}>Photo Documentation</h2>
+              <div style={styles.featureIcon}>💳</div>
+              <h2 style={styles.featureTitle}>Payment Summary & Tracking</h2>
               <p style={styles.featureText}>
-                Build a complete visual timeline of your project. Every check-in, update, and 
-                expense includes photos. See exactly what work was done, when it was done, and 
-                by whom. Perfect for quality control and documentation.
+                House owners record every payment made to contractors with full transparency. 
+                Contractors confirm receipt to lock the record, creating an indisputable payment history. 
+                Track payment methods, dates, and amounts all in one place.
               </p>
               <ul style={styles.featureList}>
-                <li>Unlimited photo uploads</li>
-                <li>Automatic timestamps</li>
-                <li>Organized by date and type</li>
-                <li>Before/after comparisons</li>
-                <li>Download all project photos</li>
+                <li>✓ Record payments with proof</li>
+                <li>✓ Multiple payment methods (cash, bank transfer, Zelle, PayPal, etc.)</li>
+                <li>✓ Contractor confirmation system</li>
+                <li>✓ Payment screenshot uploads</li>
+                <li>✓ Running total of confirmed payments</li>
+                <li>✓ Dispute resolution workflow</li>
+                <li>✓ Complete payment history</li>
               </ul>
             </div>
             <div style={styles.featureMockup}>
               <img 
-                src={photosImg} 
-                alt="Photo Gallery" 
+                src={expenseImg} 
+                alt="Payment Tracking" 
                 style={styles.mockupImage}
               />
             </div>
@@ -175,25 +179,25 @@ export const Features = () => {
           <div style={{...styles.feature, ...styles.featureReverse}}>
             <div style={styles.featureMockup}>
               <img 
-                src={updatesImg} 
-                alt="Daily Updates" 
+                src={photosImg} 
+                alt="Progress Photos" 
                 style={styles.mockupImage}
               />
             </div>
             <div style={styles.featureContent}>
-              <div style={styles.featureIcon}>📅</div>
-              <h2 style={styles.featureTitle}>Daily Updates</h2>
+              <div style={styles.featureIcon}>📷</div>
+              <h2 style={styles.featureTitle}>Progress Photo Documentation</h2>
               <p style={styles.featureText}>
-                Contractors post daily progress updates with photos and notes. Share what was 
-                accomplished, what's planned for the next week, and any issues or changes. 
-                House owners stay informed without having to visit the site daily.
+                Create a visual timeline of your project's progress. Upload photos with captions 
+                to document work as it happens. Perfect for insurance, quality assurance, and 
+                keeping house owners informed.
               </p>
               <ul style={styles.featureList}>
-                <li>Daily progress notes</li>
-                <li>Multiple photos per update</li>
-                <li>Weekly planning section</li>
-                <li>Status updates (on track, delayed, etc.)</li>
-                <li>Email notifications to owners</li>
+                <li>✓ Unlimited photo uploads</li>
+                <li>✓ Add captions and notes</li>
+                <li>✓ Chronological timeline view</li>
+                <li>✓ Before and after documentation</li>
+                <li>✓ Shared between owner and contractor</li>
               </ul>
             </div>
           </div>
@@ -204,27 +208,58 @@ export const Features = () => {
         <div style={styles.container}>
           <div style={styles.feature}>
             <div style={styles.featureContent}>
-              <div style={styles.featureIcon}>🤝</div>
-              <h2 style={styles.featureTitle}>Transparent Communication</h2>
+              <div style={styles.featureIcon}>📝</div>
+              <h2 style={styles.featureTitle}>Daily & Weekly Updates</h2>
               <p style={styles.featureText}>
-                The key to successful construction projects is trust and transparency. With 
-                Managrr, all parties see the same information at the same time. No surprises, 
-                no hidden costs, no miscommunication. Build trust through transparency.
+                Contractors post daily summaries and weekly plans to keep house owners in the loop. 
+                Add multiple photos to each update and provide detailed progress notes. 
+                Communication that builds trust.
               </p>
               <ul style={styles.featureList}>
-                <li>Shared view of all project data</li>
-                <li>Real-time updates for everyone</li>
-                <li>No information asymmetry</li>
-                <li>Build trust through openness</li>
-                <li>Reduce disputes and misunderstandings</li>
+                <li>✓ Daily progress summaries</li>
+                <li>✓ Weekly work plans</li>
+                <li>✓ Multiple photos per update</li>
+                <li>✓ Instant notifications</li>
+                <li>✓ Update history timeline</li>
               </ul>
             </div>
             <div style={styles.featureMockup}>
               <img 
-                src={transparencyImg} 
-                alt="Transparency Dashboard" 
+                src={updatesImg} 
+                alt="Project Updates" 
                 style={styles.mockupImage}
               />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section style={{...styles.section, backgroundColor: theme.colors.backgroundLight}}>
+        <div style={styles.container}>
+          <div style={{...styles.feature, ...styles.featureReverse}}>
+            <div style={styles.featureMockup}>
+              <img 
+                src={transparencyImg} 
+                alt="Transparency" 
+                style={styles.mockupImage}
+              />
+            </div>
+            <div style={styles.featureContent}>
+              <div style={styles.featureIcon}>🤝</div>
+              <h2 style={styles.featureTitle}>Complete Transparency</h2>
+              <p style={styles.featureText}>
+                The biggest challenge in construction projects is miscommunication and hidden information. 
+                With Managrr, all parties see the same information at the same time. No surprises, 
+                no hidden costs, no miscommunication. Build trust through transparency.
+              </p>
+              <ul style={styles.featureList}>
+                <li>✓ Shared view of all project data</li>
+                <li>✓ Real-time updates for everyone</li>
+                <li>✓ No information asymmetry</li>
+                <li>✓ Payment confirmation system</li>
+                <li>✓ Build trust through openness</li>
+                <li>✓ Reduce disputes and misunderstandings</li>
+              </ul>
             </div>
           </div>
         </div>
@@ -308,6 +343,9 @@ const styles = {
   featureList: {
     listStyle: 'none',
     padding: 0,
+    fontSize: '1.0625rem',
+    lineHeight: '2',
+    color: theme.colors.text,
   },
   featureMockup: {
     direction: 'ltr',
@@ -318,20 +356,6 @@ const styles = {
     maxWidth: '400px',
     margin: '0 auto',
     display: 'block',
-  },
-  mockupPlaceholder: {
-    backgroundColor: theme.colors.backgroundLight,
-    border: `2px solid ${theme.colors.borderLight}`,
-    borderRadius: theme.borderRadius.lg,
-    padding: '4rem 2rem',
-    textAlign: 'center',
-    fontSize: '1.5rem',
-    fontWeight: '600',
-    color: theme.colors.textLight,
-    minHeight: '300px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   cta: {
     textAlign: 'center',

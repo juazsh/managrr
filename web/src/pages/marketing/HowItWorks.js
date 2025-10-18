@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { theme } from '../../theme';
-import ownersImg from '../../assets/images/undraw_house-searching_g2b8.svg';
+import ownersImg from '../../assets/images/undraw_houses_owky.svg';
 import contractorsImg from '../../assets/images/undraw_construction-workers_z99i.svg';
 import employeesImg from '../../assets/images/undraw_ordinary-day_ak4e.svg';
 
@@ -31,17 +31,17 @@ export const HowItWorks = () => {
             <div style={styles.step}>
               <div style={styles.stepNumber}>1</div>
               <div style={styles.stepContent}>
-                <h3 style={styles.stepTitle}>Create a Project</h3>
+                <h3 style={styles.stepTitle}>Create Your Project</h3>
                 <p style={styles.stepText}>
-                  Set up your construction project with details like address, 
-                  estimated cost, and timeline. Add a description of the work to be done.
+                  Sign up for free and create a project with details, estimated budget, and photos. 
+                  No credit card required to start.
                 </p>
               </div>
             </div>
             <div style={styles.step}>
               <div style={styles.stepNumber}>2</div>
               <div style={styles.stepContent}>
-                <h3 style={styles.stepTitle}>Invite a Contractor</h3>
+                <h3 style={styles.stepTitle}>Invite Your Contractor</h3>
                 <p style={styles.stepText}>
                   Send an email invitation to your contractor. They'll get access 
                   to the project and can start tracking work immediately.
@@ -54,7 +54,18 @@ export const HowItWorks = () => {
                 <h3 style={styles.stepTitle}>Track Everything in Real-Time</h3>
                 <p style={styles.stepText}>
                   See daily progress updates with photos, monitor expenses as they happen, 
-                  and track employee work hours—all from your dashboard.
+                  track employee work hours, and record all payments—all from your dashboard.
+                </p>
+              </div>
+            </div>
+            <div style={styles.step}>
+              <div style={styles.stepNumber}>4</div>
+              <div style={styles.stepContent}>
+                <h3 style={styles.stepTitle}>Record Payments</h3>
+                <p style={styles.stepText}>
+                  Every time you pay your contractor, record it in the system with amount, 
+                  payment method, and optional screenshot proof. Your contractor confirms 
+                  receipt to create an indisputable payment history.
                 </p>
               </div>
             </div>
@@ -99,7 +110,7 @@ export const HowItWorks = () => {
                 <h3 style={styles.stepTitle}>Post Daily Updates</h3>
                 <p style={styles.stepText}>
                   Share progress with photos, update work status, and add notes 
-                  about what was accomplished each day.
+                  about what was accomplished each day. Keep your client informed.
                 </p>
               </div>
             </div>
@@ -109,7 +120,18 @@ export const HowItWorks = () => {
                 <h3 style={styles.stepTitle}>Track Expenses</h3>
                 <p style={styles.stepText}>
                   Upload receipts for materials and costs. Tag who paid (owner or contractor) 
-                  and categorize expenses. Keep everyone informed.
+                  and categorize expenses. Keep everyone informed about spending.
+                </p>
+              </div>
+            </div>
+            <div style={styles.step}>
+              <div style={styles.stepNumber}>5</div>
+              <div style={styles.stepContent}>
+                <h3 style={styles.stepTitle}>Confirm Payments Received</h3>
+                <p style={styles.stepText}>
+                  When the house owner records a payment, you'll see it immediately. 
+                  Click "Received" to confirm and lock the payment record. This creates 
+                  a transparent payment history that protects both parties.
                 </p>
               </div>
             </div>
@@ -132,20 +154,20 @@ export const HowItWorks = () => {
               <div style={styles.step}>
                 <div style={styles.stepNumber}>1</div>
                 <div style={styles.stepContent}>
-                  <h3 style={styles.stepTitle}>Check In When You Arrive</h3>
+                  <h3 style={styles.stepTitle}>Get Added by Contractor</h3>
                   <p style={styles.stepText}>
-                    Take a photo when you arrive at the work site. GPS location 
-                    is automatically captured for verification.
+                    Your contractor will create an account for you and assign you to projects. 
+                    You'll receive login credentials via email.
                   </p>
                 </div>
               </div>
               <div style={styles.step}>
                 <div style={styles.stepNumber}>2</div>
                 <div style={styles.stepContent}>
-                  <h3 style={styles.stepTitle}>Work Is Tracked Automatically</h3>
+                  <h3 style={styles.stepTitle}>Check In When You Arrive</h3>
                   <p style={styles.stepText}>
-                    Your hours are calculated automatically from check-in to check-out. 
-                    No manual timesheets needed.
+                    Use the mobile app to check in when you arrive at the work site. 
+                    Take a photo and optionally share your GPS location for verification.
                   </p>
                 </div>
               </div>
@@ -154,15 +176,16 @@ export const HowItWorks = () => {
                 <div style={styles.stepContent}>
                   <h3 style={styles.stepTitle}>Check Out When You Leave</h3>
                   <p style={styles.stepText}>
-                    Take another photo when leaving. Your total hours and earnings 
-                    for the day are calculated instantly.
+                    Check out at the end of your shift with another photo. 
+                    Hours worked are calculated automatically and visible to your contractor.
                   </p>
                 </div>
               </div>
             </div>
             <div style={styles.mobileNote}>
               <p style={styles.noteText}>
-                📱 Employees use the mobile app for quick check-in/out with photo verification
+                📱 <strong>Mobile app coming soon!</strong> Currently, employees can use the web version 
+                on their phones for check-in/out. Native mobile app launching in Q2 2025.
               </p>
             </div>
           </div>
@@ -172,9 +195,9 @@ export const HowItWorks = () => {
       <section style={{...styles.section, backgroundColor: theme.colors.primary}}>
         <div style={styles.container}>
           <div style={styles.cta}>
-            <h2 style={styles.ctaTitle}>See It In Action</h2>
+            <h2 style={styles.ctaTitle}>Ready to Get Started?</h2>
             <p style={styles.ctaText}>
-              Ready to bring transparency to your construction project?
+              Create your free account and start your first project today
             </p>
             <Link to="/register" style={styles.ctaButton}>
               Get Started Free
