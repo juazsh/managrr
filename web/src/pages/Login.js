@@ -11,6 +11,7 @@ const Login = () => {
     password: "",
   })
   const [error, setError] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
   const { login, isAuthenticated, user } = useAuth()
   const navigate = useNavigate()
 
@@ -33,6 +34,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError("")
+    setIsLoading(true)
     try {
       const response = await login(formData.email, formData.password)
       const loggedInUser = response.user
@@ -46,6 +48,7 @@ const Login = () => {
       }
     } catch (err) {
       setError(err.response?.data?.error || "Login failed")
+      setIsLoading(false)
     }
   }
 
@@ -68,6 +71,7 @@ const Login = () => {
               onChange={handleChange}
               required
               style={styles.input}
+              disabled={isLoading}
             />
           </div>
           <div style={styles.formGroup}>
@@ -80,10 +84,11 @@ const Login = () => {
               onChange={handleChange}
               required
               style={styles.input}
+              disabled={isLoading}
             />
           </div>
-          <button type="submit" style={styles.button}>
-            Sign In
+          <button type="submit" style={{...styles.button, ...(isLoading && styles.buttonDisabled)}} disabled={isLoading}>
+            {isLoading ? "Processing..." : "Sign In"}
           </button>
         </form>
         <p style={styles.linkText}>
@@ -166,6 +171,11 @@ const styles = {
     cursor: "pointer",
     marginTop: "0.5rem",
     transition: "all 0.2s ease",
+  },
+  buttonDisabled: {
+    backgroundColor: theme.colors.textLight,
+    cursor: "not-allowed",
+    opacity: 0.6,
   },
   error: {
     backgroundColor: theme.colors.errorLight,

@@ -14,6 +14,7 @@ const Register = () => {
   })
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const { register, isAuthenticated, user } = useAuth()
   const navigate = useNavigate()
 
@@ -34,12 +35,14 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError("")
+    setIsLoading(true)
     try {
       await register(formData.name, formData.email, formData.password, formData.userType)
       setSuccess(true)
       setTimeout(() => navigate("/login"), 2000)
     } catch (err) {
       setError(err.response?.data?.error || "Registration failed")
+      setIsLoading(false)
     }
   }
 
@@ -76,6 +79,7 @@ const Register = () => {
               onChange={handleChange}
               required
               style={styles.input}
+              disabled={isLoading}
             />
           </div>
           <div style={styles.formGroup}>
@@ -88,6 +92,7 @@ const Register = () => {
               onChange={handleChange}
               required
               style={styles.input}
+              disabled={isLoading}
             />
           </div>
           <div style={styles.formGroup}>
@@ -101,17 +106,25 @@ const Register = () => {
               required
               minLength={8}
               style={styles.input}
+              disabled={isLoading}
             />
           </div>
           <div style={styles.formGroup}>
             <label style={styles.label}>I am a</label>
-            <select name="userType" value={formData.userType} onChange={handleChange} style={styles.select} required>
+            <select 
+              name="userType" 
+              value={formData.userType} 
+              onChange={handleChange} 
+              style={styles.select} 
+              required
+              disabled={isLoading}
+            >
               <option value="house_owner">House Owner</option>
               <option value="contractor">Contractor</option>
             </select>
           </div>
-          <button type="submit" style={styles.button}>
-            Create Account
+          <button type="submit" style={{...styles.button, ...(isLoading && styles.buttonDisabled)}} disabled={isLoading}>
+            {isLoading ? "Processing..." : "Create Account"}
           </button>
         </form>
         <p style={styles.linkText}>
@@ -205,6 +218,11 @@ const styles = {
     marginTop: "0.5rem",
     transition: "all 0.2s ease",
   },
+  buttonDisabled: {
+    backgroundColor: theme.colors.textLight,
+    cursor: "not-allowed",
+    opacity: 0.6,
+  },
   error: {
     backgroundColor: theme.colors.errorLight,
     color: theme.colors.error,
@@ -227,16 +245,22 @@ const styles = {
     transition: "color 0.2s ease",
   },
   successIcon: {
-    fontSize: "4rem",
-    color: theme.colors.success,
-    textAlign: "center",
-    marginBottom: "1rem",
+    width: "64px",
+    height: "64px",
+    borderRadius: "50%",
+    backgroundColor: theme.colors.success,
+    color: theme.colors.white,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "2rem",
+    margin: "0 auto 1.5rem",
   },
   successMessage: {
-    textAlign: "center",
     color: theme.colors.textLight,
+    textAlign: "center",
     fontSize: theme.typography.body.fontSize,
-    lineHeight: "1.6",
+    marginTop: "1rem",
   },
 }
 
