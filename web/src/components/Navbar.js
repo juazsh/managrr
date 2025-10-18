@@ -25,7 +25,7 @@ const Navbar = () => {
     <nav className="navbar">
       <div className="navbar-container">
         <Link to={getDashboardLink()} className="navbar-brand">
-          <span className="navbar-logo">managrr</span>
+          <span className="navbar-logo">Managrr</span>
         </Link>
 
         <button

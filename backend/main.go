@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
@@ -84,6 +85,41 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"status":"ok","message":"Server is running"}`))
 	}).Methods("GET", "OPTIONS")
+
+	// Serve static files (React build)
+	staticDir := "./ui"
+
+	// Check if UI build exists
+	if _, err := os.Stat(staticDir); os.IsNotExist(err) {
+		log.Printf("Warning: UI build directory %s does not exist. Serving API only.", staticDir)
+	} else {
+		// Serve static assets with cache headers
+		fs := http.FileServer(http.Dir(staticDir))
+		router.PathPrefix("/static/").Handler(http.StripPrefix("/", fs))
+		router.PathPrefix("/assets/").Handler(http.StripPrefix("/", fs))
+
+		// Serve manifest, favicon, etc.
+		router.HandleFunc("/manifest.json", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			http.ServeFile(w, r, filepath.Join(staticDir, "manifest.json"))
+		})
+		router.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+			http.ServeFile(w, r, filepath.Join(staticDir, "favicon.ico"))
+		})
+
+		// Catch-all route for React Router (must be last)
+		router.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Don't serve index.html for API routes
+			if len(r.URL.Path) > 4 && r.URL.Path[:4] == "/api" {
+				w.WriteHeader(http.StatusNotFound)
+				return
+			}
+
+			// Set cache headers for HTML (no-cache for updates)
+			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+			http.ServeFile(w, r, filepath.Join(staticDir, "index.html"))
+		})
+	}
 
 	port := os.Getenv("PORT")
 	if port == "" {
