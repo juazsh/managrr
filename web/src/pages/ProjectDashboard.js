@@ -8,7 +8,6 @@ import PhotosSection from "../components/dashboard/PhotosSection"
 import UpdatesSection from "../components/dashboard/UpdatesSection"
 import ExpensesSection from "../components/dashboard/ExpensesSection"
 import WorkLogsSection from "../components/dashboard/WorkLogsSection"
-import PaymentSummarySection from "../components/dashboard/PaymentSummarySection"
 import { theme } from "../theme"
 
 const ProjectDashboard = () => {
@@ -73,6 +72,13 @@ const ProjectDashboard = () => {
   const isContractor = user?.user_type === "contractor" && dashboard.project.contractor_id === user.id
   const isOwner = user?.user_type === "house_owner" && dashboard.project.owner_id === user.id
   const isEmployee = user?.user_type === "employee"
+
+  const tabOptions = [
+    { value: "photos", label: "📷 Progress Photos", icon: "📷" },
+    { value: "updates", label: "📝 Updates", icon: "📝" },
+    { value: "expenses", label: "💰 Expenses", icon: "💰" },
+    { value: "worklogs", label: "⏰ Work Logs", icon: "⏰" },
+  ]
 
   return (
     <div style={styles.container}>
@@ -156,7 +162,7 @@ const ProjectDashboard = () => {
 
       {!isEmployee && (
         <>
-          <div style={styles.tabs}>
+          <div className="desktop-tabs" style={styles.tabs}>
             <button
               style={activeTab === "photos" ? { ...styles.tab, ...styles.activeTab } : styles.tab}
               onClick={() => setActiveTab("photos")}
@@ -181,13 +187,36 @@ const ProjectDashboard = () => {
             >
               ⏰ Work Logs
             </button>
-            <button
-              style={activeTab === "payments" ? { ...styles.tab, ...styles.activeTab } : styles.tab}
-              onClick={() => setActiveTab("payments")}
-            >
-              💳 Payments
-            </button>
           </div>
+
+          <div className="mobile-tab-dropdown" style={styles.mobileDropdown}>
+            <select value={activeTab} onChange={(e) => setActiveTab(e.target.value)} style={styles.dropdown}>
+              {tabOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <style>{`
+            @media (max-width: 768px) {
+              .desktop-tabs {
+                display: none !important;
+              }
+              .mobile-tab-dropdown {
+                display: block !important;
+              }
+            }
+            @media (min-width: 769px) {
+              .desktop-tabs {
+                display: flex !important;
+              }
+              .mobile-tab-dropdown {
+                display: none !important;
+              }
+            }
+          `}</style>
 
           <div style={styles.content}>
             {activeTab === "photos" && (
@@ -220,14 +249,6 @@ const ProjectDashboard = () => {
                 projectId={id}
                 summary={dashboard.work_logs_summary}
                 recentCheckIns={dashboard.recent_check_ins}
-              />
-            )}
-            {activeTab === "payments" && (
-              <PaymentSummarySection
-                projectId={id}
-                isOwner={isOwner}
-                isContractor={isContractor}
-                onPaymentAdded={loadDashboard}
               />
             )}
           </div>
@@ -432,6 +453,29 @@ const styles = {
     padding: "2rem",
     minHeight: "400px",
     border: `1px solid ${theme.colors.borderLight}`,
+  },
+  mobileDropdown: {
+    marginBottom: "2rem",
+    display: "none",
+  },
+  dropdown: {
+    width: "100%",
+    padding: "1rem",
+    fontSize: "1rem",
+    fontWeight: "600",
+    color: theme.colors.text,
+    backgroundColor: theme.colors.white,
+    border: `2px solid ${theme.colors.primary}`,
+    borderRadius: theme.borderRadius.md,
+    cursor: "pointer",
+    fontFamily: theme.typography.fontFamily,
+    boxShadow: theme.shadows.sm,
+    appearance: "none",
+    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%232563EB' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
+    backgroundRepeat: "no-repeat",
+    backgroundPosition: "right 0.75rem center",
+    backgroundSize: "1.5rem",
+    paddingRight: "3rem",
   },
 }
 

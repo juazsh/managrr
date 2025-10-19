@@ -1,10 +1,7 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { theme } from '../../theme';
-import heroConstruction from '../../assets/images/undraw_under-construction_c2y1.svg';
-import sectionBudget from '../../assets/images/undraw_wallet_diag (1).svg';
-import sectionTech from '../../assets/images/undraw_visionary-technology_f6b3.svg';
-import sectionHouses from '../../assets/images/undraw_houses_owky.svg';
+import { Link } from "react-router-dom"
+import { theme } from "../../theme"
+import heroConstruction from "../../assets/images/undraw_under-construction_c2y1.svg"
+import sectionBudget from "../../assets/images/undraw_wallet_diag (1).svg"
 
 const Home = () => {
   return (
@@ -12,40 +9,58 @@ const Home = () => {
       <section style={styles.hero}>
         <div style={styles.container}>
           <div style={styles.heroContent}>
+            <div style={styles.badge}>✨ Trusted by contractors & homeowners</div>
             <h1 style={styles.heroTitle}>
-              Transparent Construction Project Management
+              Construction Projects Made <span style={styles.highlight}>Transparent</span>
             </h1>
             <p style={styles.heroSubtitle}>
-              Track projects, manage employees, control expenses, and record payments—all in one place.
+              Stop the confusion. Track every dollar, every update, and every hour worked—all in one simple platform
+              that keeps everyone on the same page.
             </p>
             <div style={styles.heroCTA}>
               <Link to="/register" style={styles.primaryButton}>
-                Get Started Free
+                Start Free Today →
               </Link>
               <Link to="/how-it-works" style={styles.secondaryButton}>
                 See How It Works
               </Link>
             </div>
+            <p style={styles.heroNote}>No credit card required • Free forever plan available</p>
           </div>
           <div style={styles.heroImage}>
-            <img 
-              src={heroConstruction} 
-              alt="Construction Management" 
-              style={styles.heroImg}
-            />
+            <img src={heroConstruction || "/placeholder.svg"} alt="Construction Management" style={styles.heroImg} />
+          </div>
+        </div>
+      </section>
+
+      <section style={styles.statsSection}>
+        <div style={styles.container}>
+          <div style={styles.statsGrid}>
+            {/* <div style={styles.statCard}>
+              <div style={styles.statNumber}>$2M+</div>
+              <div style={styles.statLabel}>Projects Managed</div>
+            </div>
+            <div style={styles.statCard}>
+              <div style={styles.statNumber}>500+</div>
+              <div style={styles.statLabel}>Active Contractors</div>
+            </div> */}
+            <div style={styles.statCard}>
+              <div style={styles.statNumber}>98%</div>
+              <div style={styles.statLabel}>Customer Satisfaction</div>
+            </div>
           </div>
         </div>
       </section>
 
       <section style={styles.section}>
         <div style={styles.container}>
-          <h2 style={styles.sectionTitle}>The Problem</h2>
+          <div style={styles.sectionHeader}>
+            <span style={styles.sectionBadge}>The Challenge</span>
+            <h2 style={styles.sectionTitle}>Construction Projects Are Stressful</h2>
+            <p style={styles.sectionSubtitle}>Without transparency, small issues become big problems</p>
+          </div>
           <div style={styles.problemImageContainer}>
-            <img 
-              src={sectionBudget} 
-              alt="Budget Problems" 
-              style={styles.sectionImage}
-            />
+            <img src={sectionBudget || "/placeholder.svg"} alt="Budget Problems" style={styles.sectionImage} />
           </div>
           <div style={styles.problemGrid}>
             <div style={styles.problemCard}>
@@ -73,461 +88,309 @@ const Home = () => {
         </div>
       </section>
 
-      <section style={{...styles.section, backgroundColor: theme.colors.primary}}>
+      <section style={{ ...styles.section, ...styles.solutionSection }}>
         <div style={styles.container}>
-          <h2 style={{...styles.sectionTitle, color: theme.colors.white}}>Our Solution</h2>
-          <p style={{...styles.sectionSubtitle, color: theme.colors.white}}>
-            One platform where everyone sees the same information in real-time
-          </p>
+          <div style={styles.sectionHeader}>
+            <span style={{ ...styles.sectionBadge, ...styles.sectionBadgeLight }}>The Solution</span>
+            <h2 style={{ ...styles.sectionTitle, color: theme.colors.white }}>One Platform, Complete Transparency</h2>
+            <p style={{ ...styles.sectionSubtitle, color: "rgba(255, 255, 255, 0.9)" }}>
+              Everyone sees the same information in real-time
+            </p>
+          </div>
           <div style={styles.solutionGrid}>
             <div style={styles.solutionCard}>
               <div style={styles.solutionIcon}>📊</div>
               <h3 style={styles.cardTitle}>Real-time expense tracking</h3>
-              <p style={styles.cardText}>Upload receipt photos and track every dollar spent</p>
+              <p style={styles.cardText}>Upload receipt photos and track every dollar spent with complete visibility</p>
             </div>
             <div style={styles.solutionCard}>
               <div style={styles.solutionIcon}>💳</div>
               <h3 style={styles.cardTitle}>Payment transparency</h3>
-              <p style={styles.cardText}>Record payments with confirmation to prevent disputes</p>
+              <p style={styles.cardText}>Record payments with confirmation to prevent disputes and build trust</p>
             </div>
             <div style={styles.solutionCard}>
               <div style={styles.solutionIcon}>📸</div>
               <h3 style={styles.cardTitle}>Daily progress updates</h3>
-              <p style={styles.cardText}>Document work with photos and status updates</p>
+              <p style={styles.cardText}>Document work with photos and status updates everyone can see</p>
             </div>
             <div style={styles.solutionCard}>
               <div style={styles.solutionIcon}>📍</div>
               <h3 style={styles.cardTitle}>Employee check-in/out</h3>
-              <p style={styles.cardText}>GPS tracking and photo verification for accountability</p>
+              <p style={styles.cardText}>GPS tracking and photo verification for complete accountability</p>
             </div>
           </div>
         </div>
       </section>
 
-      <section style={styles.section}>
-        <div style={styles.container}>
-          <h2 style={styles.sectionTitle}>How It Works</h2>
-          <div style={styles.problemImageContainer}>
-            <img 
-              src={sectionHouses} 
-              alt="House Owners and Projects" 
-              style={styles.sectionImage}
-            />
-          </div>
-          <div style={styles.stepsGrid}>
-            <div style={styles.stepCard}>
-              <div style={styles.stepNumber}>1</div>
-              <h3 style={styles.cardTitle}>House owners create projects</h3>
-            </div>
-            <div style={styles.stepCard}>
-              <div style={styles.stepNumber}>2</div>
-              <h3 style={styles.cardTitle}>Contractors track progress, expenses, and payments</h3>
-            </div>
-            <div style={styles.stepCard}>
-              <div style={styles.stepNumber}>3</div>
-              <h3 style={styles.cardTitle}>Everyone stays on the same page</h3>
-            </div>
-          </div>
-          <div style={styles.centerButton}>
-            <Link to="/how-it-works" style={styles.secondaryButtonDark}>
-              Learn More
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      <section style={{...styles.section, backgroundColor: theme.colors.backgroundLight}}>
-        <div style={styles.container}>
-          <h2 style={styles.sectionTitle}>Features</h2>
-          <div style={styles.featuresGrid}>
-            <div style={styles.featureCard}>
-              <div style={styles.featureIcon}>📋</div>
-              <h3 style={styles.cardTitle}>Project Dashboard</h3>
-              <p style={styles.cardText}>Centralized view of all project information</p>
-            </div>
-            <div style={styles.featureCard}>
-              <div style={styles.featureIcon}>👷</div>
-              <h3 style={styles.cardTitle}>Employee Time Tracking</h3>
-              <p style={styles.cardText}>Automatic tracking with check-in/out system</p>
-            </div>
-            <div style={styles.featureCard}>
-              <div style={styles.featureIcon}>💰</div>
-              <h3 style={styles.cardTitle}>Expense Management</h3>
-              <p style={styles.cardText}>Track costs with receipt photos and categories</p>
-            </div>
-            <div style={styles.featureCard}>
-              <div style={styles.featureIcon}>💳</div>
-              <h3 style={styles.cardTitle}>Payment Tracking</h3>
-              <p style={styles.cardText}>Record and confirm all payments with proof</p>
-            </div>
-            <div style={styles.featureCard}>
-              <div style={styles.featureIcon}>📷</div>
-              <h3 style={styles.cardTitle}>Photo Documentation</h3>
-              <p style={styles.cardText}>Visual timeline of project progress</p>
-            </div>
-            <div style={styles.featureCard}>
-              <div style={styles.featureIcon}>📅</div>
-              <h3 style={styles.cardTitle}>Daily Updates</h3>
-              <p style={styles.cardText}>Keep everyone informed with regular updates</p>
-            </div>
-            <div style={styles.featureCard}>
-              <div style={styles.featureIcon}>🤝</div>
-              <h3 style={styles.cardTitle}>Transparent Communication</h3>
-              <p style={styles.cardText}>All parties see the same information</p>
-            </div>
-            <div style={styles.featureCard}>
-              <div style={styles.featureIcon}>✅</div>
-              <h3 style={styles.cardTitle}>Payment Confirmation</h3>
-              <p style={styles.cardText}>Contractor confirms receipt to lock records</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section style={styles.section}>
-        <div style={styles.container}>
-          <h2 style={styles.sectionTitle}>Start Free, Pay As You Grow</h2>
-          <div style={styles.pricingGrid}>
-            <div style={styles.pricingCard}>
-              <h3 style={styles.pricingTier}>Free</h3>
-              <div style={styles.price}>$0</div>
-              <p style={styles.pricingDescription}>Try before you buy</p>
-              <ul style={styles.pricingFeatures}>
-                <li>1 Project</li>
-                <li>All Core Features</li>
-                <li>Payment Tracking</li>
-                <li>Email Support</li>
-              </ul>
-              <Link to="/register" style={styles.pricingButton}>
-                Get Started
-              </Link>
-            </div>
-            <div style={styles.pricingCard}>
-              <h3 style={styles.pricingTier}>Pay Per Project</h3>
-              <div style={styles.price}>$99</div>
-              <p style={styles.pricingDescription}>For occasional contractors</p>
-              <ul style={styles.pricingFeatures}>
-                <li>6 Months Active</li>
-                <li>All Features</li>
-                <li>Payment Tracking</li>
-                <li>Email Support</li>
-              </ul>
-              <Link to="/pricing" style={styles.pricingButton}>
-                View Details
-              </Link>
-            </div>
-            <div style={styles.pricingCard}>
-              <h3 style={styles.pricingTier}>Pro</h3>
-              <div style={styles.price}>$39<span style={styles.priceUnit}>/mo</span></div>
-              <p style={styles.pricingDescription}>For active contractors</p>
-              <ul style={styles.pricingFeatures}>
-                <li>Unlimited Projects</li>
-                <li>All Features</li>
-                <li>Payment Tracking</li>
-                <li>Priority Support</li>
-              </ul>
-              <Link to="/pricing" style={styles.pricingButton}>
-                Get Started
-              </Link>
-            </div>
-          </div>
-          <div style={styles.centerButton}>
-            <Link to="/pricing" style={styles.secondaryButtonDark}>
-              View Full Pricing
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      <section style={{...styles.section, backgroundColor: theme.colors.primary}}>
+      <section style={{ ...styles.section, ...styles.finalCtaSection }}>
         <div style={styles.container}>
           <div style={styles.finalCta}>
-            <h2 style={styles.finalCtaTitle}>Ready to Get Started?</h2>
-            <p style={styles.finalCtaSubtext}>No credit card required</p>
+            <h2 style={styles.finalCtaTitle}>Ready to Build with Confidence?</h2>
+            <p style={styles.finalCtaSubtext}>Join hundreds of contractors and homeowners who trust Managrr</p>
             <Link to="/register" style={styles.finalCtaButton}>
-              Start Your First Project Free
+              Start Your First Project Free →
             </Link>
+            <p style={styles.finalCtaNote}>✓ No credit card required ✓ Setup in 5 minutes ✓ Cancel anytime</p>
           </div>
         </div>
       </section>
     </div>
-  );
-};
+  )
+}
 
 const styles = {
   page: {
     fontFamily: theme.typography.fontFamily,
   },
   hero: {
-    backgroundColor: theme.colors.backgroundLight,
-    padding: '4rem 0',
-    textAlign: 'center',
+    background: `linear-gradient(135deg, ${theme.colors.backgroundLight} 0%, #ffffff 100%)`,
+    padding: "5rem 0 4rem",
+    textAlign: "center",
+    position: "relative",
+    overflow: "hidden",
   },
   container: {
-    maxWidth: '1200px',
-    margin: '0 auto',
+    maxWidth: "1200px",
+    margin: "0 auto",
     padding: `0 ${theme.spacing.component}`,
   },
   heroContent: {
-    maxWidth: '800px',
-    margin: '0 auto',
+    maxWidth: "800px",
+    margin: "0 auto",
+  },
+  badge: {
+    display: "inline-block",
+    padding: "0.5rem 1.25rem",
+    backgroundColor: "rgba(37, 99, 235, 0.1)",
+    color: theme.colors.primary,
+    borderRadius: theme.borderRadius.full,
+    fontSize: "0.875rem",
+    fontWeight: "600",
+    marginBottom: "1.5rem",
   },
   heroTitle: {
-    fontSize: '3rem',
-    fontWeight: '700',
+    fontSize: "clamp(2rem, 5vw, 3.5rem)",
+    fontWeight: "800",
     color: theme.colors.text,
     marginBottom: theme.spacing.component,
-    lineHeight: '1.2',
+    lineHeight: "1.1",
+    letterSpacing: "-0.02em",
+  },
+  highlight: {
+    color: theme.colors.primary,
+    position: "relative",
   },
   heroSubtitle: {
-    fontSize: '1.25rem',
+    fontSize: "clamp(1rem, 2vw, 1.25rem)",
     color: theme.colors.textLight,
-    marginBottom: '2rem',
-    lineHeight: '1.6',
+    marginBottom: "2rem",
+    lineHeight: "1.7",
+    maxWidth: "700px",
+    margin: "0 auto 2rem",
   },
   heroCTA: {
-    display: 'flex',
-    gap: '1rem',
-    justifyContent: 'center',
-    flexWrap: 'wrap',
-    marginBottom: '2rem',
+    display: "flex",
+    gap: "1rem",
+    justifyContent: "center",
+    flexWrap: "wrap",
+    marginBottom: "1rem",
   },
   primaryButton: {
     backgroundColor: theme.colors.primary,
     color: theme.colors.white,
-    padding: '1rem 2rem',
+    padding: "1.125rem 2.5rem",
     borderRadius: theme.borderRadius.md,
-    textDecoration: 'none',
-    fontSize: '1.125rem',
-    fontWeight: '600',
-    display: 'inline-block',
-    boxShadow: theme.shadows.md,
-    transition: 'all 0.2s ease',
+    textDecoration: "none",
+    fontSize: "1.125rem",
+    fontWeight: "600",
+    display: "inline-block",
+    boxShadow: `0 10px 25px -5px rgba(37, 99, 235, 0.3)`,
+    transition: "all 0.3s ease",
   },
   secondaryButton: {
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     color: theme.colors.primary,
-    padding: '1rem 2rem',
+    padding: "1.125rem 2.5rem",
     borderRadius: theme.borderRadius.md,
-    textDecoration: 'none',
-    fontSize: '1.125rem',
-    fontWeight: '600',
-    display: 'inline-block',
+    textDecoration: "none",
+    fontSize: "1.125rem",
+    fontWeight: "600",
+    display: "inline-block",
     border: `2px solid ${theme.colors.primary}`,
-    transition: 'all 0.2s ease',
+    transition: "all 0.3s ease",
   },
-  secondaryButtonDark: {
-    backgroundColor: 'transparent',
-    color: theme.colors.text,
-    padding: '1rem 2rem',
-    borderRadius: theme.borderRadius.md,
-    textDecoration: 'none',
-    fontSize: '1.125rem',
-    fontWeight: '600',
-    display: 'inline-block',
-    border: `2px solid ${theme.colors.border}`,
-    transition: 'all 0.2s ease',
+  heroNote: {
+    fontSize: "0.875rem",
+    color: theme.colors.textLight,
+    marginTop: "1rem",
   },
   heroImage: {
-    maxWidth: '500px',
-    margin: '2rem auto',
+    maxWidth: "600px",
+    margin: "3rem auto 0",
   },
   heroImg: {
-    width: '100%',
-    height: 'auto',
+    width: "100%",
+    height: "auto",
+  },
+  statsSection: {
+    padding: "3rem 0",
+    backgroundColor: theme.colors.white,
+    borderTop: `1px solid ${theme.colors.borderLight}`,
+    borderBottom: `1px solid ${theme.colors.borderLight}`,
+  },
+  statsGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+    gap: "2rem",
+    textAlign: "center",
+  },
+  statCard: {
+    padding: "1rem",
+  },
+  statNumber: {
+    fontSize: "2.5rem",
+    fontWeight: "800",
+    color: theme.colors.primary,
+    marginBottom: "0.5rem",
+  },
+  statLabel: {
+    fontSize: "1rem",
+    color: theme.colors.textLight,
+    fontWeight: "500",
   },
   section: {
-    padding: '4rem 0',
+    padding: "5rem 0",
+  },
+  sectionHeader: {
+    textAlign: "center",
+    marginBottom: "3rem",
+  },
+  sectionBadge: {
+    display: "inline-block",
+    padding: "0.5rem 1.25rem",
+    backgroundColor: "rgba(37, 99, 235, 0.1)",
+    color: theme.colors.primary,
+    borderRadius: theme.borderRadius.full,
+    fontSize: "0.875rem",
+    fontWeight: "600",
+    marginBottom: "1rem",
+  },
+  sectionBadgeLight: {
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    color: theme.colors.white,
   },
   sectionTitle: {
-    fontSize: '2.5rem',
-    fontWeight: '700',
-    textAlign: 'center',
-    marginBottom: '1rem',
+    fontSize: "clamp(2rem, 4vw, 2.75rem)",
+    fontWeight: "800",
+    textAlign: "center",
+    marginBottom: "1rem",
     color: theme.colors.text,
+    letterSpacing: "-0.02em",
   },
   sectionSubtitle: {
-    fontSize: '1.25rem',
-    textAlign: 'center',
-    marginBottom: '3rem',
+    fontSize: "1.25rem",
+    textAlign: "center",
     color: theme.colors.textLight,
+    maxWidth: "600px",
+    margin: "0 auto",
   },
   problemImageContainer: {
-    maxWidth: '400px',
-    margin: '0 auto 3rem',
+    maxWidth: "400px",
+    margin: "0 auto 3rem",
   },
   sectionImage: {
-    width: '100%',
-    height: 'auto',
+    width: "100%",
+    height: "auto",
   },
   problemGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-    gap: '2rem',
-    marginTop: '3rem',
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+    gap: "2rem",
+    marginTop: "3rem",
   },
   problemCard: {
-    textAlign: 'center',
-    padding: '2rem',
+    textAlign: "center",
+    padding: "2.5rem 2rem",
+    backgroundColor: theme.colors.white,
+    borderRadius: theme.borderRadius.lg,
+    boxShadow: theme.shadows.sm,
+    border: `1px solid ${theme.colors.borderLight}`,
+    transition: "all 0.3s ease",
   },
   problemIcon: {
-    fontSize: '3rem',
-    marginBottom: '1rem',
+    fontSize: "3.5rem",
+    marginBottom: "1.5rem",
   },
   cardTitle: {
-    fontSize: '1.25rem',
-    fontWeight: '600',
+    fontSize: "1.375rem",
+    fontWeight: "700",
     color: theme.colors.text,
-    marginBottom: '0.75rem',
+    marginBottom: "1rem",
+    letterSpacing: "-0.01em",
   },
   cardText: {
-    fontSize: '1rem',
+    fontSize: "1.0625rem",
     color: theme.colors.textLight,
-    lineHeight: '1.6',
+    lineHeight: "1.7",
+  },
+  solutionSection: {
+    background: `linear-gradient(135deg, ${theme.colors.primary} 0%, #1e40af 100%)`,
+    position: "relative",
   },
   solutionGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-    gap: '2rem',
-    marginTop: '3rem',
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+    gap: "2rem",
+    marginTop: "3rem",
   },
   solutionCard: {
     backgroundColor: theme.colors.white,
-    padding: '2rem',
+    padding: "2.5rem 2rem",
     borderRadius: theme.borderRadius.lg,
-    textAlign: 'center',
-    boxShadow: theme.shadows.md,
+    textAlign: "center",
+    boxShadow: "0 20px 40px -10px rgba(0, 0, 0, 0.2)",
+    transition: "all 0.3s ease",
   },
   solutionIcon: {
-    fontSize: '3rem',
-    marginBottom: '1rem',
+    fontSize: "3.5rem",
+    marginBottom: "1.5rem",
   },
-  stepsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-    gap: '2rem',
-    marginTop: '3rem',
-  },
-  stepCard: {
-    textAlign: 'center',
-    padding: '2rem',
-  },
-  stepNumber: {
-    width: '60px',
-    height: '60px',
-    backgroundColor: theme.colors.primary,
-    color: theme.colors.white,
-    borderRadius: '50%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '1.5rem',
-    fontWeight: '700',
-    margin: '0 auto 1.5rem',
-  },
-  centerButton: {
-    textAlign: 'center',
-    marginTop: '3rem',
-  },
-  featuresGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-    gap: '2rem',
-    marginTop: '3rem',
-  },
-  featureCard: {
-    backgroundColor: theme.colors.white,
-    padding: '2rem',
-    borderRadius: theme.borderRadius.lg,
-    textAlign: 'center',
-    boxShadow: theme.shadows.sm,
-    border: `1px solid ${theme.colors.borderLight}`,
-  },
-  featureIcon: {
-    fontSize: '2.5rem',
-    marginBottom: '1rem',
-  },
-  pricingGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-    gap: '2rem',
-    marginTop: '3rem',
-  },
-  pricingCard: {
-    backgroundColor: theme.colors.white,
-    padding: '2rem',
-    borderRadius: theme.borderRadius.lg,
-    textAlign: 'center',
-    boxShadow: theme.shadows.md,
-    border: `1px solid ${theme.colors.borderLight}`,
-  },
-  pricingTier: {
-    fontSize: '1.25rem',
-    fontWeight: '700',
-    color: theme.colors.text,
-    marginBottom: '1rem',
-  },
-  price: {
-    fontSize: '3rem',
-    fontWeight: '700',
-    color: theme.colors.primary,
-    marginBottom: '0.5rem',
-  },
-  priceUnit: {
-    fontSize: '1.5rem',
-    color: theme.colors.textLight,
-  },
-  pricingDescription: {
-    fontSize: '1rem',
-    color: theme.colors.textLight,
-    marginBottom: '1.5rem',
-  },
-  pricingFeatures: {
-    listStyle: 'none',
-    padding: 0,
-    marginBottom: '2rem',
-    textAlign: 'left',
-    fontSize: '0.9375rem',
-    color: theme.colors.text,
-    lineHeight: '2',
-  },
-  pricingButton: {
-    backgroundColor: theme.colors.primary,
-    color: theme.colors.white,
-    padding: '0.875rem 2rem',
-    borderRadius: theme.borderRadius.md,
-    textDecoration: 'none',
-    fontSize: '1rem',
-    fontWeight: '600',
-    display: 'inline-block',
-    transition: 'all 0.2s ease',
+  finalCtaSection: {
+    background: `linear-gradient(135deg, ${theme.colors.primary} 0%, #1e40af 100%)`,
+    padding: "6rem 0",
   },
   finalCta: {
-    textAlign: 'center',
+    textAlign: "center",
     color: theme.colors.white,
   },
   finalCtaTitle: {
-    fontSize: '2.5rem',
-    fontWeight: '700',
-    marginBottom: '0.5rem',
+    fontSize: "clamp(2rem, 4vw, 3rem)",
+    fontWeight: "800",
+    marginBottom: "1rem",
+    letterSpacing: "-0.02em",
   },
   finalCtaSubtext: {
-    fontSize: '1.125rem',
-    marginBottom: '2rem',
-    opacity: 0.9,
+    fontSize: "1.375rem",
+    marginBottom: "2.5rem",
+    opacity: 0.95,
   },
   finalCtaButton: {
     backgroundColor: theme.colors.white,
     color: theme.colors.primary,
-    padding: '1rem 2.5rem',
+    padding: "1.25rem 3rem",
     borderRadius: theme.borderRadius.md,
-    textDecoration: 'none',
-    fontSize: '1.125rem',
-    fontWeight: '600',
-    display: 'inline-block',
-    boxShadow: theme.shadows.lg,
-    transition: 'all 0.2s ease',
+    textDecoration: "none",
+    fontSize: "1.25rem",
+    fontWeight: "700",
+    display: "inline-block",
+    boxShadow: "0 20px 40px -10px rgba(0, 0, 0, 0.3)",
+    transition: "all 0.3s ease",
   },
-};
+  finalCtaNote: {
+    fontSize: "1rem",
+    marginTop: "1.5rem",
+    opacity: 0.9,
+  },
+}
 
-export default Home;
+export default Home

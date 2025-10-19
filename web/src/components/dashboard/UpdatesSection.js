@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import projectService from '../../services/projectService';
+import ImageViewer from '../common/ImageViewer';
 import { theme } from '../../theme';
 
 const UpdatesSection = ({ projectId, updates, isContractor, onUpdateCreated }) => {
@@ -9,6 +10,11 @@ const UpdatesSection = ({ projectId, updates, isContractor, onUpdateCreated }) =
   const [photos, setPhotos] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [imageViewerState, setImageViewerState] = useState({
+    isOpen: false,
+    images: [],
+    initialIndex: 0,
+  });
 
   const handlePhotoSelect = (e) => {
     const files = Array.from(e.target.files);
@@ -60,7 +66,7 @@ const UpdatesSection = ({ projectId, updates, isContractor, onUpdateCreated }) =
       setShowForm(false);
       onUpdateCreated();
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to create update');
+      setError(err.message || 'Failed to create update');
     } finally {
       setSubmitting(false);
     }
@@ -68,28 +74,79 @@ const UpdatesSection = ({ projectId, updates, isContractor, onUpdateCreated }) =
 
   const handleCancel = () => {
     photos.forEach((photo) => URL.revokeObjectURL(photo.preview));
-    setContent('');
     setPhotos([]);
-    setShowForm(false);
+    setContent('');
     setError('');
+    setShowForm(false);
+  };
+
+  const openImageViewer = (updatePhotos, index) => {
+    const images = updatePhotos.map((photo) => ({
+      url: photo.photo_url,
+      caption: photo.caption,
+      filename: `update-photo-${photo.id}.jpg`,
+    }));
+
+    setImageViewerState({
+      isOpen: true,
+      images,
+      initialIndex: index,
+    });
+  };
+
+  const closeImageViewer = () => {
+    setImageViewerState({
+      isOpen: false,
+      images: [],
+      initialIndex: 0,
+    });
+  };
+
+  const handleDownloadImage = async (imageUrl, filename) => {
+    try {
+      const response = await fetch(imageUrl, {
+        mode: 'cors',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch image');
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename || `managrr-update-${Date.now()}.jpg`;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+    } catch (error) {
+      console.error('Download failed:', error);
+      alert('Failed to download image. Please try again.');
+    }
   };
 
   return (
     <div>
       <div style={styles.header}>
-        <h2 style={styles.sectionTitle}>Daily Summaries & Weekly Plans</h2>
+        <h2 style={styles.sectionTitle}>Project Updates</h2>
         {isContractor && !showForm && (
           <button onClick={() => setShowForm(true)} style={styles.createButton}>
-            + New Update
+            + Create Update
           </button>
         )}
       </div>
 
+      {error && <div style={styles.errorMessage}>{error}</div>}
+
       {showForm && (
-        <div style={styles.updateForm}>
-          <h3 style={styles.formTitle}>Create Update</h3>
-          
-          {error && <div style={styles.error}>{error}</div>}
+        <div style={styles.formCard}>
+          <h3 style={styles.formTitle}>Create New Update</h3>
 
           <div style={styles.formGroup}>
             <label style={styles.label}>
@@ -111,8 +168,8 @@ const UpdatesSection = ({ projectId, updates, isContractor, onUpdateCreated }) =
               <textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                placeholder="Describe the progress, work done, or plans..."
-                rows={6}
+                placeholder="Describe the work completed, progress made, or plans for the week..."
+                rows={5}
                 style={styles.textarea}
               />
             </label>
@@ -212,9 +269,56 @@ const UpdatesSection = ({ projectId, updates, isContractor, onUpdateCreated }) =
               
               {update.photos && update.photos.length > 0 && (
                 <div style={styles.updatePhotos}>
-                  {update.photos.map((photo) => (
-                    <div key={photo.id} style={styles.updatePhotoCard}>
-                      <img src={photo.photo_url} alt={photo.caption || 'Update photo'} style={styles.updatePhoto} />
+                  {update.photos.map((photo, index) => (
+                    <div 
+                      key={photo.id} 
+                      style={styles.updatePhotoCard}
+                      onMouseEnter={(e) => {
+                        const overlay = e.currentTarget.querySelector('[data-overlay]');
+                        if (overlay) overlay.style.opacity = '1';
+                      }}
+                      onMouseLeave={(e) => {
+                        const overlay = e.currentTarget.querySelector('[data-overlay]');
+                        if (overlay) overlay.style.opacity = '0';
+                      }}
+                    >
+                      <img 
+                        src={photo.photo_url} 
+                        alt={photo.caption || 'Update photo'} 
+                        style={styles.updatePhoto}
+                        onClick={() => openImageViewer(update.photos, index)}
+                      />
+                      <div style={styles.imageOverlay} data-overlay>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openImageViewer(update.photos, index);
+                          }}
+                          style={styles.overlayButton}
+                          title="View full size"
+                        >
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <circle cx="11" cy="11" r="8" />
+                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                            <line x1="11" y1="8" x2="11" y2="14" />
+                            <line x1="8" y1="11" x2="14" y2="11" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDownloadImage(photo.photo_url, `update-photo-${photo.id}.jpg`);
+                          }}
+                          style={styles.overlayButton}
+                          title="Download image"
+                        >
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="7 10 12 15 17 10" />
+                            <line x1="12" y1="15" x2="12" y2="3" />
+                          </svg>
+                        </button>
+                      </div>
                       {photo.caption && (
                         <p style={styles.photoCaption}>{photo.caption}</p>
                       )}
@@ -233,6 +337,14 @@ const UpdatesSection = ({ projectId, updates, isContractor, onUpdateCreated }) =
           )}
         </div>
       )}
+
+      {imageViewerState.isOpen && (
+        <ImageViewer
+          images={imageViewerState.images}
+          initialIndex={imageViewerState.initialIndex}
+          onClose={closeImageViewer}
+        />
+      )}
     </div>
   );
 };
@@ -246,7 +358,7 @@ const styles = {
   },
   sectionTitle: {
     fontSize: '1.5rem',
-    fontWeight: '600',
+    fontWeight: theme.typography.h3.fontWeight,
     color: theme.colors.text,
     margin: 0,
   },
@@ -256,102 +368,108 @@ const styles = {
     color: theme.colors.white,
     border: 'none',
     borderRadius: theme.borderRadius.md,
-    fontSize: '1rem',
+    fontSize: theme.typography.body.fontSize,
     fontWeight: '600',
     cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    boxShadow: theme.shadows.sm,
   },
-  updateForm: {
-    backgroundColor: theme.colors.backgroundLight,
-    padding: '1.5rem',
+  errorMessage: {
+    padding: '1rem',
+    backgroundColor: theme.colors.errorLight,
+    color: theme.colors.error,
     borderRadius: theme.borderRadius.md,
+    marginBottom: '1rem',
+    fontSize: theme.typography.body.fontSize,
+  },
+  formCard: {
+    backgroundColor: theme.colors.white,
+    padding: '2rem',
+    borderRadius: theme.borderRadius.lg,
+    boxShadow: theme.shadows.md,
     marginBottom: '2rem',
+    border: `1px solid ${theme.colors.borderLight}`,
   },
   formTitle: {
-    fontSize: '1.125rem',
-    fontWeight: '600',
+    fontSize: '1.25rem',
+    fontWeight: theme.typography.h4.fontWeight,
     color: theme.colors.text,
-    marginBottom: '1rem',
-  },
-  error: {
-    backgroundColor: '#FEE2E2',
-    color: '#991B1B',
-    padding: '0.75rem',
-    borderRadius: theme.borderRadius.sm,
-    marginBottom: '1rem',
-    fontSize: '0.875rem',
+    marginBottom: '1.5rem',
+    margin: 0,
   },
   formGroup: {
-    marginBottom: '1rem',
+    marginBottom: '1.5rem',
   },
   label: {
     display: 'block',
-    fontSize: '0.875rem',
-    fontWeight: '500',
+    fontSize: theme.typography.body.fontSize,
+    fontWeight: '600',
     color: theme.colors.text,
     marginBottom: '0.5rem',
   },
   select: {
     width: '100%',
     padding: '0.75rem',
-    fontSize: '1rem',
-    border: `1px solid ${theme.colors.border}`,
-    borderRadius: theme.borderRadius.sm,
-    marginTop: '0.5rem',
+    border: `2px solid ${theme.colors.border}`,
+    borderRadius: theme.borderRadius.md,
+    fontSize: theme.typography.body.fontSize,
+    fontFamily: theme.typography.fontFamily,
     backgroundColor: theme.colors.white,
+    marginTop: '0.5rem',
   },
   textarea: {
     width: '100%',
     padding: '0.75rem',
-    fontSize: '1rem',
-    border: `1px solid ${theme.colors.border}`,
-    borderRadius: theme.borderRadius.sm,
-    marginTop: '0.5rem',
-    fontFamily: 'inherit',
+    border: `2px solid ${theme.colors.border}`,
+    borderRadius: theme.borderRadius.md,
+    fontSize: theme.typography.body.fontSize,
+    fontFamily: theme.typography.fontFamily,
     resize: 'vertical',
+    marginTop: '0.5rem',
+    boxSizing: 'border-box',
   },
   fileInput: {
-    display: 'block',
     marginTop: '0.5rem',
-    fontSize: '0.875rem',
+    fontSize: theme.typography.body.fontSize,
   },
   photosPreview: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
     gap: '1rem',
-    marginBottom: '1rem',
+    marginBottom: '1.5rem',
   },
   photoPreview: {
     position: 'relative',
-    backgroundColor: theme.colors.white,
-    borderRadius: theme.borderRadius.sm,
-    padding: '0.5rem',
+    border: `2px solid ${theme.colors.border}`,
+    borderRadius: theme.borderRadius.md,
+    overflow: 'hidden',
   },
   previewImage: {
     width: '100%',
-    height: '120px',
+    height: '150px',
     objectFit: 'cover',
-    borderRadius: theme.borderRadius.sm,
-    marginBottom: '0.5rem',
   },
   captionInput: {
     width: '100%',
     padding: '0.5rem',
-    fontSize: '0.75rem',
-    border: `1px solid ${theme.colors.border}`,
-    borderRadius: theme.borderRadius.sm,
+    border: 'none',
+    borderTop: `1px solid ${theme.colors.border}`,
+    fontSize: theme.typography.small.fontSize,
+    fontFamily: theme.typography.fontFamily,
+    boxSizing: 'border-box',
   },
   removeButton: {
     position: 'absolute',
-    top: '0.75rem',
-    right: '0.75rem',
-    backgroundColor: '#EF4444',
+    top: '0.5rem',
+    right: '0.5rem',
+    width: '28px',
+    height: '28px',
+    backgroundColor: theme.colors.error,
     color: theme.colors.white,
     border: 'none',
-    borderRadius: '50%',
-    width: '24px',
-    height: '24px',
+    borderRadius: theme.borderRadius.full,
     cursor: 'pointer',
-    fontSize: '0.875rem',
+    fontSize: '1rem',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -365,11 +483,12 @@ const styles = {
     padding: '0.75rem 1.5rem',
     backgroundColor: theme.colors.white,
     color: theme.colors.text,
-    border: `1px solid ${theme.colors.border}`,
+    border: `2px solid ${theme.colors.border}`,
     borderRadius: theme.borderRadius.md,
-    fontSize: '1rem',
+    fontSize: theme.typography.body.fontSize,
     fontWeight: '600',
     cursor: 'pointer',
+    transition: 'all 0.2s ease',
   },
   submitButton: {
     padding: '0.75rem 1.5rem',
@@ -377,20 +496,23 @@ const styles = {
     color: theme.colors.white,
     border: 'none',
     borderRadius: theme.borderRadius.md,
-    fontSize: '1rem',
+    fontSize: theme.typography.body.fontSize,
     fontWeight: '600',
     cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    boxShadow: theme.shadows.sm,
   },
   readOnlyNotice: {
-    backgroundColor: '#EFF6FF',
+    backgroundColor: theme.colors.infoLight,
     padding: '1rem',
     borderRadius: theme.borderRadius.md,
-    marginBottom: '1.5rem',
+    marginBottom: '2rem',
+    border: `1px solid ${theme.colors.info}`,
   },
   noticeText: {
     margin: 0,
-    color: '#1E40AF',
-    fontSize: '0.875rem',
+    fontSize: theme.typography.body.fontSize,
+    color: theme.colors.info,
   },
   updatesList: {
     display: 'flex',
@@ -399,37 +521,39 @@ const styles = {
   },
   updateCard: {
     backgroundColor: theme.colors.white,
-    border: `1px solid ${theme.colors.border}`,
-    borderRadius: theme.borderRadius.md,
     padding: '1.5rem',
+    borderRadius: theme.borderRadius.lg,
+    boxShadow: theme.shadows.md,
+    border: `1px solid ${theme.colors.borderLight}`,
   },
   updateHeader: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '0.5rem',
+    marginBottom: '0.75rem',
+    flexWrap: 'wrap',
+    gap: '0.5rem',
   },
   updateType: {
-    padding: '0.25rem 0.75rem',
-    borderRadius: theme.borderRadius.sm,
-    fontSize: '0.875rem',
+    padding: '0.375rem 0.875rem',
+    borderRadius: theme.borderRadius.full,
+    fontSize: theme.typography.small.fontSize,
     fontWeight: '600',
   },
   updateDate: {
-    fontSize: '0.875rem',
+    fontSize: theme.typography.small.fontSize,
     color: theme.colors.textLight,
   },
   creatorName: {
-    fontSize: '0.875rem',
+    fontSize: theme.typography.small.fontSize,
     color: theme.colors.textLight,
-    marginBottom: '1rem',
+    marginBottom: '0.5rem',
   },
   updateContent: {
-    fontSize: '1rem',
+    fontSize: theme.typography.body.fontSize,
     color: theme.colors.text,
     lineHeight: '1.6',
     marginBottom: '1rem',
-    whiteSpace: 'pre-wrap',
   },
   updatePhotos: {
     display: 'grid',
@@ -438,33 +562,69 @@ const styles = {
     marginTop: '1rem',
   },
   updatePhotoCard: {
-    backgroundColor: theme.colors.backgroundLight,
-    borderRadius: theme.borderRadius.sm,
+    position: 'relative',
+    border: `2px solid ${theme.colors.borderLight}`,
+    borderRadius: theme.borderRadius.md,
     overflow: 'hidden',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
   },
   updatePhoto: {
     width: '100%',
-    height: '150px',
+    height: '200px',
     objectFit: 'cover',
+    display: 'block',
+  },
+  imageOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '0.5rem',
+    opacity: 0,
+    transition: 'opacity 0.2s ease',
+  },
+  overlayButton: {
+    width: '44px',
+    height: '44px',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    color: theme.colors.text,
+    border: 'none',
+    borderRadius: theme.borderRadius.full,
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.2s ease',
   },
   photoCaption: {
-    padding: '0.5rem',
-    fontSize: '0.875rem',
+    padding: '0.75rem',
+    fontSize: theme.typography.small.fontSize,
     color: theme.colors.text,
+    backgroundColor: theme.colors.backgroundLight,
     margin: 0,
   },
   emptyState: {
     textAlign: 'center',
-    padding: '3rem',
+    padding: '3rem 1rem',
+    backgroundColor: theme.colors.white,
+    borderRadius: theme.borderRadius.lg,
+    border: `2px dashed ${theme.colors.border}`,
   },
   emptyText: {
-    fontSize: '1rem',
-    color: theme.colors.textLight,
+    fontSize: theme.typography.bodyLarge.fontSize,
+    color: theme.colors.textMuted,
     marginBottom: '0.5rem',
   },
   emptyHint: {
-    fontSize: '0.875rem',
+    fontSize: theme.typography.body.fontSize,
     color: theme.colors.textLight,
+    margin: 0,
   },
 };
 
