@@ -3,6 +3,7 @@ import { theme } from '../../theme';
 import paymentService from '../../services/paymentService';
 import AddPaymentModal from './AddPaymentModal';
 import EditPaymentModal from './EditPaymentModal';
+import ImageViewer from '../common/ImageViewer';
 
 export const PaymentSummarySection = ({ projectId, isOwner, isContractor, onPaymentAdded }) => {
   const [payments, setPayments] = useState([]);
@@ -10,7 +11,11 @@ export const PaymentSummarySection = ({ projectId, isOwner, isContractor, onPaym
   const [error, setError] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingPayment, setEditingPayment] = useState(null);
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [imageViewerState, setImageViewerState] = useState({
+    isOpen: false,
+    images: [],
+    initialIndex: 0,
+  });
 
   useEffect(() => {
     fetchPayments();
@@ -88,6 +93,28 @@ export const PaymentSummarySection = ({ projectId, isOwner, isContractor, onPaym
     }
   };
 
+  const openImageViewer = (payment) => {
+    if (!payment.screenshot_url) return;
+    
+    setImageViewerState({
+      isOpen: true,
+      images: [{
+        url: payment.screenshot_url,
+        caption: `Payment of $${parseFloat(payment.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })} via ${getPaymentMethodLabel(payment.payment_method)}`,
+        filename: `payment-${payment.id}.jpg`,
+      }],
+      initialIndex: 0,
+    });
+  };
+
+  const closeImageViewer = () => {
+    setImageViewerState({
+      isOpen: false,
+      images: [],
+      initialIndex: 0,
+    });
+  };
+
   const getTotalPaid = () => {
     return payments
       .filter(p => p.status === 'confirmed')
@@ -161,31 +188,31 @@ export const PaymentSummarySection = ({ projectId, isOwner, isContractor, onPaym
         {payments.length === 0 ? (
           <div style={styles.emptyState}>
             <p style={styles.emptyText}>No payments recorded yet</p>
-            {isOwner && (
-              <p style={styles.emptySubtext}>Click "Add Payment" to record a payment</p>
-            )}
+            <p style={styles.emptySubtext}>
+              {isOwner ? 'Add your first payment to start tracking.' : 'Waiting for payment records.'}
+            </p>
           </div>
         ) : (
           payments.map((payment) => {
-            const statusBadge = getStatusBadge(payment.status);
+            const badge = getStatusBadge(payment.status);
             return (
               <div key={payment.id} style={styles.paymentCard}>
                 <div style={styles.paymentHeader}>
                   <div style={styles.paymentAmount}>
                     ${parseFloat(payment.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </div>
-                  <span style={{ ...styles.statusBadge, backgroundColor: statusBadge.color }}>
-                    {statusBadge.text}
-                  </span>
+                  <div style={{ ...styles.statusBadge, backgroundColor: badge.color }}>
+                    {badge.text}
+                  </div>
                 </div>
 
                 <div style={styles.paymentDetails}>
                   <div style={styles.detailRow}>
-                    <span style={styles.detailLabel}>Method:</span>
+                    <span style={styles.detailLabel}>Method</span>
                     <span style={styles.detailValue}>{getPaymentMethodLabel(payment.payment_method)}</span>
                   </div>
                   <div style={styles.detailRow}>
-                    <span style={styles.detailLabel}>Date:</span>
+                    <span style={styles.detailLabel}>Date</span>
                     <span style={styles.detailValue}>
                       {new Date(payment.payment_date).toLocaleDateString('en-US', {
                         year: 'numeric',
@@ -194,21 +221,41 @@ export const PaymentSummarySection = ({ projectId, isOwner, isContractor, onPaym
                       })}
                     </span>
                   </div>
-                  {payment.notes && (
-                    <div style={styles.notes}>
-                      <strong>Note:</strong> {payment.notes}
-                    </div>
-                  )}
                 </div>
+
+                {payment.notes && (
+                  <div style={styles.notes}>
+                    <strong>Notes:</strong> {payment.notes}
+                  </div>
+                )}
 
                 {payment.screenshot_url && (
                   <div style={styles.screenshotContainer}>
-                    <img
-                      src={payment.screenshot_url}
-                      alt="Payment proof"
-                      style={styles.screenshotThumbnail}
-                      onClick={() => setSelectedImage(payment.screenshot_url)}
-                    />
+                    <div style={styles.screenshotWrapper}>
+                      <img
+                        src={payment.screenshot_url}
+                        alt="Payment proof"
+                        style={styles.screenshotThumbnail}
+                        onClick={() => openImageViewer(payment)}
+                      />
+                      <div style={styles.overlayButtons}>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openImageViewer(payment);
+                          }}
+                          style={styles.overlayButton}
+                          title="View image"
+                        >
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <circle cx="11" cy="11" r="8" />
+                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                            <line x1="11" y1="8" x2="11" y2="14" />
+                            <line x1="8" y1="11" x2="14" y2="11" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 )}
 
@@ -278,15 +325,12 @@ export const PaymentSummarySection = ({ projectId, isOwner, isContractor, onPaym
         />
       )}
 
-      {selectedImage && (
-        <div style={styles.imageModal} onClick={() => setSelectedImage(null)}>
-          <div style={styles.imageModalContent} onClick={(e) => e.stopPropagation()}>
-            <button style={styles.closeButton} onClick={() => setSelectedImage(null)}>
-              ×
-            </button>
-            <img src={selectedImage} alt="Payment proof" style={styles.fullImage} />
-          </div>
-        </div>
+      {imageViewerState.isOpen && (
+        <ImageViewer
+          images={imageViewerState.images}
+          initialIndex={imageViewerState.initialIndex}
+          onClose={closeImageViewer}
+        />
       )}
     </div>
   );
@@ -444,6 +488,10 @@ const styles = {
     marginTop: theme.spacing.element,
     marginBottom: theme.spacing.element,
   },
+  screenshotWrapper: {
+    position: 'relative',
+    display: 'inline-block',
+  },
   screenshotThumbnail: {
     width: '120px',
     height: '120px',
@@ -452,6 +500,28 @@ const styles = {
     border: `2px solid ${theme.colors.borderLight}`,
     cursor: 'pointer',
     transition: 'all 0.2s ease',
+    display: 'block',
+  },
+  overlayButtons: {
+    position: 'absolute',
+    top: '0.5rem',
+    right: '0.5rem',
+    display: 'flex',
+    gap: '0.5rem',
+    opacity: 0,
+    transition: 'opacity 0.2s ease',
+  },
+  overlayButton: {
+    padding: '0.5rem',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    color: theme.colors.white,
+    border: 'none',
+    borderRadius: theme.borderRadius.md,
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'background-color 0.2s ease',
   },
   disputeReason: {
     marginTop: theme.spacing.element,
@@ -524,42 +594,6 @@ const styles = {
     fontWeight: '600',
     cursor: 'pointer',
     transition: 'all 0.2s ease',
-  },
-  imageModal: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-    padding: '1rem',
-  },
-  imageModalContent: {
-    position: 'relative',
-    maxWidth: '90%',
-    maxHeight: '90%',
-  },
-  closeButton: {
-    position: 'absolute',
-    top: '-3rem',
-    right: 0,
-    background: 'none',
-    border: 'none',
-    fontSize: '3rem',
-    color: theme.colors.white,
-    cursor: 'pointer',
-    padding: 0,
-    lineHeight: 1,
-  },
-  fullImage: {
-    maxWidth: '100%',
-    maxHeight: '85vh',
-    objectFit: 'contain',
-    borderRadius: theme.borderRadius.lg,
   },
 };
 

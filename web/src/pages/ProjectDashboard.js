@@ -6,6 +6,7 @@ import projectService from "../services/projectService"
 import { useAuth } from "../context/AuthContext"
 import PhotosSection from "../components/dashboard/PhotosSection"
 import UpdatesSection from "../components/dashboard/UpdatesSection"
+import PaymentSummarySection from '../components/dashboard/PaymentSummarySection';
 import ExpensesSection from "../components/dashboard/ExpensesSection"
 import WorkLogsSection from "../components/dashboard/WorkLogsSection"
 import { theme } from "../theme"
@@ -77,6 +78,7 @@ const ProjectDashboard = () => {
     { value: "photos", label: "📷 Progress Photos", icon: "📷" },
     { value: "updates", label: "📝 Updates", icon: "📝" },
     { value: "expenses", label: "💰 Expenses", icon: "💰" },
+    { value: 'payments', label: '💳 Payment Summary', icon: '💳' },
     { value: "worklogs", label: "⏰ Work Logs", icon: "⏰" },
   ]
 
@@ -182,6 +184,12 @@ const ProjectDashboard = () => {
               💰 Expenses
             </button>
             <button
+  style={activeTab === 'payments' ? { ...styles.tab, ...styles.activeTab } : styles.tab}
+  onClick={() => setActiveTab('payments')}
+>
+  💳 Payment Summary
+</button>
+            <button
               style={activeTab === "worklogs" ? { ...styles.tab, ...styles.activeTab } : styles.tab}
               onClick={() => setActiveTab("worklogs")}
             >
@@ -244,6 +252,14 @@ const ProjectDashboard = () => {
                 onExpenseAdded={loadDashboard}
               />
             )}
+            {activeTab === 'payments' && (
+  <PaymentSummarySection
+    projectId={id}
+    isOwner={isOwner}
+    isContractor={isContractor}
+    onPaymentAdded={loadDashboard}
+  />
+)}
             {activeTab === "worklogs" && (
               <WorkLogsSection
                 projectId={id}
