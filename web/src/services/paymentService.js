@@ -6,6 +6,36 @@ const paymentService = {
     return response.data;
   },
 
+  downloadPaymentSummaryExcel: async (projectId) => {
+    const url = `/projects/${projectId}/payment-summaries/download`;
+    
+    const response = await api.get(url, {
+      responseType: 'blob',
+    });
+
+    const blob = new Blob([response.data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+
+    const contentDisposition = response.headers['content-disposition'];
+    let filename = 'payment-summary.xlsx';
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
+      if (filenameMatch) {
+        filename = filenameMatch[1];
+      }
+    }
+
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(downloadUrl);
+  },
+
   addPayment: async (paymentData, screenshotFile) => {
     const formData = new FormData();
     formData.append('project_id', paymentData.project_id);

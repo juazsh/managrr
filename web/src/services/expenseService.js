@@ -15,6 +15,43 @@ const expenseService = {
     return response.data;
   },
 
+  downloadExpensesExcel: async (projectId, filters = {}) => {
+    const params = new URLSearchParams();
+    if (filters.paidBy && filters.paidBy !== 'all') params.append('paid_by', filters.paidBy);
+    if (filters.category && filters.category !== 'all') params.append('category', filters.category);
+    if (filters.startDate) params.append('start_date', filters.startDate);
+    if (filters.endDate) params.append('end_date', filters.endDate);
+
+    const queryString = params.toString();
+    const url = `/projects/${projectId}/expenses/download${queryString ? `?${queryString}` : ''}`;
+    
+    const response = await api.get(url, {
+      responseType: 'blob',
+    });
+
+    const blob = new Blob([response.data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+
+    const contentDisposition = response.headers['content-disposition'];
+    let filename = 'expenses.xlsx';
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
+      if (filenameMatch) {
+        filename = filenameMatch[1];
+      }
+    }
+
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(downloadUrl);
+  },
+
   addExpense: async (expenseData, receiptFile = null) => {
     const formData = new FormData();
     formData.append('project_id', expenseData.project_id);

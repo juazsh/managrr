@@ -600,7 +600,7 @@ func DownloadPaymentSummaryExcel(w http.ResponseWriter, r *http.Request) {
 
 	var ownerID, contractorID sql.NullString
 	var projectName string
-	err := db.QueryRow("SELECT owner_id, contractor_id, name FROM projects WHERE id = $1", projectID).
+	err := db.QueryRow("SELECT owner_id, contractor_id, title FROM projects WHERE id = $1", projectID).
 		Scan(&ownerID, &contractorID, &projectName)
 	if err != nil {
 		respondWithError(w, http.StatusNotFound, "Project not found")

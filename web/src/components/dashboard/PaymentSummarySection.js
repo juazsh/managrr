@@ -8,6 +8,7 @@ import ImageViewer from '../common/ImageViewer';
 export const PaymentSummarySection = ({ projectId, isOwner, isContractor, onPaymentAdded }) => {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingPayment, setEditingPayment] = useState(null);
@@ -31,6 +32,18 @@ export const PaymentSummarySection = ({ projectId, isOwner, isContractor, onPaym
       setError(err.response?.data?.error || 'Failed to load payments');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDownloadExcel = async () => {
+    try {
+      setDownloading(true);
+      setError('');
+      await paymentService.downloadPaymentSummaryExcel(projectId);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to download payment summary');
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -156,16 +169,25 @@ export const PaymentSummarySection = ({ projectId, isOwner, isContractor, onPaym
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <div>
-          <h2 style={styles.title}>💳 Payment Summary</h2>
-          <p style={styles.subtitle}>Track all payments made for this project</p>
-        </div>
-        {isOwner && (
-          <button style={styles.addButton} onClick={() => setShowAddModal(true)}>
-            + Add Payment
-          </button>
-        )}
-      </div>
+  <div>
+    <h2 style={styles.title}>💳 Payment Summary</h2>
+    <p style={styles.subtitle}>Track all payments made for this project</p>
+  </div>
+  <div style={styles.headerButtons}>
+    <button 
+      onClick={handleDownloadExcel} 
+      style={downloading ? styles.downloadButtonDisabled : styles.downloadButton}
+      disabled={downloading}
+    >
+      {downloading ? '⏳ Downloading...' : '📥 Download Excel'}
+    </button>
+    {isOwner && (
+      <button onClick={() => setShowAddModal(true)} style={styles.addButton}>
+        + Add Payment
+      </button>
+    )}
+  </div>
+</div>
 
       {error && <div style={styles.error}>{error}</div>}
 
@@ -594,6 +616,34 @@ const styles = {
     fontWeight: '600',
     cursor: 'pointer',
     transition: 'all 0.2s ease',
+  },
+  headerButtons: {
+    display: 'flex',
+    gap: '0.75rem',
+    flexWrap: 'wrap',
+  },
+  downloadButton: {
+    padding: '0.875rem 1.5rem',
+    backgroundColor: theme.colors.white,
+    color: theme.colors.primary,
+    border: `2px solid ${theme.colors.primary}`,
+    borderRadius: theme.borderRadius.md,
+    fontSize: theme.typography.body.fontSize,
+    fontWeight: '600',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    boxShadow: theme.shadows.sm,
+  },
+  downloadButtonDisabled: {
+    padding: '0.875rem 1.5rem',
+    backgroundColor: theme.colors.backgroundLight,
+    color: theme.colors.textLight,
+    border: `2px solid ${theme.colors.border}`,
+    borderRadius: theme.borderRadius.md,
+    fontSize: theme.typography.body.fontSize,
+    fontWeight: '600',
+    cursor: 'not-allowed',
+    opacity: 0.6,
   },
 };
 

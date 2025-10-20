@@ -9,6 +9,7 @@ export const ExpensesSection = ({ projectId, expenses: initialExpenses, summary:
   const [expenses, setExpenses] = useState(initialExpenses || []);
   const [summary, setSummary] = useState(initialSummary || {});
   const [loading, setLoading] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
@@ -44,6 +45,23 @@ export const ExpensesSection = ({ projectId, expenses: initialExpenses, summary:
     fetchExpenses();
   };
 
+  const handleDownloadExcel = async () => {
+    try {
+      setDownloading(true);
+      setError('');
+      
+      const filters = {};
+      if (paidByFilter !== 'all') filters.paidBy = paidByFilter;
+      if (categoryFilter !== 'all') filters.category = categoryFilter;
+
+      await expenseService.downloadExpensesExcel(projectId, filters);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to download expenses');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   const handleAddExpense = async (expenseData, receiptFile) => {
     try {
       await expenseService.addExpense(expenseData, receiptFile);
@@ -65,64 +83,15 @@ export const ExpensesSection = ({ projectId, expenses: initialExpenses, summary:
   };
 
   const handleDeleteExpense = async (expenseId) => {
-    if (!window.confirm('Are you sure you want to delete this expense?')) return;
-    
+    if (!window.confirm('Are you sure you want to delete this expense?')) {
+      return;
+    }
+
     try {
       await expenseService.deleteExpense(expenseId);
       if (onExpenseAdded) onExpenseAdded();
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to delete expense');
-    }
-  };
-
-  const openImageViewer = (receiptUrl, expenseId) => {
-    const images = [{
-      url: receiptUrl,
-      caption: '',
-      filename: `receipt-${expenseId}.jpg`,
-    }];
-
-    setImageViewerState({
-      isOpen: true,
-      images,
-      initialIndex: 0,
-    });
-  };
-
-  const closeImageViewer = () => {
-    setImageViewerState({
-      isOpen: false,
-      images: [],
-      initialIndex: 0,
-    });
-  };
-
-  const handleDownloadImage = async (imageUrl, filename) => {
-    try {
-      const response = await fetch(imageUrl, {
-        mode: 'cors',
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch image');
-      }
-      
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename || `managrr-receipt-${Date.now()}.jpg`;
-      link.style.display = 'none';
-      document.body.appendChild(link);
-      link.click();
-      
-      setTimeout(() => {
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-      }, 100);
-    } catch (error) {
-      console.error('Download failed:', error);
-      alert('Failed to download receipt. Please try again.');
+      setError(err.response?.data?.error || 'Failed to delete expense. Please try again.');
     }
   };
 
@@ -140,11 +109,20 @@ export const ExpensesSection = ({ projectId, expenses: initialExpenses, summary:
     <div>
       <div style={styles.header}>
         <h2 style={styles.sectionTitle}>Expenses</h2>
-        {canAdd && (
-          <button onClick={() => setShowAddModal(true)} style={styles.addButton}>
-            + Add Expense
+        <div style={styles.headerButtons}>
+          <button 
+            onClick={handleDownloadExcel} 
+            style={downloading ? styles.downloadButtonDisabled : styles.downloadButton}
+            disabled={downloading}
+          >
+            {downloading ? '⏳ Downloading...' : '📥 Download Excel'}
           </button>
-        )}
+          {canAdd && (
+            <button onClick={() => setShowAddModal(true)} style={styles.addButton}>
+              + Add Expense
+            </button>
+          )}
+        </div>
       </div>
 
       {error && <div style={styles.errorMessage}>{error}</div>}
@@ -210,9 +188,9 @@ export const ExpensesSection = ({ projectId, expenses: initialExpenses, summary:
           <div style={styles.loadingText}>Loading expenses...</div>
         ) : expenses.length === 0 ? (
           <div style={styles.emptyState}>
-            <p style={styles.emptyText}>No expenses found</p>
+            <div style={styles.emptyText}>No expenses found</div>
             {canAdd && (
-              <p style={styles.emptyHint}>Add your first expense to track project costs!</p>
+              <div style={styles.emptyHint}>Click "Add Expense" to record your first expense</div>
             )}
           </div>
         ) : (
@@ -220,8 +198,8 @@ export const ExpensesSection = ({ projectId, expenses: initialExpenses, summary:
             <div key={expense.id} style={styles.expenseCard}>
               <div style={styles.expenseHeader}>
                 <div style={styles.expenseInfo}>
-                  <h4 style={styles.expenseAmount}>${parseFloat(expense.amount).toFixed(2)}</h4>
-                  {expense.vendor && <p style={styles.vendor}>{expense.vendor}</p>}
+                  <h3 style={styles.expenseAmount}>${expense.amount.toFixed(2)}</h3>
+                  <p style={styles.vendor}>{expense.vendor}</p>
                   <p style={styles.date}>
                     {new Date(expense.date).toLocaleDateString('en-US', {
                       year: 'numeric',
@@ -231,23 +209,24 @@ export const ExpensesSection = ({ projectId, expenses: initialExpenses, summary:
                   </p>
                 </div>
                 <div style={styles.badges}>
-                  <span style={{
-                    ...styles.badge,
-                    backgroundColor: expense.paid_by === 'owner' ? theme.colors.primary : theme.colors.secondary,
-                  }}>
-                    {expense.paid_by === 'owner' ? 'Owner Paid' : 'Contractor Paid'}
-                  </span>
-                  <span style={{...styles.badge, backgroundColor: '#6B7280'}}>
+                  <span style={{...styles.badge, backgroundColor: theme.colors.background}}>
                     {getCategoryLabel(expense.category)}
+                  </span>
+                  <span
+                    style={{
+                      ...styles.badge,
+                      backgroundColor: expense.paid_by === 'owner' ? theme.colors.primary : theme.colors.secondary,
+                      color: theme.colors.white,
+                    }}
+                  >
+                    {expense.paid_by === 'owner' ? '👤 Owner' : '🔧 Contractor'}
                   </span>
                 </div>
               </div>
 
-              {expense.description && (
-                <p style={styles.description}>{expense.description}</p>
-              )}
+              {expense.description && <p style={styles.description}>{expense.description}</p>}
 
-              {expense.receipt_photo_url && (
+              {expense.receipt_url && (
                 <div 
                   style={styles.receiptContainer}
                   onMouseEnter={(e) => {
@@ -260,40 +239,28 @@ export const ExpensesSection = ({ projectId, expenses: initialExpenses, summary:
                   }}
                 >
                   <img
-                    src={expense.receipt_photo_url}
+                    src={expense.receipt_url}
                     alt="Receipt"
                     style={styles.receiptThumbnail}
-                    onClick={() => openImageViewer(expense.receipt_photo_url, expense.id)}
                   />
-                  <div style={styles.imageOverlay} data-overlay>
+                  <div data-overlay style={styles.imageOverlay}>
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openImageViewer(expense.receipt_photo_url, expense.id);
-                      }}
                       style={styles.overlayButton}
-                      title="View full size"
-                    >
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <circle cx="11" cy="11" r="8" />
-                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                        <line x1="11" y1="8" x2="11" y2="14" />
-                        <line x1="8" y1="11" x2="14" y2="11" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDownloadImage(expense.receipt_photo_url, `receipt-${expense.id}.jpg`);
+                      onClick={() => setImageViewerState({
+                        isOpen: true,
+                        images: [{ url: expense.receipt_url, caption: `Receipt - ${expense.vendor}` }],
+                        initialIndex: 0,
+                      })}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'white';
+                        e.currentTarget.style.transform = 'scale(1.1)';
                       }}
-                      style={styles.overlayButton}
-                      title="Download receipt"
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+                        e.currentTarget.style.transform = 'scale(1)';
+                      }}
                     >
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="7 10 12 15 17 10" />
-                        <line x1="12" y1="15" x2="12" y2="3" />
-                      </svg>
+                      🔍
                     </button>
                   </div>
                 </div>
@@ -304,14 +271,34 @@ export const ExpensesSection = ({ projectId, expenses: initialExpenses, summary:
                 {canAdd && (
                   <div style={styles.actions}>
                     <button
-                      style={styles.actionButton}
                       onClick={() => setEditingExpense(expense)}
+                      style={styles.actionButton}
+                      onMouseEnter={(e) => {
+                        e.target.style.backgroundColor = theme.colors.primary;
+                        e.target.style.color = theme.colors.white;
+                        e.target.style.borderColor = theme.colors.primary;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.backgroundColor = theme.colors.background;
+                        e.target.style.color = theme.colors.text;
+                        e.target.style.borderColor = theme.colors.border;
+                      }}
                     >
                       Edit
                     </button>
                     <button
-                      style={styles.deleteButton}
                       onClick={() => handleDeleteExpense(expense.id)}
+                      style={styles.deleteButton}
+                      onMouseEnter={(e) => {
+                        e.target.style.backgroundColor = '#C33';
+                        e.target.style.color = theme.colors.white;
+                        e.target.style.borderColor = '#C33';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.backgroundColor = '#FEE';
+                        e.target.style.color = '#C33';
+                        e.target.style.borderColor = '#FCC';
+                      }}
                     >
                       Delete
                     </button>
@@ -343,7 +330,7 @@ export const ExpensesSection = ({ projectId, expenses: initialExpenses, summary:
         <ImageViewer
           images={imageViewerState.images}
           initialIndex={imageViewerState.initialIndex}
-          onClose={closeImageViewer}
+          onClose={() => setImageViewerState({ isOpen: false, images: [], initialIndex: 0 })}
         />
       )}
     </div>
@@ -355,16 +342,23 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '2rem',
+    marginBottom: '1.5rem',
+    flexWrap: 'wrap',
+    gap: '1rem',
   },
   sectionTitle: {
     fontSize: '1.5rem',
-    fontWeight: theme.typography.h3.fontWeight,
+    fontWeight: '600',
     color: theme.colors.text,
     margin: 0,
   },
+  headerButtons: {
+    display: 'flex',
+    gap: '0.75rem',
+    flexWrap: 'wrap',
+  },
   addButton: {
-    padding: '0.75rem 1.5rem',
+    padding: '0.625rem 1.25rem',
     backgroundColor: theme.colors.primary,
     color: theme.colors.white,
     border: 'none',
@@ -374,23 +368,46 @@ const styles = {
     cursor: 'pointer',
     transition: 'all 0.2s',
   },
+  downloadButton: {
+    padding: '0.625rem 1.25rem',
+    backgroundColor: theme.colors.white,
+    color: theme.colors.primary,
+    border: `1px solid ${theme.colors.primary}`,
+    borderRadius: theme.borderRadius.md,
+    fontSize: theme.typography.body.fontSize,
+    fontWeight: '500',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+  },
+  downloadButtonDisabled: {
+    padding: '0.625rem 1.25rem',
+    backgroundColor: theme.colors.background,
+    color: theme.colors.textLight,
+    border: `1px solid ${theme.colors.border}`,
+    borderRadius: theme.borderRadius.md,
+    fontSize: theme.typography.body.fontSize,
+    fontWeight: '500',
+    cursor: 'not-allowed',
+    opacity: 0.6,
+  },
   errorMessage: {
-    padding: '1rem',
     backgroundColor: '#FEE',
     color: '#C33',
+    padding: '1rem',
     borderRadius: theme.borderRadius.md,
     marginBottom: '1rem',
+    border: '1px solid #FCC',
   },
   summaryCard: {
     backgroundColor: theme.colors.white,
     borderRadius: theme.borderRadius.lg,
     padding: '1.5rem',
-    marginBottom: '2rem',
+    marginBottom: '1.5rem',
     boxShadow: theme.shadows.sm,
   },
   summaryTitle: {
     fontSize: '1.125rem',
-    fontWeight: theme.typography.h4.fontWeight,
+    fontWeight: '600',
     color: theme.colors.text,
     marginBottom: '1rem',
   },
@@ -407,6 +424,7 @@ const styles = {
   summaryLabel: {
     fontSize: '0.875rem',
     color: theme.colors.textLight,
+    fontWeight: '500',
   },
   summaryValue: {
     fontSize: '1.5rem',
@@ -415,12 +433,13 @@ const styles = {
   },
   filterSection: {
     display: 'flex',
-    flexWrap: 'wrap',
     gap: '1rem',
     marginBottom: '1.5rem',
-    padding: '1rem',
-    backgroundColor: theme.colors.background,
-    borderRadius: theme.borderRadius.md,
+    padding: '1.25rem',
+    backgroundColor: theme.colors.white,
+    borderRadius: theme.borderRadius.lg,
+    flexWrap: 'wrap',
+    boxShadow: theme.shadows.sm,
   },
   filterGroup: {
     display: 'flex',
@@ -524,7 +543,7 @@ const styles = {
     borderRadius: theme.borderRadius.full,
     fontSize: '0.75rem',
     fontWeight: '500',
-    color: theme.colors.white,
+    whiteSpace: 'nowrap',
   },
   description: {
     fontSize: theme.typography.body.fontSize,
