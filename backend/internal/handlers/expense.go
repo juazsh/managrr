@@ -8,12 +8,15 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/juazsh/managrr/internal/database"
 	"github.com/juazsh/managrr/internal/middleware"
 	"github.com/juazsh/managrr/internal/models"
 	"github.com/juazsh/managrr/internal/storage"
+	"github.com/juazsh/managrr/internal/utils"
+	"github.com/xuri/excelize/v2"
 )
 
 func AddExpense(w http.ResponseWriter, r *http.Request) {
@@ -608,4 +611,230 @@ func DeleteExpense(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondWithJSON(w, http.StatusOK, map[string]string{"message": "Expense deleted successfully"})
+}
+
+func DownloadExpensesExcel(w http.ResponseWriter, r *http.Request) {
+	userCtx, ok := middleware.GetUserFromContext(r.Context())
+	if !ok {
+		respondWithError(w, http.StatusUnauthorized, "User not found in context")
+		return
+	}
+
+	vars := mux.Vars(r)
+	projectID := vars["id"]
+
+	db := database.GetDB()
+
+	var ownerID, contractorID sql.NullString
+	var projectName string
+	err := db.QueryRow("SELECT owner_id, contractor_id, name FROM projects WHERE id = $1", projectID).
+		Scan(&ownerID, &contractorID, &projectName)
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, "Project not found")
+		return
+	}
+
+	isOwner := ownerID.Valid && ownerID.String == userCtx.UserID
+	isContractor := contractorID.Valid && contractorID.String == userCtx.UserID
+
+	if !isOwner && !isContractor {
+		respondWithError(w, http.StatusForbidden, "Only project owner or assigned contractor can download expenses")
+		return
+	}
+
+	paidBy := r.URL.Query().Get("paid_by")
+	category := r.URL.Query().Get("category")
+	startDate := r.URL.Query().Get("start_date")
+	endDate := r.URL.Query().Get("end_date")
+
+	if paidBy == "" {
+		paidBy = "all"
+	}
+
+	query := `
+		SELECT e.id, e.project_id, e.amount, e.vendor, e.date, e.category, e.description, 
+		       e.paid_by, e.added_by, e.created_at, u.name
+		FROM expenses e
+		JOIN users u ON e.added_by = u.id
+		WHERE e.project_id = $1
+	`
+	args := []interface{}{projectID}
+	argIndex := 2
+
+	if paidBy != "all" {
+		query += " AND e.paid_by = $" + strconv.Itoa(argIndex)
+		args = append(args, paidBy)
+		argIndex++
+	}
+
+	if category != "" {
+		query += " AND e.category = $" + strconv.Itoa(argIndex)
+		args = append(args, category)
+		argIndex++
+	}
+
+	if startDate != "" {
+		query += " AND e.date >= $" + strconv.Itoa(argIndex)
+		args = append(args, startDate)
+		argIndex++
+	}
+
+	if endDate != "" {
+		query += " AND e.date <= $" + strconv.Itoa(argIndex)
+		args = append(args, endDate)
+		argIndex++
+	}
+
+	query += " ORDER BY e.date DESC, e.created_at DESC"
+
+	rows, err := db.Query(query, args...)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to fetch expenses")
+		return
+	}
+	defer rows.Close()
+
+	f := excelize.NewFile()
+	defer f.Close()
+
+	sheetName := "Expenses"
+	index, err := f.NewSheet(sheetName)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to create Excel sheet")
+		return
+	}
+	f.SetActiveSheet(index)
+	f.DeleteSheet("Sheet1")
+
+	headerStyle, _ := f.NewStyle(&excelize.Style{
+		Font: &excelize.Font{
+			Bold: true,
+			Size: 12,
+		},
+		Fill: excelize.Fill{
+			Type:    "pattern",
+			Color:   []string{"#4472C4"},
+			Pattern: 1,
+		},
+		Alignment: &excelize.Alignment{
+			Horizontal: "center",
+			Vertical:   "center",
+		},
+	})
+
+	headers := []string{"Date", "Vendor", "Category", "Amount", "Paid By", "Description", "Added By"}
+	for i, header := range headers {
+		cell := fmt.Sprintf("%c1", 'A'+i)
+		f.SetCellValue(sheetName, cell, header)
+		f.SetCellStyle(sheetName, cell, cell, headerStyle)
+	}
+
+	f.SetColWidth(sheetName, "A", "A", 12)
+	f.SetColWidth(sheetName, "B", "B", 20)
+	f.SetColWidth(sheetName, "C", "C", 15)
+	f.SetColWidth(sheetName, "D", "D", 12)
+	f.SetColWidth(sheetName, "E", "E", 15)
+	f.SetColWidth(sheetName, "F", "F", 30)
+	f.SetColWidth(sheetName, "G", "G", 20)
+
+	rowIndex := 2
+	totalAmount := 0.0
+	totalByOwner := 0.0
+	totalByContractor := 0.0
+
+	for rows.Next() {
+		var id, projectID, addedBy string
+		var amount float64
+		var vendor, date, category, description, paidBy, addedByName string
+		var createdAt time.Time
+
+		err := rows.Scan(&id, &projectID, &amount, &vendor, &date, &category, &description,
+			&paidBy, &addedBy, &createdAt, &addedByName)
+		if err != nil {
+			continue
+		}
+
+		totalAmount += amount
+		if paidBy == string(models.ExpensePaidByOwner) {
+			totalByOwner += amount
+		} else if paidBy == string(models.ExpensePaidByContractor) {
+			totalByContractor += amount
+		}
+
+		categoryLabel := getCategoryLabel(category)
+		paidByLabel := getPaidByLabel(paidBy)
+
+		f.SetCellValue(sheetName, fmt.Sprintf("A%d", rowIndex), date)
+		f.SetCellValue(sheetName, fmt.Sprintf("B%d", rowIndex), vendor)
+		f.SetCellValue(sheetName, fmt.Sprintf("C%d", rowIndex), categoryLabel)
+		f.SetCellValue(sheetName, fmt.Sprintf("D%d", rowIndex), amount)
+		f.SetCellValue(sheetName, fmt.Sprintf("E%d", rowIndex), paidByLabel)
+		f.SetCellValue(sheetName, fmt.Sprintf("F%d", rowIndex), description)
+		f.SetCellValue(sheetName, fmt.Sprintf("G%d", rowIndex), addedByName)
+
+		rowIndex++
+	}
+
+	summaryStartRow := rowIndex + 2
+
+	summaryStyle, _ := f.NewStyle(&excelize.Style{
+		Font: &excelize.Font{
+			Bold: true,
+			Size: 11,
+		},
+		Fill: excelize.Fill{
+			Type:    "pattern",
+			Color:   []string{"#E7E6E6"},
+			Pattern: 1,
+		},
+	})
+
+	f.SetCellValue(sheetName, fmt.Sprintf("C%d", summaryStartRow), "Total Spent:")
+	f.SetCellValue(sheetName, fmt.Sprintf("D%d", summaryStartRow), totalAmount)
+	f.SetCellStyle(sheetName, fmt.Sprintf("C%d", summaryStartRow), fmt.Sprintf("D%d", summaryStartRow), summaryStyle)
+
+	f.SetCellValue(sheetName, fmt.Sprintf("C%d", summaryStartRow+1), "Paid by Owner:")
+	f.SetCellValue(sheetName, fmt.Sprintf("D%d", summaryStartRow+1), totalByOwner)
+	f.SetCellStyle(sheetName, fmt.Sprintf("C%d", summaryStartRow+1), fmt.Sprintf("D%d", summaryStartRow+1), summaryStyle)
+
+	f.SetCellValue(sheetName, fmt.Sprintf("C%d", summaryStartRow+2), "Paid by Contractor:")
+	f.SetCellValue(sheetName, fmt.Sprintf("D%d", summaryStartRow+2), totalByContractor)
+	f.SetCellStyle(sheetName, fmt.Sprintf("C%d", summaryStartRow+2), fmt.Sprintf("D%d", summaryStartRow+2), summaryStyle)
+
+	timestamp := time.Now().Format("2006-01-02")
+	filename := fmt.Sprintf("expenses-%s-%s.xlsx", utils.SanitizeFilename(projectName), timestamp)
+
+	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
+
+	if err := f.Write(w); err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to generate Excel file")
+		return
+	}
+}
+
+func getCategoryLabel(category string) string {
+	switch category {
+	case "materials":
+		return "Materials"
+	case "labor":
+		return "Labor"
+	case "equipment":
+		return "Equipment"
+	case "other":
+		return "Other"
+	default:
+		return category
+	}
+}
+
+func getPaidByLabel(paidBy string) string {
+	switch paidBy {
+	case "owner":
+		return "Owner"
+	case "contractor":
+		return "Contractor"
+	default:
+		return paidBy
+	}
 }

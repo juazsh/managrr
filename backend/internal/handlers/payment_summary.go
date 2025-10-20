@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"path/filepath"
 	"strconv"
@@ -14,6 +15,8 @@ import (
 	"github.com/juazsh/managrr/internal/middleware"
 	"github.com/juazsh/managrr/internal/models"
 	"github.com/juazsh/managrr/internal/storage"
+	"github.com/juazsh/managrr/internal/utils"
+	"github.com/xuri/excelize/v2"
 )
 
 func AddPaymentSummary(w http.ResponseWriter, r *http.Request) {
@@ -581,4 +584,193 @@ func DeletePaymentSummary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondWithJSON(w, http.StatusOK, map[string]string{"message": "Payment summary deleted successfully"})
+}
+
+func DownloadPaymentSummaryExcel(w http.ResponseWriter, r *http.Request) {
+	userCtx, ok := middleware.GetUserFromContext(r.Context())
+	if !ok {
+		respondWithError(w, http.StatusUnauthorized, "User not found in context")
+		return
+	}
+
+	vars := mux.Vars(r)
+	projectID := vars["id"]
+
+	db := database.GetDB()
+
+	var ownerID, contractorID sql.NullString
+	var projectName string
+	err := db.QueryRow("SELECT owner_id, contractor_id, name FROM projects WHERE id = $1", projectID).
+		Scan(&ownerID, &contractorID, &projectName)
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, "Project not found")
+		return
+	}
+
+	isOwner := ownerID.Valid && ownerID.String == userCtx.UserID
+	isContractor := contractorID.Valid && contractorID.String == userCtx.UserID
+
+	if !isOwner && !isContractor {
+		respondWithError(w, http.StatusForbidden, "Access denied")
+		return
+	}
+
+	query := `
+		SELECT ps.id, ps.amount, ps.payment_method, ps.payment_date, 
+		       ps.notes, ps.added_by, ps.status, 
+		       ps.confirmed_by, ps.confirmed_at, ps.created_at, 
+		       u.name as added_by_name,
+		       COALESCE(u2.name, '') as confirmed_by_name
+		FROM payment_summaries ps
+		JOIN users u ON ps.added_by = u.id
+		LEFT JOIN users u2 ON ps.confirmed_by = u2.id
+		WHERE ps.project_id = $1
+		ORDER BY ps.payment_date DESC, ps.created_at DESC
+	`
+
+	rows, err := db.Query(query, projectID)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to fetch payment summaries")
+		return
+	}
+	defer rows.Close()
+
+	f := excelize.NewFile()
+	defer f.Close()
+
+	sheetName := "Payment Summary"
+	index, err := f.NewSheet(sheetName)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to create Excel sheet")
+		return
+	}
+	f.SetActiveSheet(index)
+	f.DeleteSheet("Sheet1")
+
+	headerStyle, _ := f.NewStyle(&excelize.Style{
+		Font: &excelize.Font{
+			Bold: true,
+			Size: 12,
+		},
+		Fill: excelize.Fill{
+			Type:    "pattern",
+			Color:   []string{"#70AD47"},
+			Pattern: 1,
+		},
+		Alignment: &excelize.Alignment{
+			Horizontal: "center",
+			Vertical:   "center",
+		},
+	})
+
+	headers := []string{"Payment Date", "Amount", "Payment Method", "Status", "Added By", "Confirmed By", "Confirmed Date", "Notes"}
+	for i, header := range headers {
+		cell := fmt.Sprintf("%c1", 'A'+i)
+		f.SetCellValue(sheetName, cell, header)
+		f.SetCellStyle(sheetName, cell, cell, headerStyle)
+	}
+
+	f.SetColWidth(sheetName, "A", "A", 14)
+	f.SetColWidth(sheetName, "B", "B", 12)
+	f.SetColWidth(sheetName, "C", "C", 18)
+	f.SetColWidth(sheetName, "D", "D", 12)
+	f.SetColWidth(sheetName, "E", "E", 20)
+	f.SetColWidth(sheetName, "F", "F", 20)
+	f.SetColWidth(sheetName, "G", "G", 14)
+	f.SetColWidth(sheetName, "H", "H", 30)
+
+	rowIndex := 2
+	totalConfirmed := 0.0
+	totalPending := 0.0
+
+	for rows.Next() {
+		var id, addedBy, status, addedByName string
+		var amount float64
+		var paymentMethod, paymentDate string
+		var notes, confirmedBy, confirmedByName sql.NullString
+		var confirmedAt, createdAt sql.NullTime
+
+		err := rows.Scan(&id, &amount, &paymentMethod, &paymentDate, &notes, &addedBy,
+			&status, &confirmedBy, &confirmedAt, &createdAt, &addedByName, &confirmedByName)
+		if err != nil {
+			continue
+		}
+
+		if status == string(models.PaymentStatusConfirmed) {
+			totalConfirmed += amount
+		} else if status == string(models.PaymentStatusPending) {
+			totalPending += amount
+		}
+
+		statusLabel := getStatusLabel(status)
+		confirmedByValue := ""
+		if confirmedByName.Valid {
+			confirmedByValue = confirmedByName.String
+		}
+		confirmedDateValue := ""
+		if confirmedAt.Valid {
+			confirmedDateValue = confirmedAt.Time.Format("2006-01-02")
+		}
+		notesValue := ""
+		if notes.Valid {
+			notesValue = notes.String
+		}
+
+		f.SetCellValue(sheetName, fmt.Sprintf("A%d", rowIndex), paymentDate)
+		f.SetCellValue(sheetName, fmt.Sprintf("B%d", rowIndex), amount)
+		f.SetCellValue(sheetName, fmt.Sprintf("C%d", rowIndex), paymentMethod)
+		f.SetCellValue(sheetName, fmt.Sprintf("D%d", rowIndex), statusLabel)
+		f.SetCellValue(sheetName, fmt.Sprintf("E%d", rowIndex), addedByName)
+		f.SetCellValue(sheetName, fmt.Sprintf("F%d", rowIndex), confirmedByValue)
+		f.SetCellValue(sheetName, fmt.Sprintf("G%d", rowIndex), confirmedDateValue)
+		f.SetCellValue(sheetName, fmt.Sprintf("H%d", rowIndex), notesValue)
+
+		rowIndex++
+	}
+
+	summaryStartRow := rowIndex + 2
+
+	summaryStyle, _ := f.NewStyle(&excelize.Style{
+		Font: &excelize.Font{
+			Bold: true,
+			Size: 11,
+		},
+		Fill: excelize.Fill{
+			Type:    "pattern",
+			Color:   []string{"#E7E6E6"},
+			Pattern: 1,
+		},
+	})
+
+	f.SetCellValue(sheetName, fmt.Sprintf("A%d", summaryStartRow), "Total Confirmed:")
+	f.SetCellValue(sheetName, fmt.Sprintf("B%d", summaryStartRow), totalConfirmed)
+	f.SetCellStyle(sheetName, fmt.Sprintf("A%d", summaryStartRow), fmt.Sprintf("B%d", summaryStartRow), summaryStyle)
+
+	f.SetCellValue(sheetName, fmt.Sprintf("A%d", summaryStartRow+1), "Total Pending:")
+	f.SetCellValue(sheetName, fmt.Sprintf("B%d", summaryStartRow+1), totalPending)
+	f.SetCellStyle(sheetName, fmt.Sprintf("A%d", summaryStartRow+1), fmt.Sprintf("B%d", summaryStartRow+1), summaryStyle)
+
+	timestamp := time.Now().Format("2006-01-02")
+	filename := fmt.Sprintf("payment-summary-%s-%s.xlsx", utils.SanitizeFilename(projectName), timestamp)
+
+	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
+
+	if err := f.Write(w); err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to generate Excel file")
+		return
+	}
+}
+
+func getStatusLabel(status string) string {
+	switch status {
+	case "pending":
+		return "Pending"
+	case "confirmed":
+		return "Confirmed"
+	case "disputed":
+		return "Disputed"
+	default:
+		return status
+	}
 }
