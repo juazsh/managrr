@@ -10,6 +10,8 @@ import { HowItWorks, Features, Pricing, About, Contact } from './pages/marketing
 import Login from './pages/Login';
 import Register from './pages/Register';
 import VerifyEmail from './pages/VerifyEmail';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import CreateProject from './pages/CreateProject';
 import ProjectDetail from './pages/ProjectDetail';
@@ -48,6 +50,18 @@ function App() {
             <div>
               <Navbar />
               <VerifyEmail />
+            </div>
+          } />
+          <Route path="/forgot-password" element={
+            <div>
+              <Navbar />
+              <ForgotPassword />
+            </div>
+          } />
+          <Route path="/reset-password" element={
+            <div>
+              <Navbar />
+              <ResetPassword />
             </div>
           } />
 

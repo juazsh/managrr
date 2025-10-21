@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"log"
 	"net/http"
 	"regexp"
 	"time"
@@ -263,7 +264,10 @@ func ForgotPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	expiresAt := time.Now().Add(1 * time.Hour)
+	// Use UTC time consistently
+	expiresAt := time.Now().UTC().Add(1 * time.Hour)
+
+	log.Printf("📧 Creating password reset - Token: %s, Expires: %v (UTC)", resetToken, expiresAt)
 
 	insertQuery := `
 		INSERT INTO password_resets (user_id, reset_token, expires_at)
@@ -271,14 +275,18 @@ func ForgotPassword(w http.ResponseWriter, r *http.Request) {
 	`
 	_, err = db.Exec(insertQuery, userID, resetToken, expiresAt)
 	if err != nil {
+		log.Printf("❌ ERROR: Failed to insert reset token: %v", err)
 		respondWithError(w, http.StatusInternalServerError, "Failed to create reset token")
 		return
 	}
 
 	if err := utils.SendPasswordResetEmail(req.Email, resetToken); err != nil {
+		log.Printf("❌ ERROR: Failed to send reset email: %v", err)
 		respondWithError(w, http.StatusInternalServerError, "Failed to send reset email")
 		return
 	}
+
+	log.Printf("✅ Password reset email sent to: %s", req.Email)
 
 	respondWithJSON(w, http.StatusOK, map[string]string{
 		"message": "If the email exists, a password reset link has been sent.",
@@ -291,6 +299,8 @@ func ResetPassword(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
+
+	log.Printf("🔐 Reset Password Request - Token: %s", req.Token)
 
 	if req.Token == "" {
 		respondWithError(w, http.StatusBadRequest, "Reset token is required")
@@ -306,36 +316,52 @@ func ResetPassword(w http.ResponseWriter, r *http.Request) {
 
 	var userID string
 	var usedAt *time.Time
+	var expiresAt time.Time
+
 	query := `
-		SELECT user_id, used_at
+		SELECT user_id, used_at, expires_at
 		FROM password_resets
-		WHERE reset_token = $1 AND expires_at > NOW()
+		WHERE reset_token = $1
 	`
-	err := db.QueryRow(query, req.Token).Scan(&userID, &usedAt)
+	err := db.QueryRow(query, req.Token).Scan(&userID, &usedAt, &expiresAt)
 
 	if err == sql.ErrNoRows {
+		log.Printf("❌ ERROR: Reset token not found - Token: %s", req.Token)
 		respondWithError(w, http.StatusBadRequest, "Invalid or expired reset token")
 		return
 	}
 
 	if err != nil {
+		log.Printf("❌ ERROR: Database query failed: %v", err)
 		respondWithError(w, http.StatusInternalServerError, "Failed to validate token")
 		return
 	}
 
+	currentTime := time.Now().UTC()
+	log.Printf("✅ Token found - Expires: %v (UTC), Current time: %v (UTC)", expiresAt, currentTime)
+
+	if currentTime.After(expiresAt) {
+		log.Printf("❌ ERROR: Token expired - Expired at: %v (UTC), Current time: %v (UTC)", expiresAt, currentTime)
+		respondWithError(w, http.StatusBadRequest, "Invalid or expired reset token")
+		return
+	}
+
 	if usedAt != nil {
+		log.Printf("❌ ERROR: Token already used at: %v", *usedAt)
 		respondWithError(w, http.StatusBadRequest, "Reset token has already been used")
 		return
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
 	if err != nil {
+		log.Printf("❌ ERROR: Failed to hash password: %v", err)
 		respondWithError(w, http.StatusInternalServerError, "Failed to process password")
 		return
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
+		log.Printf("❌ ERROR: Failed to start transaction: %v", err)
 		respondWithError(w, http.StatusInternalServerError, "Failed to start transaction")
 		return
 	}
@@ -344,6 +370,7 @@ func ResetPassword(w http.ResponseWriter, r *http.Request) {
 	updateUserQuery := "UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2"
 	_, err = tx.Exec(updateUserQuery, string(hashedPassword), userID)
 	if err != nil {
+		log.Printf("❌ ERROR: Failed to update password: %v", err)
 		respondWithError(w, http.StatusInternalServerError, "Failed to update password")
 		return
 	}
@@ -351,14 +378,18 @@ func ResetPassword(w http.ResponseWriter, r *http.Request) {
 	markUsedQuery := "UPDATE password_resets SET used_at = NOW() WHERE reset_token = $1"
 	_, err = tx.Exec(markUsedQuery, req.Token)
 	if err != nil {
+		log.Printf("❌ ERROR: Failed to mark token as used: %v", err)
 		respondWithError(w, http.StatusInternalServerError, "Failed to mark token as used")
 		return
 	}
 
 	if err := tx.Commit(); err != nil {
+		log.Printf("❌ ERROR: Failed to commit transaction: %v", err)
 		respondWithError(w, http.StatusInternalServerError, "Failed to commit transaction")
 		return
 	}
+
+	log.Printf("✅ Password reset successful for user: %s", userID)
 
 	respondWithJSON(w, http.StatusOK, map[string]string{
 		"message": "Password has been reset successfully. You can now log in with your new password.",
