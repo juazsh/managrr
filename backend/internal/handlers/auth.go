@@ -228,6 +228,54 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	w.Write(response)
 }
 
+type ProjectParticipants struct {
+	ProjectTitle    string
+	OwnerID         string
+	OwnerEmail      string
+	OwnerName       string
+	ContractorID    sql.NullString
+	ContractorEmail sql.NullString
+	ContractorName  sql.NullString
+}
+
+func getProjectParticipants(db *sql.DB, projectID string) (*ProjectParticipants, error) {
+	var participants ProjectParticipants
+	err := db.QueryRow(`
+		SELECT p.title, p.owner_id, u1.email, u1.name, p.contractor_id, u2.email, u2.name
+		FROM projects p
+		LEFT JOIN users u1 ON p.owner_id = u1.id
+		LEFT JOIN users u2 ON p.contractor_id = u2.id
+		WHERE p.id = $1
+	`, projectID).Scan(
+		&participants.ProjectTitle,
+		&participants.OwnerID,
+		&participants.OwnerEmail,
+		&participants.OwnerName,
+		&participants.ContractorID,
+		&participants.ContractorEmail,
+		&participants.ContractorName,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &participants, nil
+}
+
+type UserNotificationInfo struct {
+	Name     string
+	UserType string
+}
+
+func getUserInfo(db *sql.DB, userID string) (*UserNotificationInfo, error) {
+	var userInfo UserNotificationInfo
+	err := db.QueryRow("SELECT name, user_type FROM users WHERE id = $1", userID).
+		Scan(&userInfo.Name, &userInfo.UserType)
+	if err != nil {
+		return nil, err
+	}
+	return &userInfo, nil
+}
+
 func ForgotPassword(w http.ResponseWriter, r *http.Request) {
 	var req models.ForgotPasswordRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

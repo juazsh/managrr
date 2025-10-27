@@ -13,6 +13,7 @@ import (
 	"github.com/juazsh/managrr/internal/middleware"
 	"github.com/juazsh/managrr/internal/models"
 	"github.com/juazsh/managrr/internal/storage"
+	"github.com/juazsh/managrr/internal/utils"
 )
 
 const (
@@ -138,6 +139,24 @@ func CreateProjectUpdate(w http.ResponseWriter, r *http.Request) {
 			log.Printf("ERROR CreateProjectUpdate: Failed to save photo metadata: %v", err)
 			respondWithError(w, http.StatusInternalServerError, "Failed to save photo metadata")
 			return
+		}
+	}
+
+	participants, err := getProjectParticipants(db, projectID)
+	if err == nil {
+		userInfo, err := getUserInfo(db, userCtx.UserID)
+		if err == nil {
+			err = utils.SendProjectUpdateNotification(
+				participants.OwnerEmail,
+				participants.OwnerName,
+				userInfo.Name,
+				participants.ProjectTitle,
+				updateType,
+				content,
+			)
+			if err != nil {
+				log.Printf("Failed to send project update notification to owner: %v", err)
+			}
 		}
 	}
 

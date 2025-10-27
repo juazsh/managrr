@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"path/filepath"
 	"strconv"
@@ -158,6 +159,24 @@ func AddPaymentSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	participants, err := getProjectParticipants(db, projectID)
+	if err == nil {
+		if participants.ContractorEmail.Valid && participants.ContractorName.Valid {
+			err = utils.SendPaymentAddedNotification(
+				participants.ContractorEmail.String,
+				participants.ContractorName.String,
+				participants.OwnerName,
+				participants.ProjectTitle,
+				amountFloat,
+				paymentMethod,
+				paymentDate,
+			)
+			if err != nil {
+				log.Printf("Failed to send payment added notification to contractor: %v", err)
+			}
+		}
+	}
+
 	respondWithJSON(w, http.StatusCreated, payment)
 }
 
@@ -287,10 +306,10 @@ func ConfirmPayment(w http.ResponseWriter, r *http.Request) {
 
 	var payment models.PaymentSummary
 	err := db.QueryRow(`
-		SELECT ps.id, ps.project_id, ps.status
+		SELECT ps.id, ps.project_id, ps.status, ps.amount, ps.payment_date
 		FROM payment_summaries ps
 		WHERE ps.id = $1
-	`, paymentID).Scan(&payment.ID, &payment.ProjectID, &payment.Status)
+	`, paymentID).Scan(&payment.ID, &payment.ProjectID, &payment.Status, &payment.Amount, &payment.PaymentDate)
 
 	if err == sql.ErrNoRows {
 		respondWithError(w, http.StatusNotFound, "Payment summary not found")
@@ -319,7 +338,7 @@ func ConfirmPayment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, err = db.Exec(`
-		UPDATE payment_summaries 
+		UPDATE payment_summaries
 		SET status = $1, confirmed_by = $2, confirmed_at = $3, updated_at = $3
 		WHERE id = $4
 	`, models.PaymentStatusConfirmed, userCtx.UserID, time.Now(), paymentID)
@@ -327,6 +346,24 @@ func ConfirmPayment(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to confirm payment")
 		return
+	}
+
+	participants, err := getProjectParticipants(db, payment.ProjectID)
+	if err == nil {
+		userInfo, err := getUserInfo(db, userCtx.UserID)
+		if err == nil {
+			err = utils.SendPaymentConfirmedNotification(
+				participants.OwnerEmail,
+				participants.OwnerName,
+				userInfo.Name,
+				participants.ProjectTitle,
+				payment.Amount,
+				payment.PaymentDate,
+			)
+			if err != nil {
+				log.Printf("Failed to send payment confirmed notification to owner: %v", err)
+			}
+		}
 	}
 
 	respondWithJSON(w, http.StatusOK, map[string]string{"message": "Payment confirmed successfully"})
@@ -365,10 +402,10 @@ func DisputePayment(w http.ResponseWriter, r *http.Request) {
 
 	var payment models.PaymentSummary
 	err := db.QueryRow(`
-		SELECT ps.id, ps.project_id, ps.status
+		SELECT ps.id, ps.project_id, ps.status, ps.amount, ps.payment_date
 		FROM payment_summaries ps
 		WHERE ps.id = $1
-	`, paymentID).Scan(&payment.ID, &payment.ProjectID, &payment.Status)
+	`, paymentID).Scan(&payment.ID, &payment.ProjectID, &payment.Status, &payment.Amount, &payment.PaymentDate)
 
 	if err == sql.ErrNoRows {
 		respondWithError(w, http.StatusNotFound, "Payment summary not found")
@@ -397,7 +434,7 @@ func DisputePayment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, err = db.Exec(`
-		UPDATE payment_summaries 
+		UPDATE payment_summaries
 		SET status = $1, disputed_at = $2, dispute_reason = $3, updated_at = $2
 		WHERE id = $4
 	`, models.PaymentStatusDisputed, time.Now(), req.Reason, paymentID)
@@ -405,6 +442,25 @@ func DisputePayment(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to dispute payment")
 		return
+	}
+
+	participants, err := getProjectParticipants(db, payment.ProjectID)
+	if err == nil {
+		userInfo, err := getUserInfo(db, userCtx.UserID)
+		if err == nil {
+			err = utils.SendPaymentDisputedNotification(
+				participants.OwnerEmail,
+				participants.OwnerName,
+				userInfo.Name,
+				participants.ProjectTitle,
+				payment.Amount,
+				payment.PaymentDate,
+				req.Reason,
+			)
+			if err != nil {
+				log.Printf("Failed to send payment disputed notification to owner: %v", err)
+			}
+		}
 	}
 
 	respondWithJSON(w, http.StatusOK, map[string]string{"message": "Payment disputed successfully"})

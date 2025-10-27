@@ -206,6 +206,52 @@ func AddExpense(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Printf("Expense created successfully - ID: %s", expense.ID)
+
+	participants, err := getProjectParticipants(db, projectID)
+	if err == nil {
+		userInfo, err := getUserInfo(db, userCtx.UserID)
+		if err == nil {
+			descText := description
+			if descText == "" {
+				descText = "No description"
+			}
+
+			if participants.ContractorEmail.Valid && participants.ContractorName.Valid {
+				if userCtx.UserID != participants.ContractorID.String {
+					err = utils.SendExpenseAddedNotification(
+						participants.ContractorEmail.String,
+						participants.ContractorName.String,
+						userInfo.Name,
+						userInfo.UserType,
+						participants.ProjectTitle,
+						amountFloat,
+						category,
+						descText,
+					)
+					if err != nil {
+						log.Printf("Failed to send expense notification to contractor: %v", err)
+					}
+				}
+			}
+
+			if userCtx.UserID != participants.OwnerID {
+				err = utils.SendExpenseAddedNotification(
+					participants.OwnerEmail,
+					participants.OwnerName,
+					userInfo.Name,
+					userInfo.UserType,
+					participants.ProjectTitle,
+					amountFloat,
+					category,
+					descText,
+				)
+				if err != nil {
+					log.Printf("Failed to send expense notification to owner: %v", err)
+				}
+			}
+		}
+	}
+
 	log.Println("=== AddExpense Handler Completed ===")
 	respondWithJSON(w, http.StatusCreated, expense)
 }
@@ -560,6 +606,51 @@ func UpdateExpense(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to update expense")
 		return
+	}
+
+	participants, err := getProjectParticipants(db, existing.ProjectID)
+	if err == nil {
+		userInfo, err := getUserInfo(db, userCtx.UserID)
+		if err == nil {
+			descText := description
+			if descText == "" {
+				descText = "No description"
+			}
+
+			if participants.ContractorEmail.Valid && participants.ContractorName.Valid {
+				if userCtx.UserID != participants.ContractorID.String {
+					err = utils.SendExpenseUpdatedNotification(
+						participants.ContractorEmail.String,
+						participants.ContractorName.String,
+						userInfo.Name,
+						userInfo.UserType,
+						participants.ProjectTitle,
+						amountFloat,
+						category,
+						descText,
+					)
+					if err != nil {
+						log.Printf("Failed to send expense update notification to contractor: %v", err)
+					}
+				}
+			}
+
+			if userCtx.UserID != participants.OwnerID {
+				err = utils.SendExpenseUpdatedNotification(
+					participants.OwnerEmail,
+					participants.OwnerName,
+					userInfo.Name,
+					userInfo.UserType,
+					participants.ProjectTitle,
+					amountFloat,
+					category,
+					descText,
+				)
+				if err != nil {
+					log.Printf("Failed to send expense update notification to owner: %v", err)
+				}
+			}
+		}
 	}
 
 	respondWithJSON(w, http.StatusOK, map[string]string{"message": "Expense updated successfully"})

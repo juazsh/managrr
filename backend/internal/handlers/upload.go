@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"database/sql"
+	"log"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -11,6 +12,7 @@ import (
 	"github.com/juazsh/managrr/internal/middleware"
 	"github.com/juazsh/managrr/internal/models"
 	"github.com/juazsh/managrr/internal/storage"
+	"github.com/juazsh/managrr/internal/utils"
 )
 
 const maxFileSize = 5 * 1024 * 1024
@@ -111,6 +113,38 @@ func UploadProjectPhoto(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to save photo record")
 		return
+	}
+
+	participants, err := getProjectParticipants(db, projectID)
+	if err == nil {
+		userInfo, err := getUserInfo(db, userCtx.UserID)
+		if err == nil {
+			if userCtx.UserID == participants.OwnerID {
+				if participants.ContractorEmail.Valid && participants.ContractorName.Valid {
+					err = utils.SendPhotoUploadNotification(
+						participants.ContractorEmail.String,
+						participants.ContractorName.String,
+						userInfo.Name,
+						userInfo.UserType,
+						participants.ProjectTitle,
+					)
+					if err != nil {
+						log.Printf("Failed to send photo upload notification to contractor: %v", err)
+					}
+				}
+			} else {
+				err = utils.SendPhotoUploadNotification(
+					participants.OwnerEmail,
+					participants.OwnerName,
+					userInfo.Name,
+					userInfo.UserType,
+					participants.ProjectTitle,
+				)
+				if err != nil {
+					log.Printf("Failed to send photo upload notification to owner: %v", err)
+				}
+			}
+		}
 	}
 
 	respondWithJSON(w, http.StatusCreated, photo)
