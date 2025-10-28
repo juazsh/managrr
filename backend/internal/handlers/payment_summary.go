@@ -189,6 +189,7 @@ func ListPaymentSummaries(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	projectID := vars["project_id"]
+	contractorFilter := r.URL.Query().Get("contractor_id")
 
 	db := database.GetDB()
 
@@ -219,10 +220,20 @@ func ListPaymentSummaries(w http.ResponseWriter, r *http.Request) {
 		FROM payment_summaries ps
 		JOIN users u ON ps.added_by = u.id
 		WHERE ps.project_id = $1
-		ORDER BY ps.payment_date DESC, ps.created_at DESC
 	`
 
-	rows, err := db.Query(query, projectID)
+	args := []interface{}{projectID}
+	argIndex := 2
+
+	if contractorFilter != "" {
+		query += " AND ps.added_by = $" + strconv.Itoa(argIndex)
+		args = append(args, contractorFilter)
+		argIndex++
+	}
+
+	query += " ORDER BY ps.payment_date DESC, ps.created_at DESC"
+
+	rows, err := db.Query(query, args...)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to fetch payment summaries")
 		return
@@ -830,3 +841,110 @@ func getStatusLabel(status string) string {
 		return status
 	}
 }
+
+// func ListPaymentSummaries(w http.ResponseWriter, r *http.Request) {
+// 	userCtx, ok := middleware.GetUserFromContext(r.Context())
+// 	if !ok {
+// 		respondWithError(w, http.StatusUnauthorized, "User not found in context")
+// 		return
+// 	}
+
+// 	vars := mux.Vars(r)
+// 	projectID := vars["project_id"]
+
+// 	db := database.GetDB()
+
+// 	var ownerID, contractorID sql.NullString
+// 	err := db.QueryRow("SELECT owner_id, contractor_id FROM projects WHERE id = $1", projectID).Scan(&ownerID, &contractorID)
+// 	if err == sql.ErrNoRows {
+// 		respondWithError(w, http.StatusNotFound, "Project not found")
+// 		return
+// 	}
+// 	if err != nil {
+// 		respondWithError(w, http.StatusInternalServerError, "Failed to verify project access")
+// 		return
+// 	}
+
+// 	isOwner := ownerID.Valid && ownerID.String == userCtx.UserID
+// 	isContractor := contractorID.Valid && contractorID.String == userCtx.UserID
+
+// 	if !isOwner && !isContractor {
+// 		respondWithError(w, http.StatusForbidden, "Access denied")
+// 		return
+// 	}
+
+// 	query := `
+// 		SELECT ps.id, ps.project_id, ps.amount, ps.payment_method, ps.payment_date,
+// 		       ps.screenshot_url, ps.notes, ps.added_by, ps.status,
+// 		       ps.confirmed_by, ps.confirmed_at, ps.disputed_at, ps.dispute_reason,
+// 		       ps.created_at, ps.updated_at, u.name as added_by_name
+// 		FROM payment_summaries ps
+// 		JOIN users u ON ps.added_by = u.id
+// 		WHERE ps.project_id = $1
+// 		ORDER BY ps.payment_date DESC, ps.created_at DESC
+// 	`
+
+// 	rows, err := db.Query(query, projectID)
+// 	if err != nil {
+// 		respondWithError(w, http.StatusInternalServerError, "Failed to fetch payment summaries")
+// 		return
+// 	}
+// 	defer rows.Close()
+
+// 	var payments []map[string]interface{}
+// 	for rows.Next() {
+// 		var payment models.PaymentSummary
+// 		var addedByName string
+
+// 		err := rows.Scan(
+// 			&payment.ID,
+// 			&payment.ProjectID,
+// 			&payment.Amount,
+// 			&payment.PaymentMethod,
+// 			&payment.PaymentDate,
+// 			&payment.ScreenshotURL,
+// 			&payment.Notes,
+// 			&payment.AddedBy,
+// 			&payment.Status,
+// 			&payment.ConfirmedBy,
+// 			&payment.ConfirmedAt,
+// 			&payment.DisputedAt,
+// 			&payment.DisputeReason,
+// 			&payment.CreatedAt,
+// 			&payment.UpdatedAt,
+// 			&addedByName,
+// 		)
+
+// 		if err != nil {
+// 			respondWithError(w, http.StatusInternalServerError, "Failed to scan payment summary")
+// 			return
+// 		}
+
+// 		paymentData := map[string]interface{}{
+// 			"id":             payment.ID,
+// 			"project_id":     payment.ProjectID,
+// 			"amount":         payment.Amount,
+// 			"payment_method": payment.PaymentMethod,
+// 			"payment_date":   payment.PaymentDate,
+// 			"screenshot_url": payment.ScreenshotURL,
+// 			"notes":          payment.Notes,
+// 			"added_by":       payment.AddedBy,
+// 			"added_by_name":  addedByName,
+// 			"status":         payment.Status,
+// 			"confirmed_by":   payment.ConfirmedBy,
+// 			"confirmed_at":   payment.ConfirmedAt,
+// 			"disputed_at":    payment.DisputedAt,
+// 			"dispute_reason": payment.DisputeReason,
+// 			"created_at":     payment.CreatedAt,
+// 			"updated_at":     payment.UpdatedAt,
+// 		}
+
+// 		payments = append(payments, paymentData)
+// 	}
+
+// 	if payments == nil {
+// 		payments = []map[string]interface{}{}
+// 	}
+
+// 	respondWithJSON(w, http.StatusOK, payments)
+// }

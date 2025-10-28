@@ -457,6 +457,7 @@ func GetProjectWorkLogs(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	projectID := vars["id"]
+	contractorFilter := r.URL.Query().Get("contractor_id")
 
 	db := database.GetDB()
 
@@ -471,7 +472,7 @@ func GetProjectWorkLogs(w http.ResponseWriter, r *http.Request) {
 		}
 	} else if userCtx.UserType == string(models.UserTypeContractor) {
 		err := db.QueryRow(`
-			SELECT EXISTS(SELECT 1 FROM projects WHERE id = $1 AND contractor_id = $2)
+			SELECT EXISTS(SELECT 1 FROM project_contractors WHERE project_id = $1 AND contractor_id = $2)
 		`, projectID, userCtx.UserID).Scan(&hasAccess)
 		if err != nil || !hasAccess {
 			respondWithError(w, http.StatusForbidden, "Access denied")
@@ -500,11 +501,22 @@ func GetProjectWorkLogs(w http.ResponseWriter, r *http.Request) {
 		FROM work_logs wl
 		JOIN users u ON wl.employee_id = u.id
 		JOIN projects p ON wl.project_id = p.id
-		WHERE wl.project_id = $1
-		ORDER BY wl.check_in_time DESC
 	`
 
-	rows, err := db.Query(query, projectID)
+	args := []interface{}{projectID}
+	argIndex := 2
+
+	if contractorFilter != "" {
+		query += ` JOIN employees e ON wl.employee_id = e.user_id
+		WHERE wl.project_id = $1 AND e.contractor_id = $` + strconv.Itoa(argIndex)
+		args = append(args, contractorFilter)
+	} else {
+		query += ` WHERE wl.project_id = $1`
+	}
+
+	query += ` ORDER BY wl.check_in_time DESC`
+
+	rows, err := db.Query(query, args...)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to fetch work logs")
 		return
@@ -784,3 +796,106 @@ func GetSummaryByProject(w http.ResponseWriter, r *http.Request) {
 
 	respondWithJSON(w, http.StatusOK, summaries)
 }
+
+// func GetProjectWorkLogs(w http.ResponseWriter, r *http.Request) {
+// 	userCtx, ok := middleware.GetUserFromContext(r.Context())
+// 	if !ok {
+// 		respondWithError(w, http.StatusUnauthorized, "User not found in context")
+// 		return
+// 	}
+
+// 	vars := mux.Vars(r)
+// 	projectID := vars["id"]
+
+// 	db := database.GetDB()
+
+// 	var hasAccess bool
+// 	if userCtx.UserType == string(models.UserTypeHouseOwner) {
+// 		err := db.QueryRow(`
+// 			SELECT EXISTS(SELECT 1 FROM projects WHERE id = $1 AND owner_id = $2)
+// 		`, projectID, userCtx.UserID).Scan(&hasAccess)
+// 		if err != nil || !hasAccess {
+// 			respondWithError(w, http.StatusForbidden, "Access denied")
+// 			return
+// 		}
+// 	} else if userCtx.UserType == string(models.UserTypeContractor) {
+// 		err := db.QueryRow(`
+// 			SELECT EXISTS(SELECT 1 FROM projects WHERE id = $1 AND contractor_id = $2)
+// 		`, projectID, userCtx.UserID).Scan(&hasAccess)
+// 		if err != nil || !hasAccess {
+// 			respondWithError(w, http.StatusForbidden, "Access denied")
+// 			return
+// 		}
+// 	} else if userCtx.UserType == string(models.UserTypeEmployee) {
+// 		err := db.QueryRow(`
+// 			SELECT EXISTS(SELECT 1 FROM employee_projects WHERE project_id = $1 AND employee_id = $2)
+// 		`, projectID, userCtx.UserID).Scan(&hasAccess)
+// 		if err != nil || !hasAccess {
+// 			respondWithError(w, http.StatusForbidden, "Access denied")
+// 			return
+// 		}
+// 	} else {
+// 		respondWithError(w, http.StatusForbidden, "Access denied")
+// 		return
+// 	}
+
+// 	query := `
+// 		SELECT wl.id, wl.employee_id, wl.project_id, wl.check_in_time, wl.check_out_time,
+// 		       wl.check_in_photo_url, wl.check_out_photo_url,
+// 		       wl.check_in_latitude, wl.check_in_longitude,
+// 		       wl.check_out_latitude, wl.check_out_longitude,
+// 		       wl.hours_worked, wl.created_at,
+// 		       u.name as employee_name, p.title as project_name
+// 		FROM work_logs wl
+// 		JOIN users u ON wl.employee_id = u.id
+// 		JOIN projects p ON wl.project_id = p.id
+// 		WHERE wl.project_id = $1
+// 		ORDER BY wl.check_in_time DESC
+// 	`
+
+// 	rows, err := db.Query(query, projectID)
+// 	if err != nil {
+// 		respondWithError(w, http.StatusInternalServerError, "Failed to fetch work logs")
+// 		return
+// 	}
+// 	defer rows.Close()
+
+// 	type WorkLogResponse struct {
+// 		models.WorkLog
+// 		EmployeeName string `json:"employee_name"`
+// 		ProjectName  string `json:"project_name"`
+// 	}
+
+// 	var workLogs []WorkLogResponse
+// 	for rows.Next() {
+// 		var wl WorkLogResponse
+// 		err := rows.Scan(
+// 			&wl.ID,
+// 			&wl.EmployeeID,
+// 			&wl.ProjectID,
+// 			&wl.CheckInTime,
+// 			&wl.CheckOutTime,
+// 			&wl.CheckInPhotoURL,
+// 			&wl.CheckOutPhotoURL,
+// 			&wl.CheckInLatitude,
+// 			&wl.CheckInLongitude,
+// 			&wl.CheckOutLatitude,
+// 			&wl.CheckOutLongitude,
+// 			&wl.HoursWorked,
+// 			&wl.CreatedAt,
+// 			&wl.EmployeeName,
+// 			&wl.ProjectName,
+// 		)
+// 		if err != nil {
+// 			respondWithError(w, http.StatusInternalServerError, "Failed to scan work log")
+// 			return
+// 		}
+// 		workLogs = append(workLogs, wl)
+// 	}
+
+// 	if workLogs == nil {
+// 		workLogs = []WorkLogResponse{}
+// 	}
+
+// 	respondWithJSON(w, http.StatusOK, workLogs)
+// }
