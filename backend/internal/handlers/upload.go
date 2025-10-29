@@ -36,9 +36,7 @@ func UploadProjectPhoto(w http.ResponseWriter, r *http.Request) {
 	db := database.GetDB()
 
 	var ownerID string
-	var contractorID *string
-	err := db.QueryRow("SELECT owner_id, contractor_id FROM projects WHERE id = $1", projectID).
-		Scan(&ownerID, &contractorID)
+	err := db.QueryRow("SELECT owner_id FROM projects WHERE id = $1", projectID).Scan(&ownerID)
 
 	if err == sql.ErrNoRows {
 		respondWithError(w, http.StatusNotFound, "Project not found")
@@ -50,12 +48,17 @@ func UploadProjectPhoto(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	canUpload := ownerID == userCtx.UserID ||
-		(contractorID != nil && *contractorID == userCtx.UserID)
+	canUpload := ownerID == userCtx.UserID
 
-	if !canUpload {
-		respondWithError(w, http.StatusForbidden, "Only project owner or assigned contractor can upload photos")
-		return
+	if !canUpload && userCtx.UserType == string(models.UserTypeContractor) {
+		var isContractor bool
+		db.QueryRow(`
+        SELECT EXISTS(
+            SELECT 1 FROM project_contractors 
+            WHERE project_id = $1 AND contractor_id = $2
+        )
+    `, projectID, userCtx.UserID).Scan(&isContractor)
+		canUpload = isContractor
 	}
 
 	if err := r.ParseMultipartForm(maxFileSize); err != nil {

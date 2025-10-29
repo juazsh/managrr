@@ -294,41 +294,39 @@ func GetProjectExpenses(w http.ResponseWriter, r *http.Request) {
 
 	db := database.GetDB()
 
-	var ownerID, contractorID sql.NullString
-	err := db.QueryRow("SELECT owner_id, contractor_id FROM projects WHERE id = $1", projectID).Scan(&ownerID, &contractorID)
-
+	var ownerID string
+	err := db.QueryRow("SELECT owner_id FROM projects WHERE id = $1", projectID).Scan(&ownerID)
 	if err == sql.ErrNoRows {
 		respondWithError(w, http.StatusNotFound, "Project not found")
 		return
 	}
-
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to fetch project")
 		return
 	}
 
-	isOwner := ownerID.Valid && ownerID.String == userCtx.UserID
-	isContractor := contractorID.Valid && contractorID.String == userCtx.UserID
+	isOwner := ownerID == userCtx.UserID
+
+	var isContractor bool
+	if !isOwner {
+		db.QueryRow(`
+			SELECT EXISTS(
+				SELECT 1 FROM project_contractors 
+				WHERE project_id = $1 AND contractor_id = $2
+			)
+		`, projectID, userCtx.UserID).Scan(&isContractor)
+	}
 
 	if !isOwner && !isContractor {
-		respondWithError(w, http.StatusForbidden, "Only project owner or assigned contractor can view expenses")
+		respondWithError(w, http.StatusForbidden, "Access denied")
 		return
 	}
 
-	paidBy := r.URL.Query().Get("paid_by")
-	category := r.URL.Query().Get("category")
+	paidByFilter := r.URL.Query().Get("paid_by")
+	categoryFilter := r.URL.Query().Get("category")
 	startDate := r.URL.Query().Get("start_date")
 	endDate := r.URL.Query().Get("end_date")
 	contractorFilter := r.URL.Query().Get("contractor_id")
-
-	if paidBy == "" {
-		paidBy = "all"
-	}
-
-	if paidBy != "all" && paidBy != string(models.ExpensePaidByOwner) && paidBy != string(models.ExpensePaidByContractor) {
-		respondWithError(w, http.StatusBadRequest, "Invalid paid_by filter")
-		return
-	}
 
 	query := `
 		SELECT e.id, e.project_id, e.amount, e.vendor, e.date, e.category, e.description, 
@@ -340,15 +338,15 @@ func GetProjectExpenses(w http.ResponseWriter, r *http.Request) {
 	args := []interface{}{projectID}
 	argIndex := 2
 
-	if paidBy != "all" {
+	if paidByFilter != "" {
 		query += " AND e.paid_by = $" + strconv.Itoa(argIndex)
-		args = append(args, paidBy)
+		args = append(args, paidByFilter)
 		argIndex++
 	}
 
-	if category != "" {
+	if categoryFilter != "" {
 		query += " AND e.category = $" + strconv.Itoa(argIndex)
-		args = append(args, category)
+		args = append(args, categoryFilter)
 		argIndex++
 	}
 
@@ -478,15 +476,24 @@ func GetExpenseByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var ownerID, contractorID sql.NullString
-	err = db.QueryRow("SELECT owner_id, contractor_id FROM projects WHERE id = $1", exp.ProjectID).Scan(&ownerID, &contractorID)
+	var ownerID string
+	err = db.QueryRow("SELECT owner_id FROM projects WHERE id = $1", exp.ProjectID).Scan(&ownerID)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to verify project access")
 		return
 	}
 
-	isOwner := ownerID.Valid && ownerID.String == userCtx.UserID
-	isContractor := contractorID.Valid && contractorID.String == userCtx.UserID
+	isOwner := ownerID == userCtx.UserID
+
+	var isContractor bool
+	if !isOwner {
+		db.QueryRow(`
+        SELECT EXISTS(
+            SELECT 1 FROM project_contractors 
+            WHERE project_id = $1 AND contractor_id = $2
+        )
+    `, exp.ProjectID, userCtx.UserID).Scan(&isContractor)
+	}
 
 	if !isOwner && !isContractor {
 		respondWithError(w, http.StatusForbidden, "Access denied")
@@ -736,8 +743,7 @@ func DownloadExpensesExcel(w http.ResponseWriter, r *http.Request) {
 
 	var ownerID, contractorID sql.NullString
 	var projectName string
-	err := db.QueryRow("SELECT owner_id, contractor_id, title FROM projects WHERE id = $1", projectID).
-		Scan(&ownerID, &contractorID, &projectName)
+	err := db.QueryRow("SELECT owner_id, contractor_id, title FROM projects WHERE id = $1", projectID).Scan(&ownerID, &projectName)
 	if err != nil {
 		respondWithError(w, http.StatusNotFound, "Project not found")
 		return
