@@ -51,10 +51,27 @@ const projectService = {
     return response.data;
   },
 
-  assignContractor: async (id, contractorEmail) => {
-    const response = await api.post(`/projects/${id}/assign-contractor`, {
-      contractor_email: contractorEmail,
+  // assignContractor: async (id, contractorEmail) => {
+  //   const response = await api.post(`/projects/${id}/assign-contractor`, {
+  //     contractor_email: contractorEmail,
+  //   });
+  //   return response.data;
+  // },
+
+  assignContractor: async (projectId, contractorId) => {
+    const response = await api.post(`/projects/${projectId}/contractors`, {
+      contractor_id: contractorId,
     });
+    return response.data;
+  },
+
+  removeContractor: async (projectId, contractorId) => {
+    const response = await api.delete(`/projects/${projectId}/contractors/${contractorId}`);
+    return response.data;
+  },
+
+  getProjectContractors: async (projectId) => {
+    const response = await api.get(`/projects/${projectId}/contractors`);
     return response.data;
   },
 

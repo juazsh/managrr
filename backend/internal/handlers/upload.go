@@ -163,9 +163,7 @@ func GetProjectPhotos(w http.ResponseWriter, r *http.Request) {
 	db := database.GetDB()
 
 	var ownerID string
-	var contractorID *string
-	err := db.QueryRow("SELECT owner_id, contractor_id FROM projects WHERE id = $1", projectID).
-		Scan(&ownerID, &contractorID)
+	err := db.QueryRow("SELECT owner_id FROM projects WHERE id = $1", projectID).Scan(&ownerID)
 
 	if err == sql.ErrNoRows {
 		respondWithError(w, http.StatusNotFound, "Project not found")
@@ -181,8 +179,17 @@ func GetProjectPhotos(w http.ResponseWriter, r *http.Request) {
 	switch userCtx.UserType {
 	case string(models.UserTypeHouseOwner):
 		hasAccess = ownerID == userCtx.UserID
+
 	case string(models.UserTypeContractor):
-		hasAccess = contractorID != nil && *contractorID == userCtx.UserID
+		var isContractor bool
+		db.QueryRow(`
+			SELECT EXISTS(
+				SELECT 1 FROM project_contractors 
+				WHERE project_id = $1 AND contractor_id = $2
+			)
+		`, projectID, userCtx.UserID).Scan(&isContractor)
+		hasAccess = isContractor
+
 	case string(models.UserTypeEmployee):
 		var count int
 		err := db.QueryRow(`

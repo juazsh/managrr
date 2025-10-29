@@ -94,17 +94,27 @@ func AddExpense(w http.ResponseWriter, r *http.Request) {
 	}
 
 	db := database.GetDB()
-	var ownerID, contractorID sql.NullString
-	err := db.QueryRow("SELECT owner_id, contractor_id FROM projects WHERE id = $1", projectID).Scan(&ownerID, &contractorID)
+	var ownerID string
+	err := db.QueryRow("SELECT owner_id FROM projects WHERE id = $1", projectID).Scan(&ownerID)
 	if err != nil {
 		log.Printf("ERROR: Failed to fetch project: %v", err)
 		respondWithError(w, http.StatusInternalServerError, "Failed to verify project access")
 		return
 	}
-	log.Printf("Project found - Owner ID: %v, Contractor ID: %v", ownerID, contractorID)
+	log.Printf("Project found - Owner ID: %v", ownerID)
 
-	isOwner := ownerID.Valid && ownerID.String == userCtx.UserID
-	isContractor := contractorID.Valid && contractorID.String == userCtx.UserID
+	isOwner := ownerID == userCtx.UserID
+
+	var isContractor bool
+	if !isOwner {
+		db.QueryRow(`
+			SELECT EXISTS(
+				SELECT 1 FROM project_contractors 
+				WHERE project_id = $1 AND contractor_id = $2
+			)
+		`, projectID, userCtx.UserID).Scan(&isContractor)
+	}
+
 	log.Printf("Access check - isOwner: %v, isContractor: %v", isOwner, isContractor)
 
 	if !isOwner && !isContractor {

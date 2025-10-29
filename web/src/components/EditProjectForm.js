@@ -1,18 +1,28 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import projectService from "../services/projectService"
+import AssignContractorModal from "./AssignContractorModal"
 import { theme } from "../theme"
 
 const EditProjectForm = ({ project, onSave, onCancel }) => {
-  const [formData, setFormData] = useState({
-    title: project.title,
-    description: project.description,
-    estimated_cost: project.estimated_cost,
-    address: project.address,
-    status: project.status,
-  })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [assignedContractors, setAssignedContractors] = useState([])
+  const [showAssignModal, setShowAssignModal] = useState(false)
+  const [formData, setFormData] = useState({
+    title: project.title || "",
+    description: project.description || "",
+    estimated_cost: project.estimated_cost || "",
+    address: project.address || "",
+    status: project.status || "draft",
+  })
+
+  useEffect(() => {
+    if (project.contractors && Array.isArray(project.contractors)) {
+      setAssignedContractors(project.contractors)
+    }
+  }, [project.contractors])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -22,27 +32,49 @@ const EditProjectForm = ({ project, onSave, onCancel }) => {
     }))
   }
 
+  const handleRemoveContractor = async (contractorId) => {
+    try {
+      await projectService.removeContractor(project.id, contractorId)
+      setAssignedContractors(assignedContractors.filter(c => c.contractor_id !== contractorId))
+    } catch (err) {
+      setError(err.response?.data?.error || "Failed to remove contractor")
+    }
+  }
+
+  const handleAssignContractor = async (contractorEmail) => {
+    try {
+      const response = await projectService.assignContractor(project.id, contractorEmail)
+      const updatedProject = await projectService.getProjectById(project.id)
+      if (updatedProject.project.contractors) {
+        setAssignedContractors(updatedProject.project.contractors)
+      }
+      setShowAssignModal(false)
+    } catch (err) {
+      throw new Error(err.response?.data?.error || "Failed to assign contractor")
+    }
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError("")
 
     if (!formData.title.trim()) {
-      setError("Title is required")
+      setError("Project title is required")
       return
     }
 
     if (!formData.description.trim()) {
-      setError("Description is required")
+      setError("Project description is required")
       return
     }
 
-    if (formData.estimated_cost <= 0) {
+    if (!formData.estimated_cost || parseFloat(formData.estimated_cost) <= 0) {
       setError("Estimated cost must be greater than 0")
       return
     }
 
     if (!formData.address.trim()) {
-      setError("Address is required")
+      setError("Project address is required")
       return
     }
 
@@ -50,130 +82,22 @@ const EditProjectForm = ({ project, onSave, onCancel }) => {
       setLoading(true)
       await onSave(formData)
     } catch (err) {
-      setError(err.message)
+      setError(err.message || "Failed to update project")
     } finally {
       setLoading(false)
     }
   }
 
-  const styles = {
-    container: {
-      background: theme.colors.white,
-      padding: "2rem",
-      borderRadius: theme.borderRadius.lg,
-      boxShadow: theme.shadows.md,
-      marginBottom: "2rem",
-      border: `1px solid ${theme.colors.borderLight}`,
-    },
-    title: {
-      margin: "0 0 1.5rem 0",
-      color: theme.colors.text,
-      fontSize: theme.typography.h3.fontSize,
-      fontWeight: theme.typography.h3.fontWeight,
-      letterSpacing: "-0.02em",
-    },
-    formGroup: {
-      marginBottom: "1.5rem",
-    },
-    label: {
-      display: "block",
-      marginBottom: "0.5rem",
-      color: theme.colors.text,
-      fontWeight: "600",
-      fontSize: "0.875rem",
-    },
-    input: {
-      width: "100%",
-      padding: "0.875rem 1rem",
-      border: `1px solid ${theme.colors.border}`,
-      borderRadius: theme.borderRadius.md,
-      fontSize: theme.typography.body.fontSize,
-      fontFamily: theme.typography.fontFamily,
-      backgroundColor: theme.colors.inputBg,
-      transition: "all 0.2s ease",
-      boxSizing: "border-box",
-    },
-    textarea: {
-      width: "100%",
-      padding: "0.875rem 1rem",
-      border: `1px solid ${theme.colors.border}`,
-      borderRadius: theme.borderRadius.md,
-      fontSize: theme.typography.body.fontSize,
-      fontFamily: theme.typography.fontFamily,
-      backgroundColor: theme.colors.inputBg,
-      resize: "vertical",
-      minHeight: "120px",
-      lineHeight: "1.6",
-      transition: "all 0.2s ease",
-      boxSizing: "border-box",
-    },
-    select: {
-      width: "100%",
-      padding: "0.875rem 1rem",
-      border: `1px solid ${theme.colors.border}`,
-      borderRadius: theme.borderRadius.md,
-      fontSize: theme.typography.body.fontSize,
-      fontFamily: theme.typography.fontFamily,
-      backgroundColor: theme.colors.inputBg,
-      cursor: "pointer",
-      transition: "all 0.2s ease",
-      boxSizing: "border-box",
-    },
-    error: {
-      backgroundColor: theme.colors.errorLight,
-      color: theme.colors.error,
-      padding: "0.875rem",
-      borderRadius: theme.borderRadius.md,
-      marginBottom: "1rem",
-      fontSize: theme.typography.small.fontSize,
-      border: `1px solid ${theme.colors.error}`,
-    },
-    actions: {
-      display: "flex",
-      gap: "1rem",
-      justifyContent: "flex-end",
-      marginTop: "1.5rem",
-      flexWrap: "wrap",
-    },
-    cancelButton: {
-      padding: "0.875rem 1.5rem",
-      border: `1px solid ${theme.colors.border}`,
-      borderRadius: theme.borderRadius.md,
-      cursor: "pointer",
-      fontSize: theme.typography.body.fontSize,
-      backgroundColor: theme.colors.white,
-      color: theme.colors.text,
-      fontWeight: "600",
-      transition: "all 0.2s ease",
-      flex: "1 1 auto",
-      minWidth: "120px",
-    },
-    saveButton: {
-      padding: "0.875rem 1.5rem",
-      backgroundColor: theme.colors.black,
-      color: theme.colors.white,
-      border: "none",
-      borderRadius: theme.borderRadius.md,
-      cursor: "pointer",
-      fontSize: theme.typography.body.fontSize,
-      fontWeight: "600",
-      transition: "all 0.2s ease",
-      flex: "1 1 auto",
-      minWidth: "120px",
-    },
-    buttonDisabled: {
-      opacity: 0.6,
-      cursor: "not-allowed",
-    },
-  }
-
   return (
     <div style={styles.container}>
       <h2 style={styles.title}>Edit Project</h2>
-      <form onSubmit={handleSubmit}>
+
+      {error && <div style={styles.error}>{error}</div>}
+
+      <form onSubmit={handleSubmit} style={styles.form}>
         <div style={styles.formGroup}>
           <label htmlFor="title" style={styles.label}>
-            Title *
+            Project Title *
           </label>
           <input
             type="text"
@@ -196,6 +120,7 @@ const EditProjectForm = ({ project, onSave, onCancel }) => {
             value={formData.description}
             onChange={handleChange}
             disabled={loading}
+            rows="5"
             style={styles.textarea}
           />
         </div>
@@ -250,7 +175,39 @@ const EditProjectForm = ({ project, onSave, onCancel }) => {
           </select>
         </div>
 
-        {error && <div style={styles.error}>{error}</div>}
+        <div style={styles.formGroup}>
+          <div style={styles.contractorHeader}>
+            <label style={styles.label}>Assigned Contractors</label>
+            <button
+              type="button"
+              onClick={() => setShowAssignModal(true)}
+              style={styles.addButton}
+            >
+              + Add Contractor
+            </button>
+          </div>
+          {assignedContractors.length === 0 ? (
+            <p style={styles.noContractors}>No contractors assigned yet</p>
+          ) : (
+            <div style={styles.contractorList}>
+              {assignedContractors.map((contractor) => (
+                <div key={contractor.contractor_id} style={styles.contractorItem}>
+                  <div style={styles.contractorInfo}>
+                    <strong>{contractor.name}</strong>
+                    <span style={styles.contractorEmail}>{contractor.email}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveContractor(contractor.contractor_id)}
+                    style={styles.removeButton}
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         <div style={styles.actions}>
           <button type="button" onClick={onCancel} style={styles.cancelButton} disabled={loading}>
@@ -268,8 +225,178 @@ const EditProjectForm = ({ project, onSave, onCancel }) => {
           </button>
         </div>
       </form>
+
+      {showAssignModal && (
+        <AssignContractorModal
+          onClose={() => setShowAssignModal(false)}
+          onAssign={handleAssignContractor}
+        />
+      )}
     </div>
   )
+}
+
+const styles = {
+  container: {
+    backgroundColor: theme.colors.white,
+    padding: "2rem",
+    borderRadius: theme.borderRadius.lg,
+    boxShadow: theme.shadows.md,
+    border: `1px solid ${theme.colors.borderLight}`,
+  },
+  title: {
+    fontSize: theme.typography.h2.fontSize,
+    fontWeight: theme.typography.h2.fontWeight,
+    color: theme.colors.text,
+    marginBottom: "1.5rem",
+  },
+  error: {
+    backgroundColor: theme.colors.errorLight,
+    color: theme.colors.error,
+    padding: "1rem",
+    borderRadius: theme.borderRadius.md,
+    marginBottom: "1.5rem",
+    fontSize: theme.typography.small.fontSize,
+    border: `1px solid ${theme.colors.error}`,
+  },
+  form: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "1.5rem",
+  },
+  formGroup: {
+    display: "flex",
+    flexDirection: "column",
+  },
+  label: {
+    fontSize: "0.875rem",
+    fontWeight: "600",
+    color: theme.colors.text,
+    marginBottom: "0.5rem",
+  },
+  input: {
+    padding: "0.875rem 1rem",
+    fontSize: theme.typography.body.fontSize,
+    border: `1px solid ${theme.colors.border}`,
+    borderRadius: theme.borderRadius.md,
+    outline: "none",
+    transition: "all 0.2s ease",
+    fontFamily: theme.typography.fontFamily,
+    backgroundColor: theme.colors.inputBg,
+  },
+  textarea: {
+    padding: "0.875rem 1rem",
+    fontSize: theme.typography.body.fontSize,
+    border: `1px solid ${theme.colors.border}`,
+    borderRadius: theme.borderRadius.md,
+    outline: "none",
+    transition: "all 0.2s ease",
+    fontFamily: theme.typography.fontFamily,
+    resize: "vertical",
+    backgroundColor: theme.colors.inputBg,
+    lineHeight: "1.6",
+  },
+  select: {
+    padding: "0.875rem 1rem",
+    fontSize: theme.typography.body.fontSize,
+    border: `1px solid ${theme.colors.border}`,
+    borderRadius: theme.borderRadius.md,
+    outline: "none",
+    transition: "all 0.2s ease",
+    fontFamily: theme.typography.fontFamily,
+    backgroundColor: theme.colors.inputBg,
+  },
+  contractorHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "0.75rem",
+  },
+  noContractors: {
+    padding: "1rem",
+    backgroundColor: theme.colors.backgroundLight,
+    borderRadius: theme.borderRadius.md,
+    color: theme.colors.textLight,
+    fontSize: theme.typography.small.fontSize,
+  },
+  contractorList: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.75rem",
+  },
+  contractorItem: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "1rem",
+    backgroundColor: theme.colors.backgroundLight,
+    borderRadius: theme.borderRadius.md,
+    border: `1px solid ${theme.colors.border}`,
+  },
+  contractorInfo: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.25rem",
+  },
+  contractorEmail: {
+    fontSize: theme.typography.small.fontSize,
+    color: theme.colors.textLight,
+  },
+  removeButton: {
+    padding: "0.5rem 1rem",
+    fontSize: theme.typography.small.fontSize,
+    fontWeight: "600",
+    backgroundColor: theme.colors.errorLight,
+    color: theme.colors.error,
+    border: `1px solid ${theme.colors.error}`,
+    borderRadius: theme.borderRadius.sm,
+    cursor: "pointer",
+    transition: "all 0.2s ease",
+  },
+  addButton: {
+    padding: "0.5rem 1rem",
+    fontSize: theme.typography.small.fontSize,
+    fontWeight: "600",
+    backgroundColor: theme.colors.primary,
+    color: theme.colors.white,
+    border: "none",
+    borderRadius: theme.borderRadius.sm,
+    cursor: "pointer",
+    transition: "all 0.2s ease",
+  },
+  actions: {
+    display: "flex",
+    gap: "1rem",
+    justifyContent: "flex-end",
+    marginTop: "1rem",
+    flexWrap: "wrap",
+  },
+  cancelButton: {
+    padding: "0.875rem 1.5rem",
+    fontSize: theme.typography.body.fontSize,
+    fontWeight: "600",
+    backgroundColor: theme.colors.white,
+    color: theme.colors.text,
+    border: `1px solid ${theme.colors.border}`,
+    borderRadius: theme.borderRadius.md,
+    cursor: "pointer",
+    transition: "all 0.2s ease",
+  },
+  saveButton: {
+    padding: "0.875rem 1.5rem",
+    fontSize: theme.typography.body.fontSize,
+    fontWeight: "600",
+    backgroundColor: theme.colors.black,
+    color: theme.colors.white,
+    border: "none",
+    borderRadius: theme.borderRadius.md,
+    cursor: "pointer",
+    transition: "all 0.2s ease",
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+    cursor: "not-allowed",
+  },
 }
 
 export default EditProjectForm

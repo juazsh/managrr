@@ -3,11 +3,14 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"log"
 	"net/http"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/juazsh/managrr/internal/database"
 	"github.com/juazsh/managrr/internal/middleware"
@@ -16,73 +19,85 @@ import (
 )
 
 func CreateProject(w http.ResponseWriter, r *http.Request) {
+	log.Println("=== CreateProject Handler Started ===")
+
 	userCtx, ok := middleware.GetUserFromContext(r.Context())
 	if !ok {
+		log.Println("ERROR: User not found in context")
 		respondWithError(w, http.StatusUnauthorized, "User not found in context")
 		return
 	}
+	log.Printf("User authenticated: ID=%s, Type=%s", userCtx.UserID, userCtx.UserType)
 
 	if userCtx.UserType != string(models.UserTypeHouseOwner) {
+		log.Printf("ERROR: Invalid user type. Expected house_owner, got %s", userCtx.UserType)
 		respondWithError(w, http.StatusForbidden, "Only house owners can create projects")
 		return
 	}
 
-	if err := r.ParseMultipartForm(32 << 20); err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid multipart form data")
+	err := r.ParseMultipartForm(10 << 20)
+	if err != nil {
+		log.Printf("ERROR: Failed to parse multipart form: %v", err)
+		respondWithError(w, http.StatusBadRequest, "Failed to parse form data")
 		return
 	}
+	log.Println("Multipart form parsed successfully")
 
 	title := r.FormValue("title")
+	description := r.FormValue("description")
+	estimatedCostStr := r.FormValue("estimated_cost")
+	address := r.FormValue("address")
+	status := r.FormValue("status")
+
+	log.Printf("Form values - Title: %s, Description: %s, EstimatedCost: %s, Address: %s, Status: %s",
+		title, description, estimatedCostStr, address, status)
+
 	if title == "" {
+		log.Println("ERROR: Title is required but empty")
 		respondWithError(w, http.StatusBadRequest, "Title is required")
 		return
 	}
 
-	description := r.FormValue("description")
-	if description == "" {
-		respondWithError(w, http.StatusBadRequest, "Description is required")
-		return
+	if status == "" {
+		status = string(models.ProjectStatusDraft)
+		log.Printf("Status not provided, defaulting to: %s", status)
 	}
 
-	estimatedCostStr := r.FormValue("estimated_cost")
-	if estimatedCostStr == "" {
-		respondWithError(w, http.StatusBadRequest, "Estimated cost is required")
-		return
-	}
-
-	estimatedCost, err := strconv.ParseFloat(estimatedCostStr, 64)
-	if err != nil || estimatedCost <= 0 {
-		respondWithError(w, http.StatusBadRequest, "Estimated cost must be a positive number")
-		return
-	}
-
-	address := r.FormValue("address")
-	var addressPtr *string
-	if address != "" {
-		addressPtr = &address
+	var estimatedCost float64
+	if estimatedCostStr != "" {
+		estimatedCost, err = strconv.ParseFloat(estimatedCostStr, 64)
+		if err != nil {
+			log.Printf("ERROR: Invalid estimated_cost value: %s, error: %v", estimatedCostStr, err)
+			respondWithError(w, http.StatusBadRequest, "Invalid estimated cost")
+			return
+		}
+		log.Printf("Estimated cost parsed: %.2f", estimatedCost)
 	}
 
 	db := database.GetDB()
-	var project models.Project
+	projectID := uuid.New().String()
+	log.Printf("Generated new project ID: %s", projectID)
 
 	query := `
-		INSERT INTO projects (owner_id, title, description, estimated_cost, address, status)
-		VALUES ($1, $2, $3, $4, $5, $6)
-		RETURNING id, owner_id, contractor_id, title, description, estimated_cost, address, status, created_at, updated_at
+		INSERT INTO projects (id, owner_id, title, description, estimated_cost, address, status)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		RETURNING id, owner_id, title, description, estimated_cost, address, status, created_at, updated_at
 	`
+	log.Println("Executing INSERT query...")
 
+	var project models.Project
 	err = db.QueryRow(
 		query,
+		projectID,
 		userCtx.UserID,
 		title,
 		description,
 		estimatedCost,
-		addressPtr,
-		models.ProjectStatusDraft,
+		address,
+		status,
 	).Scan(
 		&project.ID,
 		&project.OwnerID,
-		&project.ContractorID,
 		&project.Title,
 		&project.Description,
 		&project.EstimatedCost,
@@ -93,47 +108,64 @@ func CreateProject(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err != nil {
+		log.Printf("ERROR: Failed to insert project into database: %v", err)
 		respondWithError(w, http.StatusInternalServerError, "Failed to create project")
 		return
 	}
+	log.Printf("Project created successfully in database with ID: %s", project.ID)
 
-	files := r.MultipartForm.File["photos"]
-	if len(files) > 0 {
+	if r.MultipartForm != nil && r.MultipartForm.File != nil {
+		files := r.MultipartForm.File["photos"]
+		log.Printf("Found %d photo files to upload", len(files))
+
 		supabaseStorage := storage.NewSupabaseStorage()
 
-		for _, fileHeader := range files {
+		for i, fileHeader := range files {
+			log.Printf("Processing photo %d/%d: %s", i+1, len(files), fileHeader.Filename)
+
 			file, err := fileHeader.Open()
 			if err != nil {
+				log.Printf("ERROR: Failed to open file %s: %v", fileHeader.Filename, err)
 				continue
 			}
-			defer file.Close()
 
 			if fileHeader.Size > 5*1024*1024 {
+				log.Printf("WARNING: File %s exceeds 5MB limit, skipping", fileHeader.Filename)
+				file.Close()
 				continue
 			}
 
 			ext := strings.ToLower(filepath.Ext(fileHeader.Filename))
 			allowedExts := map[string]bool{".jpg": true, ".jpeg": true, ".png": true}
 			if !allowedExts[ext] {
+				log.Printf("WARNING: File %s has invalid extension %s, skipping", fileHeader.Filename, ext)
+				file.Close()
 				continue
 			}
 
 			photoURL, err := supabaseStorage.UploadFile(file, fileHeader, project.ID)
+			file.Close()
+
 			if err != nil {
+				log.Printf("ERROR: Failed to upload photo to storage: %v", err)
 				continue
 			}
+			log.Printf("Photo uploaded successfully: %s", photoURL)
 
-			_, err = db.Exec(`
+			photoQuery := `
 				INSERT INTO project_photos (project_id, photo_url, uploaded_by)
 				VALUES ($1, $2, $3)
-			`, project.ID, photoURL, userCtx.UserID)
-
+			`
+			_, err = db.Exec(photoQuery, project.ID, photoURL, userCtx.UserID)
 			if err != nil {
+				log.Printf("ERROR: Failed to save photo record to database: %v", err)
 				continue
 			}
+			log.Printf("Photo record saved to database")
 		}
 	}
 
+	log.Printf("=== CreateProject Handler Completed Successfully ===")
 	respondWithJSON(w, http.StatusCreated, map[string]interface{}{
 		"project": project,
 	})
@@ -162,7 +194,7 @@ func ListProjects(w http.ResponseWriter, r *http.Request) {
 	switch userCtx.UserType {
 	case string(models.UserTypeHouseOwner):
 		query := `
-			SELECT p.id, p.owner_id, p.contractor_id, p.title, p.description, 
+			SELECT p.id, p.owner_id, p.title, p.description, 
 			       p.estimated_cost, p.address, p.status, p.created_at, p.updated_at,
 			       (SELECT u.name FROM project_contractors pc 
 			        JOIN users u ON pc.contractor_id = u.id 
@@ -178,10 +210,11 @@ func ListProjects(w http.ResponseWriter, r *http.Request) {
 
 	case string(models.UserTypeContractor):
 		query := `
-			SELECT p.id, p.owner_id, p.contractor_id, p.title, p.description, 
+			SELECT p.id, p.owner_id, p.title, p.description, 
 			       p.estimated_cost, p.address, p.status, p.created_at, p.updated_at,
 			       NULL as contractor_name,
-			       0 as contractor_count
+			       (SELECT COUNT(*) FROM project_contractors pc 
+			        WHERE pc.project_id = p.id) as contractor_count
 			FROM projects p
 			JOIN project_contractors pc ON p.id = pc.project_id
 			WHERE pc.contractor_id = $1
@@ -191,10 +224,11 @@ func ListProjects(w http.ResponseWriter, r *http.Request) {
 
 	case string(models.UserTypeEmployee):
 		query := `
-			SELECT p.id, p.owner_id, p.contractor_id, p.title, p.description, 
+			SELECT p.id, p.owner_id, p.title, p.description, 
 			       p.estimated_cost, p.address, p.status, p.created_at, p.updated_at,
 			       NULL as contractor_name,
-			       0 as contractor_count
+			       (SELECT COUNT(*) FROM project_contractors pc 
+			        WHERE pc.project_id = p.id) as contractor_count
 			FROM projects p
 			JOIN employee_projects ep ON p.id = ep.project_id
 			WHERE ep.employee_id = $1
@@ -218,7 +252,6 @@ func ListProjects(w http.ResponseWriter, r *http.Request) {
 		err := rows.Scan(
 			&project.ID,
 			&project.OwnerID,
-			&project.ContractorID,
 			&project.Title,
 			&project.Description,
 			&project.EstimatedCost,
@@ -261,13 +294,11 @@ func GetProject(w http.ResponseWriter, r *http.Request) {
 	db := database.GetDB()
 
 	query := `
-		SELECT p.id, p.owner_id, p.contractor_id, p.title, p.description, 
+		SELECT p.id, p.owner_id, p.title, p.description, 
 		       p.estimated_cost, p.address, p.status, p.created_at, p.updated_at,
-		       o.name as owner_name, o.email as owner_email,
-		       c.name as contractor_name, c.email as contractor_email
+		       o.name as owner_name, o.email as owner_email
 		FROM projects p
 		LEFT JOIN users o ON p.owner_id = o.id
-		LEFT JOIN users c ON p.contractor_id = c.id
 		WHERE p.id = $1
 	`
 
@@ -279,17 +310,14 @@ func GetProject(w http.ResponseWriter, r *http.Request) {
 
 	var project struct {
 		models.Project
-		OwnerName       string           `json:"owner_name"`
-		OwnerEmail      string           `json:"owner_email"`
-		ContractorName  *string          `json:"contractor_name,omitempty"`
-		ContractorEmail *string          `json:"contractor_email,omitempty"`
-		Contractors     []ContractorInfo `json:"contractors"`
+		OwnerName   string           `json:"owner_name"`
+		OwnerEmail  string           `json:"owner_email"`
+		Contractors []ContractorInfo `json:"contractors"`
 	}
 
 	err := db.QueryRow(query, projectID).Scan(
 		&project.ID,
 		&project.OwnerID,
-		&project.ContractorID,
 		&project.Title,
 		&project.Description,
 		&project.EstimatedCost,
@@ -299,8 +327,6 @@ func GetProject(w http.ResponseWriter, r *http.Request) {
 		&project.UpdatedAt,
 		&project.OwnerName,
 		&project.OwnerEmail,
-		&project.ContractorName,
-		&project.ContractorEmail,
 	)
 
 	if err == sql.ErrNoRows {
@@ -320,7 +346,16 @@ func GetProject(w http.ResponseWriter, r *http.Request) {
 		hasAccess = project.OwnerID == userCtx.UserID
 
 	case string(models.UserTypeContractor):
-		hasAccess = project.ContractorID != nil && *project.ContractorID == userCtx.UserID
+		var isInProjectContractors bool
+		err = db.QueryRow(`
+			SELECT EXISTS(
+				SELECT 1 FROM project_contractors 
+				WHERE project_id = $1 AND contractor_id = $2
+			)
+		`, projectID, userCtx.UserID).Scan(&isInProjectContractors)
+		if err == nil && isInProjectContractors {
+			hasAccess = true
+		}
 
 	case string(models.UserTypeEmployee):
 		var employeeAccess bool
@@ -443,7 +478,7 @@ func UpdateProject(w http.ResponseWriter, r *http.Request) {
 		    status = COALESCE($5, status),
 		    updated_at = NOW()
 		WHERE id = $6
-		RETURNING id, owner_id, contractor_id, title, description, estimated_cost, address, status, created_at, updated_at
+		RETURNING id, owner_id, title, description, estimated_cost, address, status, created_at, updated_at
 	`
 
 	var project models.Project
@@ -458,7 +493,6 @@ func UpdateProject(w http.ResponseWriter, r *http.Request) {
 	).Scan(
 		&project.ID,
 		&project.OwnerID,
-		&project.ContractorID,
 		&project.Title,
 		&project.Description,
 		&project.EstimatedCost,
@@ -580,6 +614,7 @@ func AssignContractor(w http.ResponseWriter, r *http.Request) {
 
 	var id string
 	err = db.QueryRow(query, projectID, req.ContractorID).Scan(&id)
+
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
 			respondWithError(w, http.StatusConflict, "Contractor already assigned to this project")
@@ -671,32 +706,15 @@ func ListProjectContractors(w http.ResponseWriter, r *http.Request) {
 	hasAccess := false
 	if ownerID == userCtx.UserID {
 		hasAccess = true
-	}
-
-	if !hasAccess {
+	} else if userCtx.UserType == string(models.UserTypeContractor) {
 		var isContractor bool
-		err = db.QueryRow(`
+		db.QueryRow(`
 			SELECT EXISTS(
 				SELECT 1 FROM project_contractors 
 				WHERE project_id = $1 AND contractor_id = $2
 			)
 		`, projectID, userCtx.UserID).Scan(&isContractor)
-		if err == nil && isContractor {
-			hasAccess = true
-		}
-	}
-
-	if !hasAccess && userCtx.UserType == string(models.UserTypeEmployee) {
-		var isAssignedEmployee bool
-		err = db.QueryRow(`
-			SELECT EXISTS(
-				SELECT 1 FROM employee_projects 
-				WHERE project_id = $1 AND employee_id = $2
-			)
-		`, projectID, userCtx.UserID).Scan(&isAssignedEmployee)
-		if err == nil && isAssignedEmployee {
-			hasAccess = true
-		}
+		hasAccess = isContractor
 	}
 
 	if !hasAccess {
@@ -705,7 +723,7 @@ func ListProjectContractors(w http.ResponseWriter, r *http.Request) {
 	}
 
 	query := `
-		SELECT pc.contractor_id, u.name, u.email, u.phone, pc.assigned_at
+		SELECT pc.contractor_id, u.name, u.email, pc.assigned_at
 		FROM project_contractors pc
 		JOIN users u ON pc.contractor_id = u.id
 		WHERE pc.project_id = $1
@@ -719,22 +737,21 @@ func ListProjectContractors(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 
-	type ContractorInfo struct {
-		ContractorID string  `json:"contractor_id"`
-		Name         string  `json:"name"`
-		Email        string  `json:"email"`
-		Phone        *string `json:"phone,omitempty"`
-		AssignedAt   string  `json:"assigned_at"`
+	type ContractorResponse struct {
+		ContractorID string    `json:"contractor_id"`
+		Name         string    `json:"name"`
+		Email        string    `json:"email"`
+		AssignedAt   time.Time `json:"assigned_at"`
 	}
 
-	var contractors []ContractorInfo
+	contractors := []ContractorResponse{}
+
 	for rows.Next() {
-		var contractor ContractorInfo
+		var contractor ContractorResponse
 		err := rows.Scan(
 			&contractor.ContractorID,
 			&contractor.Name,
 			&contractor.Email,
-			&contractor.Phone,
 			&contractor.AssignedAt,
 		)
 		if err != nil {
@@ -749,288 +766,5 @@ func ListProjectContractors(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if contractors == nil {
-		contractors = []ContractorInfo{}
-	}
-
 	respondWithJSON(w, http.StatusOK, contractors)
 }
-
-// func AssignContractor(w http.ResponseWriter, r *http.Request) {
-// 	userCtx, ok := middleware.GetUserFromContext(r.Context())
-// 	if !ok {
-// 		respondWithError(w, http.StatusUnauthorized, "User not found in context")
-// 		return
-// 	}
-
-// 	vars := mux.Vars(r)
-// 	projectID := vars["id"]
-
-// 	db := database.GetDB()
-
-// 	var ownerID string
-// 	err := db.QueryRow("SELECT owner_id FROM projects WHERE id = $1", projectID).Scan(&ownerID)
-
-// 	if err == sql.ErrNoRows {
-// 		respondWithError(w, http.StatusNotFound, "Project not found")
-// 		return
-// 	}
-
-// 	if err != nil {
-// 		respondWithError(w, http.StatusInternalServerError, "Failed to fetch project")
-// 		return
-// 	}
-
-// 	if ownerID != userCtx.UserID {
-// 		respondWithError(w, http.StatusForbidden, "Only the project owner can assign a contractor")
-// 		return
-// 	}
-
-// 	var req models.AssignContractorRequest
-// 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-// 		respondWithError(w, http.StatusBadRequest, "Invalid request body")
-// 		return
-// 	}
-
-// 	if req.ContractorEmail == "" {
-// 		respondWithError(w, http.StatusBadRequest, "Contractor email is required")
-// 		return
-// 	}
-
-// 	var contractorID string
-// 	var userType string
-// 	err = db.QueryRow(
-// 		"SELECT id, user_type FROM users WHERE email = $1",
-// 		req.ContractorEmail,
-// 	).Scan(&contractorID, &userType)
-
-// 	if err == sql.ErrNoRows {
-// 		respondWithError(w, http.StatusNotFound, "Contractor not found")
-// 		return
-// 	}
-
-// 	if err != nil {
-// 		respondWithError(w, http.StatusInternalServerError, "Failed to lookup contractor")
-// 		return
-// 	}
-
-// 	if userType != string(models.UserTypeContractor) {
-// 		respondWithError(w, http.StatusBadRequest, "User is not a contractor")
-// 		return
-// 	}
-
-// 	query := `
-// 		UPDATE projects
-// 		SET contractor_id = $1, updated_at = NOW()
-// 		WHERE id = $2
-// 		RETURNING id, owner_id, contractor_id, title, description, estimated_cost, address, status, created_at, updated_at
-// 	`
-
-// 	var project models.Project
-// 	err = db.QueryRow(query, contractorID, projectID).Scan(
-// 		&project.ID,
-// 		&project.OwnerID,
-// 		&project.ContractorID,
-// 		&project.Title,
-// 		&project.Description,
-// 		&project.EstimatedCost,
-// 		&project.Address,
-// 		&project.Status,
-// 		&project.CreatedAt,
-// 		&project.UpdatedAt,
-// 	)
-
-// 	if err != nil {
-// 		respondWithError(w, http.StatusInternalServerError, "Failed to assign contractor")
-// 		return
-// 	}
-
-// 	respondWithJSON(w, http.StatusOK, project)
-// }
-
-// func GetProject(w http.ResponseWriter, r *http.Request) {
-// 	userCtx, ok := middleware.GetUserFromContext(r.Context())
-// 	if !ok {
-// 		respondWithError(w, http.StatusUnauthorized, "User not found in context")
-// 		return
-// 	}
-
-// 	vars := mux.Vars(r)
-// 	projectID := vars["id"]
-
-// 	db := database.GetDB()
-
-// 	query := `
-// 		SELECT p.id, p.owner_id, p.contractor_id, p.title, p.description,
-// 		       p.estimated_cost, p.address, p.status, p.created_at, p.updated_at,
-// 		       o.name as owner_name, o.email as owner_email,
-// 		       c.name as contractor_name, c.email as contractor_email
-// 		FROM projects p
-// 		LEFT JOIN users o ON p.owner_id = o.id
-// 		LEFT JOIN users c ON p.contractor_id = c.id
-// 		WHERE p.id = $1
-// 	`
-
-// 	var project struct {
-// 		models.Project
-// 		OwnerName       string  `json:"owner_name"`
-// 		OwnerEmail      string  `json:"owner_email"`
-// 		ContractorName  *string `json:"contractor_name,omitempty"`
-// 		ContractorEmail *string `json:"contractor_email,omitempty"`
-// 	}
-
-// 	err := db.QueryRow(query, projectID).Scan(
-// 		&project.ID,
-// 		&project.OwnerID,
-// 		&project.ContractorID,
-// 		&project.Title,
-// 		&project.Description,
-// 		&project.EstimatedCost,
-// 		&project.Address,
-// 		&project.Status,
-// 		&project.CreatedAt,
-// 		&project.UpdatedAt,
-// 		&project.OwnerName,
-// 		&project.OwnerEmail,
-// 		&project.ContractorName,
-// 		&project.ContractorEmail,
-// 	)
-
-// 	if err == sql.ErrNoRows {
-// 		respondWithError(w, http.StatusNotFound, "Project not found")
-// 		return
-// 	}
-
-// 	if err != nil {
-// 		respondWithError(w, http.StatusInternalServerError, "Failed to fetch project")
-// 		return
-// 	}
-
-// 	hasAccess := false
-
-// 	switch userCtx.UserType {
-// 	case string(models.UserTypeHouseOwner):
-// 		hasAccess = project.OwnerID == userCtx.UserID
-
-// 	case string(models.UserTypeContractor):
-// 		hasAccess = project.ContractorID != nil && *project.ContractorID == userCtx.UserID
-
-// 	case string(models.UserTypeEmployee):
-// 		var employeeAccess bool
-// 		checkQuery := `
-// 			SELECT EXISTS(
-// 				SELECT 1 FROM employee_projects
-// 				WHERE employee_id = $1 AND project_id = $2
-// 			)
-// 		`
-// 		db.QueryRow(checkQuery, userCtx.UserID, projectID).Scan(&employeeAccess)
-// 		hasAccess = employeeAccess
-// 	}
-
-// 	if !hasAccess {
-// 		respondWithError(w, http.StatusForbidden, "You don't have access to this project")
-// 		return
-// 	}
-
-// 	respondWithJSON(w, http.StatusOK, project)
-// }
-
-// func ListProjects(w http.ResponseWriter, r *http.Request) {
-// 	userCtx, ok := middleware.GetUserFromContext(r.Context())
-// 	if !ok {
-// 		respondWithError(w, http.StatusUnauthorized, "User not found in context")
-// 		return
-// 	}
-
-// 	db := database.GetDB()
-
-// 	var rows *sql.Rows
-// 	var err error
-
-// 	type ProjectWithContractor struct {
-// 		models.Project
-// 		ContractorName *string `json:"contractor_name,omitempty"`
-// 	}
-
-// 	var projects []ProjectWithContractor
-
-// 	switch userCtx.UserType {
-// 	case string(models.UserTypeHouseOwner):
-// 		query := `
-// 			SELECT p.id, p.owner_id, p.contractor_id, p.title, p.description,
-// 			       p.estimated_cost, p.address, p.status, p.created_at, p.updated_at,
-// 			       c.name as contractor_name
-// 			FROM projects p
-// 			LEFT JOIN users c ON p.contractor_id = c.id
-// 			WHERE p.owner_id = $1
-// 			ORDER BY p.created_at DESC
-// 		`
-// 		rows, err = db.Query(query, userCtx.UserID)
-
-// 	case string(models.UserTypeContractor):
-// 		query := `
-// 			SELECT p.id, p.owner_id, p.contractor_id, p.title, p.description,
-// 			       p.estimated_cost, p.address, p.status, p.created_at, p.updated_at,
-// 			       NULL as contractor_name
-// 			FROM projects p
-// 			WHERE p.contractor_id = $1
-// 			ORDER BY p.created_at DESC
-// 		`
-// 		rows, err = db.Query(query, userCtx.UserID)
-
-// 	case string(models.UserTypeEmployee):
-// 		query := `
-// 			SELECT p.id, p.owner_id, p.contractor_id, p.title, p.description,
-// 			       p.estimated_cost, p.address, p.status, p.created_at, p.updated_at,
-// 			       NULL as contractor_name
-// 			FROM projects p
-// 			JOIN employee_projects ep ON p.id = ep.project_id
-// 			WHERE ep.employee_id = $1
-// 			ORDER BY p.created_at DESC
-// 		`
-// 		rows, err = db.Query(query, userCtx.UserID)
-
-// 	default:
-// 		respondWithError(w, http.StatusBadRequest, "Invalid user type")
-// 		return
-// 	}
-
-// 	if err != nil {
-// 		respondWithError(w, http.StatusInternalServerError, "Failed to fetch projects")
-// 		return
-// 	}
-// 	defer rows.Close()
-
-// 	for rows.Next() {
-// 		var project ProjectWithContractor
-// 		err := rows.Scan(
-// 			&project.ID,
-// 			&project.OwnerID,
-// 			&project.ContractorID,
-// 			&project.Title,
-// 			&project.Description,
-// 			&project.EstimatedCost,
-// 			&project.Address,
-// 			&project.Status,
-// 			&project.CreatedAt,
-// 			&project.UpdatedAt,
-// 			&project.ContractorName,
-// 		)
-// 		if err != nil {
-// 			respondWithError(w, http.StatusInternalServerError, "Failed to scan project")
-// 			return
-// 		}
-// 		projects = append(projects, project)
-// 	}
-
-// 	if err = rows.Err(); err != nil {
-// 		respondWithError(w, http.StatusInternalServerError, "Error iterating projects")
-// 		return
-// 	}
-
-// 	if projects == nil {
-// 		projects = []ProjectWithContractor{}
-// 	}
-
-// 	respondWithJSON(w, http.StatusOK, projects)
-// }

@@ -38,19 +38,21 @@ func CreateProjectUpdate(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	projectID := vars["id"]
 
-	var contractorID sql.NullString
-	err := db.QueryRow("SELECT contractor_id FROM projects WHERE id = $1", projectID).Scan(&contractorID)
-	if err == sql.ErrNoRows {
-		respondWithError(w, http.StatusNotFound, "Project not found")
-		return
-	}
+	var isContractor bool
+	err := db.QueryRow(`
+		SELECT EXISTS(
+			SELECT 1 FROM project_contractors 
+			WHERE project_id = $1 AND contractor_id = $2
+		)
+	`, projectID, userCtx.UserID).Scan(&isContractor)
+
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to verify project")
 		return
 	}
 
-	if !contractorID.Valid || contractorID.String != userCtx.UserID {
-		respondWithError(w, http.StatusForbidden, "Only the assigned contractor can post updates")
+	if !isContractor {
+		respondWithError(w, http.StatusForbidden, "Only assigned contractors can post updates")
 		return
 	}
 
@@ -173,9 +175,8 @@ func GetProjectUpdates(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	projectID := vars["id"]
 
-	var ownerID, contractorID sql.NullString
-	err := db.QueryRow("SELECT owner_id, contractor_id FROM projects WHERE id = $1", projectID).
-		Scan(&ownerID, &contractorID)
+	var ownerID string
+	err := db.QueryRow("SELECT owner_id FROM projects WHERE id = $1", projectID).Scan(&ownerID)
 
 	if err == sql.ErrNoRows {
 		respondWithError(w, http.StatusNotFound, "Project not found")
@@ -186,8 +187,15 @@ func GetProjectUpdates(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	isOwner := ownerID.Valid && ownerID.String == userCtx.UserID
-	isContractor := contractorID.Valid && contractorID.String == userCtx.UserID
+	isOwner := ownerID == userCtx.UserID
+
+	var isContractor bool
+	db.QueryRow(`
+		SELECT EXISTS(
+			SELECT 1 FROM project_contractors 
+			WHERE project_id = $1 AND contractor_id = $2
+		)
+	`, projectID, userCtx.UserID).Scan(&isContractor)
 
 	if !isOwner && !isContractor {
 		respondWithError(w, http.StatusForbidden, "Access denied")
@@ -249,7 +257,7 @@ func GetProjectUpdates(w http.ResponseWriter, r *http.Request) {
 			&createdByName,
 		)
 		if err != nil {
-			respondWithError(w, http.StatusInternalServerError, "Failed to parse update")
+			respondWithError(w, http.StatusInternalServerError, "Failed to scan update")
 			return
 		}
 
@@ -260,39 +268,49 @@ func GetProjectUpdates(w http.ResponseWriter, r *http.Request) {
 		update.CreatedAt = createdAt
 
 		photoRows, err := db.Query(`
-			SELECT id, project_update_id, photo_url, caption, display_order, created_at
+			SELECT id, photo_url, caption, display_order, created_at
 			FROM project_update_photos
 			WHERE project_update_id = $1
 			ORDER BY display_order ASC
 		`, update.ID)
-
 		if err != nil {
-			respondWithError(w, http.StatusInternalServerError, "Failed to fetch photos")
-			return
-		}
-
-		photos := []models.ProjectUpdatePhoto{}
-		for photoRows.Next() {
-			var photo models.ProjectUpdatePhoto
-			err := photoRows.Scan(
-				&photo.ID,
-				&photo.ProjectUpdateID,
-				&photo.PhotoURL,
-				&photo.Caption,
-				&photo.DisplayOrder,
-				&photo.CreatedAt,
-			)
-			if err != nil {
-				photoRows.Close()
-				respondWithError(w, http.StatusInternalServerError, "Failed to parse photo")
-				return
+			log.Printf("Failed to fetch photos for update %s: %v", update.ID, err)
+			update.Photos = []models.ProjectUpdatePhoto{}
+		} else {
+			photos := []models.ProjectUpdatePhoto{}
+			for photoRows.Next() {
+				var photo models.ProjectUpdatePhoto
+				var caption sql.NullString
+				err := photoRows.Scan(
+					&photo.ID,
+					&photo.PhotoURL,
+					&caption,
+					&photo.DisplayOrder,
+					&photo.CreatedAt,
+				)
+				if err != nil {
+					log.Printf("Failed to scan photo: %v", err)
+					continue
+				}
+				if caption.Valid {
+					photo.Caption = &caption.String
+				}
+				photos = append(photos, photo)
 			}
-			photos = append(photos, photo)
+			photoRows.Close()
+			update.Photos = photos
 		}
-		photoRows.Close()
 
-		update.Photos = photos
 		updates = append(updates, update)
+	}
+
+	if err = rows.Err(); err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Error iterating updates")
+		return
+	}
+
+	if updates == nil {
+		updates = []UpdateResponse{}
 	}
 
 	respondWithJSON(w, http.StatusOK, updates)
