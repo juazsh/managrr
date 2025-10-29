@@ -578,56 +578,78 @@ func AssignContractor(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req struct {
-		ContractorID string `json:"contractor_id"`
+		ContractorIDs []string `json:"contractor_ids"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		respondWithError(w, http.StatusBadRequest, "Invalid request body")
 		return
 	}
 
-	if req.ContractorID == "" {
-		respondWithError(w, http.StatusBadRequest, "contractor_id is required")
+	if len(req.ContractorIDs) == 0 {
+		respondWithError(w, http.StatusBadRequest, "contractor_ids is required and cannot be empty")
 		return
 	}
 
-	var userType string
-	err = db.QueryRow("SELECT user_type FROM users WHERE id = $1", req.ContractorID).Scan(&userType)
-	if err == sql.ErrNoRows {
-		respondWithError(w, http.StatusNotFound, "Contractor not found")
-		return
-	}
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Failed to lookup contractor")
-		return
-	}
+	successCount := 0
+	duplicateCount := 0
+	var failedContractors []string
 
-	if userType != string(models.UserTypeContractor) {
-		respondWithError(w, http.StatusBadRequest, "User is not a contractor")
-		return
-	}
-
-	query := `
-		INSERT INTO project_contractors (project_id, contractor_id)
-		VALUES ($1, $2)
-		RETURNING id
-	`
-
-	var id string
-	err = db.QueryRow(query, projectID, req.ContractorID).Scan(&id)
-
-	if err != nil {
-		if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
-			respondWithError(w, http.StatusConflict, "Contractor already assigned to this project")
-			return
+	for _, contractorID := range req.ContractorIDs {
+		if contractorID == "" {
+			continue
 		}
-		respondWithError(w, http.StatusInternalServerError, "Failed to assign contractor")
-		return
+
+		var userType string
+		err = db.QueryRow("SELECT user_type FROM users WHERE id = $1", contractorID).Scan(&userType)
+		if err == sql.ErrNoRows {
+			failedContractors = append(failedContractors, contractorID)
+			continue
+		}
+		if err != nil {
+			failedContractors = append(failedContractors, contractorID)
+			continue
+		}
+
+		if userType != string(models.UserTypeContractor) {
+			failedContractors = append(failedContractors, contractorID)
+			continue
+		}
+
+		query := `
+			INSERT INTO project_contractors (project_id, contractor_id)
+			VALUES ($1, $2)
+			ON CONFLICT (project_id, contractor_id) DO NOTHING
+		`
+
+		result, err := db.Exec(query, projectID, contractorID)
+		if err != nil {
+			failedContractors = append(failedContractors, contractorID)
+			continue
+		}
+
+		rowsAffected, _ := result.RowsAffected()
+		if rowsAffected > 0 {
+			successCount++
+		} else {
+			duplicateCount++
+		}
 	}
 
-	respondWithJSON(w, http.StatusOK, map[string]string{
-		"message": "Contractor assigned successfully",
-		"id":      id,
-	})
+	response := map[string]interface{}{
+		"assigned_count":  successCount,
+		"duplicate_count": duplicateCount,
+	}
+
+	if len(failedContractors) > 0 {
+		response["failed_contractors"] = failedContractors
+		response["message"] = "Some contractors could not be assigned"
+	} else if successCount > 0 {
+		response["message"] = "Contractors assigned successfully"
+	} else {
+		response["message"] = "All contractors were already assigned to this project"
+	}
+
+	respondWithJSON(w, http.StatusOK, response)
 }
 
 func RemoveContractor(w http.ResponseWriter, r *http.Request) {

@@ -228,6 +228,49 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	w.Write(response)
 }
 
+func ListContractors(w http.ResponseWriter, r *http.Request) {
+	db := database.GetDB()
+
+	query := `
+		SELECT id, name, email 
+		FROM users 
+		WHERE user_type = $1 AND email_verified = true
+		ORDER BY name ASC
+	`
+
+	rows, err := db.Query(query, models.UserTypeContractor)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to fetch contractors")
+		return
+	}
+	defer rows.Close()
+
+	type ContractorInfo struct {
+		ID    string `json:"id"`
+		Name  string `json:"name"`
+		Email string `json:"email"`
+	}
+
+	contractors := []ContractorInfo{}
+
+	for rows.Next() {
+		var contractor ContractorInfo
+		err := rows.Scan(&contractor.ID, &contractor.Name, &contractor.Email)
+		if err != nil {
+			respondWithError(w, http.StatusInternalServerError, "Failed to scan contractor")
+			return
+		}
+		contractors = append(contractors, contractor)
+	}
+
+	if err = rows.Err(); err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Error iterating contractors")
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, contractors)
+}
+
 type ProjectParticipants struct {
 	ProjectTitle    string
 	OwnerID         string

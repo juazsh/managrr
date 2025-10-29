@@ -51,16 +51,14 @@ const projectService = {
     return response.data;
   },
 
-  // assignContractor: async (id, contractorEmail) => {
-  //   const response = await api.post(`/projects/${id}/assign-contractor`, {
-  //     contractor_email: contractorEmail,
-  //   });
-  //   return response.data;
-  // },
-
-  assignContractor: async (projectId, contractorId) => {
+  listContractors: async () => {
+    const response = await api.get('/users/contractors');
+    return response.data;
+  },
+  
+  assignContractor: async (projectId, contractorIds) => {
     const response = await api.post(`/projects/${projectId}/contractors`, {
-      contractor_id: contractorId,
+      contractor_ids: contractorIds,
     });
     return response.data;
   },
@@ -104,37 +102,18 @@ const projectService = {
     const formData = new FormData();
     formData.append('update_type', updateData.update_type);
     formData.append('content', updateData.content);
-  
+
     if (updateData.photos && updateData.photos.length > 0) {
-      updateData.photos.forEach((photo, index) => {
-        formData.append('photos[]', photo.file);  // Changed from 'photos' to 'photos[]'
-        if (photo.caption) {
-          formData.append(`captions[${index}]`, photo.caption);
-        }
+      updateData.photos.forEach((photo) => {
+        formData.append('photos', photo);
       });
     }
-  
+
     const response = await api.post(`/projects/${id}/updates`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     });
-    return response.data;
-  },
-
-  getProjectExpenses: async (id, filters = {}) => {
-    const params = new URLSearchParams();
-    if (filters.paid_by) params.append('paid_by', filters.paid_by);
-    if (filters.category) params.append('category', filters.category);
-    if (filters.start_date) params.append('start_date', filters.start_date);
-    if (filters.end_date) params.append('end_date', filters.end_date);
-
-    const response = await api.get(`/projects/${id}/expenses?${params.toString()}`);
-    return response.data;
-  },
-
-  getProjectWorkLogs: async (id) => {
-    const response = await api.get(`/projects/${id}/work-logs`);
     return response.data;
   },
 };

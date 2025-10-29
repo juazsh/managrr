@@ -39,6 +39,7 @@ func main() {
 	protected.Use(middleware.AuthMiddleware)
 
 	protected.HandleFunc("/auth/me", handlers.GetCurrentUser).Methods("GET", "OPTIONS")
+	protected.HandleFunc("/users/contractors", handlers.ListContractors).Methods("GET", "OPTIONS")
 
 	protected.HandleFunc("/projects", handlers.CreateProject).Methods("POST", "OPTIONS")
 	protected.HandleFunc("/projects", handlers.ListProjects).Methods("GET", "OPTIONS")
