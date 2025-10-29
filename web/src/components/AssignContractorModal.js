@@ -1,33 +1,65 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import projectService from "../services/projectService"
 import { theme } from "../theme"
 
-const AssignContractorModal = ({ onAssign, onClose }) => {
-  const [email, setEmail] = useState("")
+const AssignContractorModal = ({ onAssign, onClose, currentContractors = [] }) => {
+  const [contractors, setContractors] = useState([])
+  const [selectedContractors, setSelectedContractors] = useState([])
+  const [searchTerm, setSearchTerm] = useState("")
   const [loading, setLoading] = useState(false)
+  const [fetchLoading, setFetchLoading] = useState(true)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
+
+  useEffect(() => {
+    alert("useEffect");
+    fetchContractors()
+  }, [])
+
+  const fetchContractors = async () => {
+    try {
+      setFetchLoading(true)
+      alert("fetching contractors");
+      const data = await projectService.listContractors()
+      const currentIds = currentContractors.map(c => c.contractor_id)
+      const available = data.filter(c => !currentIds.includes(c.id))
+      setContractors(available)
+    } catch (err) {
+      setError("Failed to load contractors")
+    } finally {
+      setFetchLoading(false)
+    }
+  }
+
+  const filteredContractors = contractors.filter(contractor =>
+    contractor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    contractor.email.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  const handleToggleContractor = (contractorId) => {
+    setSelectedContractors(prev =>
+      prev.includes(contractorId)
+        ? prev.filter(id => id !== contractorId)
+        : [...prev, contractorId]
+    )
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError("")
     setSuccess("")
 
-    if (!email.trim()) {
-      setError("Please enter contractor email")
-      return
-    }
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError("Please enter a valid email address")
+    if (selectedContractors.length === 0) {
+      setError("Please select at least one contractor")
       return
     }
 
     try {
       setLoading(true)
-      await onAssign(email)
-      setSuccess("Contractor assigned successfully!")
+      await onAssign(selectedContractors)
+      setSuccess(`${selectedContractors.length} contractor(s) assigned successfully!`)
       setTimeout(() => {
         onClose()
       }, 1500)
@@ -57,7 +89,11 @@ const AssignContractorModal = ({ onAssign, onClose }) => {
       padding: "2rem",
       borderRadius: theme.borderRadius.lg,
       width: "100%",
-      maxWidth: "500px",
+      maxWidth: "600px",
+      maxHeight: "80vh",
+      overflow: "hidden",
+      display: "flex",
+      flexDirection: "column",
       boxShadow: theme.shadows.xl,
     },
     title: {
@@ -67,77 +103,130 @@ const AssignContractorModal = ({ onAssign, onClose }) => {
       fontWeight: theme.typography.h3.fontWeight,
       letterSpacing: "-0.01em",
     },
-    formGroup: {
-      marginBottom: "1.5rem",
+    searchBox: {
+      marginBottom: "1rem",
     },
-    label: {
-      display: "block",
-      marginBottom: "0.5rem",
-      color: theme.colors.text,
-      fontWeight: "600",
-      fontSize: theme.typography.body.fontSize,
-    },
-    input: {
+    searchInput: {
       width: "100%",
-      padding: "0.875rem",
+      padding: "0.75rem",
       border: `2px solid ${theme.colors.border}`,
       borderRadius: theme.borderRadius.md,
       fontSize: theme.typography.body.fontSize,
       fontFamily: theme.typography.fontFamily,
-      transition: "all 0.2s ease",
-      boxSizing: "border-box",
+      outline: "none",
     },
-    error: {
-      backgroundColor: theme.colors.errorLight,
-      color: theme.colors.error,
-      padding: "0.875rem",
-      borderRadius: theme.borderRadius.md,
+    contractorListWrapper: {
+      flex: 1,
+      minHeight: 0,
       marginBottom: "1rem",
-      fontSize: theme.typography.body.fontSize,
-      border: `1px solid ${theme.colors.error}`,
-      fontWeight: "500",
     },
-    success: {
-      backgroundColor: theme.colors.successLight,
-      color: theme.colors.success,
-      padding: "0.875rem",
+    contractorList: {
+      height: "300px",
+      overflowY: "auto",
+      border: `1px solid ${theme.colors.border}`,
       borderRadius: theme.borderRadius.md,
+    },
+    contractorItem: {
+      display: "flex",
+      alignItems: "center",
+      padding: "0.875rem 1rem",
+      borderBottom: `1px solid ${theme.colors.border}`,
+      cursor: "pointer",
+      transition: "background-color 0.2s ease",
+    },
+    contractorItemHover: {
+      backgroundColor: "#f9fafb",
+    },
+    contractorItemSelected: {
+      backgroundColor: theme.colors.backgroundLight,
+    },
+    checkbox: {
+      width: "18px",
+      height: "18px",
+      marginRight: "1rem",
+      cursor: "pointer",
+      flexShrink: 0,
+    },
+    contractorInfo: {
+      flex: 1,
+      minWidth: 0,
+    },
+    contractorName: {
+      fontWeight: "600",
+      color: theme.colors.text,
+      marginBottom: "0.25rem",
+    },
+    contractorEmail: {
+      fontSize: theme.typography.small.fontSize,
+      color: theme.colors.textLight,
+    },
+    emptyState: {
+      padding: "2rem",
+      textAlign: "center",
+      color: theme.colors.textLight,
+    },
+    loadingState: {
+      padding: "2rem",
+      textAlign: "center",
+      color: theme.colors.textLight,
+    },
+    errorMessage: {
+      padding: "0.75rem",
+      backgroundColor: "#FEE2E2",
+      color: "#B91C1C",
+      borderRadius: theme.borderRadius.md,
+      fontSize: theme.typography.small.fontSize,
       marginBottom: "1rem",
-      fontSize: theme.typography.body.fontSize,
-      border: `1px solid ${theme.colors.success}`,
-      fontWeight: "500",
+      border: "1px solid #FCA5A5",
+    },
+    successMessage: {
+      padding: "0.75rem",
+      backgroundColor: "#D1FAE5",
+      color: "#065F46",
+      borderRadius: theme.borderRadius.md,
+      fontSize: theme.typography.small.fontSize,
+      marginBottom: "1rem",
+      border: "1px solid #6EE7B7",
+    },
+    selectedCount: {
+      marginBottom: "1rem",
+      fontSize: theme.typography.small.fontSize,
+      color: theme.colors.textLight,
+      fontWeight: "600",
     },
     actions: {
       display: "flex",
-      gap: "0.75rem",
+      gap: "1rem",
       justifyContent: "flex-end",
-      flexWrap: "wrap",
+      paddingTop: "1rem",
+      borderTop: `1px solid ${theme.colors.border}`,
     },
     cancelButton: {
-      padding: "0.875rem 1.75rem",
+      padding: "0.875rem 1.5rem",
+      fontSize: theme.typography.body.fontSize,
+      fontWeight: "600",
       border: `2px solid ${theme.colors.border}`,
       borderRadius: theme.borderRadius.md,
-      cursor: "pointer",
-      fontSize: theme.typography.body.fontSize,
       backgroundColor: theme.colors.white,
       color: theme.colors.text,
-      fontWeight: "600",
+      cursor: "pointer",
       transition: "all 0.2s ease",
+      fontFamily: theme.typography.fontFamily,
     },
     submitButton: {
-      padding: "0.875rem 1.75rem",
-      backgroundColor: theme.colors.primary,
-      color: theme.colors.white,
-      border: "none",
-      borderRadius: theme.borderRadius.md,
-      cursor: "pointer",
+      padding: "0.875rem 1.5rem",
       fontSize: theme.typography.body.fontSize,
       fontWeight: "600",
+      border: "none",
+      borderRadius: theme.borderRadius.md,
+      backgroundColor: theme.colors.primary,
+      color: theme.colors.white,
+      cursor: "pointer",
       transition: "all 0.2s ease",
-      boxShadow: theme.shadows.sm,
+      fontFamily: theme.typography.fontFamily,
     },
-    buttonDisabled: {
-      opacity: 0.6,
+    submitButtonDisabled: {
+      opacity: 0.5,
       cursor: "not-allowed",
     },
   }
@@ -145,42 +234,92 @@ const AssignContractorModal = ({ onAssign, onClose }) => {
   return (
     <div style={styles.overlay} onClick={onClose}>
       <div style={styles.content} onClick={(e) => e.stopPropagation()}>
-        <h2 style={styles.title}>Assign Contractor</h2>
-        <form onSubmit={handleSubmit}>
-          <div style={styles.formGroup}>
-            <label htmlFor="email" style={styles.label}>
-              Contractor Email
-            </label>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="contractor@example.com"
-              disabled={loading}
-              style={styles.input}
-            />
-          </div>
+        <h2 style={styles.title}>Assign Contractors</h2>
 
-          {error && <div style={styles.error}>{error}</div>}
-          {success && <div style={styles.success}>{success}</div>}
+        {error && <div style={styles.errorMessage}>{error}</div>}
+        {success && <div style={styles.successMessage}>{success}</div>}
 
-          <div style={styles.actions}>
-            <button type="button" onClick={onClose} style={styles.cancelButton} disabled={loading}>
-              Cancel
-            </button>
-            <button
-              type="submit"
-              style={{
-                ...styles.submitButton,
-                ...(loading ? styles.buttonDisabled : {}),
-              }}
-              disabled={loading}
-            >
-              {loading ? "Assigning..." : "Assign"}
-            </button>
+        <div style={styles.searchBox}>
+          <input
+            type="text"
+            placeholder="Search by name or email..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={styles.searchInput}
+          />
+        </div>
+
+        {selectedContractors.length > 0 && (
+          <div style={styles.selectedCount}>
+            {selectedContractors.length} contractor(s) selected
           </div>
-        </form>
+        )}
+
+        <div style={styles.contractorListWrapper}>
+          <div style={styles.contractorList}>
+            {fetchLoading ? (
+              <div style={styles.loadingState}>Loading contractors...</div>
+            ) : filteredContractors.length === 0 ? (
+              <div style={styles.emptyState}>
+                {contractors.length === 0 
+                  ? "No available contractors found" 
+                  : "No contractors match your search"}
+              </div>
+            ) : (
+              filteredContractors.map((contractor) => {
+                const isSelected = selectedContractors.includes(contractor.id)
+                return (
+                  <div
+                    key={contractor.id}
+                    style={{
+                      ...styles.contractorItem,
+                      ...(isSelected ? styles.contractorItemSelected : {}),
+                    }}
+                    onClick={() => handleToggleContractor(contractor.id)}
+                    onMouseEnter={(e) => {
+                      if (!isSelected) {
+                        e.currentTarget.style.backgroundColor = "#f9fafb"
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isSelected) {
+                        e.currentTarget.style.backgroundColor = "transparent"
+                      }
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => {}}
+                      style={styles.checkbox}
+                    />
+                    <div style={styles.contractorInfo}>
+                      <div style={styles.contractorName}>{contractor.name}</div>
+                      <div style={styles.contractorEmail}>({contractor.email})</div>
+                    </div>
+                  </div>
+                )
+              })
+            )}
+          </div>
+        </div>
+
+        <div style={styles.actions}>
+          <button type="button" onClick={onClose} style={styles.cancelButton} disabled={loading}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            style={{
+              ...styles.submitButton,
+              ...(loading || selectedContractors.length === 0 ? styles.submitButtonDisabled : {}),
+            }}
+            disabled={loading || selectedContractors.length === 0}
+          >
+            {loading ? "Assigning..." : `Assign (${selectedContractors.length})`}
+          </button>
+        </div>
       </div>
     </div>
   )

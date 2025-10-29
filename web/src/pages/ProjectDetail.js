@@ -184,11 +184,12 @@ const ProjectDetail = () => {
         </>
       )}
 
-      {showAssignModal && (<div> Hello<AssignContractorModal
+      {showAssignModal && (
+        <AssignContractorModal
           onClose={() => setShowAssignModal(false)}
           onAssign={handleAssignContractor}
           currentContractors={contractors}
-        /> </div>
+        /> 
       )}
     </div>
   )
