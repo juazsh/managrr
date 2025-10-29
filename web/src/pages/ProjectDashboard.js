@@ -6,7 +6,7 @@ import projectService from "../services/projectService"
 import { useAuth } from "../context/AuthContext"
 import PhotosSection from "../components/dashboard/PhotosSection"
 import UpdatesSection from "../components/dashboard/UpdatesSection"
-import PaymentSummarySection from '../components/dashboard/PaymentSummarySection';
+import PaymentSummarySection from '../components/dashboard/PaymentSummarySection'
 import ExpensesSection from "../components/dashboard/ExpensesSection"
 import WorkLogsSection from "../components/dashboard/WorkLogsSection"
 import { theme } from "../theme"
@@ -19,9 +19,12 @@ const ProjectDashboard = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [activeTab, setActiveTab] = useState("photos")
+  const [selectedContractor, setSelectedContractor] = useState('all')
+  const [contractors, setContractors] = useState([])
 
   useEffect(() => {
     loadDashboard()
+    loadContractors()
   }, [id])
 
   const loadDashboard = async () => {
@@ -40,6 +43,15 @@ const ProjectDashboard = () => {
       }
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadContractors = async () => {
+    try {
+      const data = await projectService.getProjectContractors(id)
+      setContractors(data || [])
+    } catch (err) {
+      console.error("Failed to load contractors:", err)
     }
   }
 
@@ -70,17 +82,9 @@ const ProjectDashboard = () => {
 
   if (!dashboard) return null
 
-  const isContractor = user?.user_type === "contractor" && dashboard.project.contractor_id === user.id
+  const isContractor = user?.user_type === "contractor"
   const isOwner = user?.user_type === "house_owner" && dashboard.project.owner_id === user.id
   const isEmployee = user?.user_type === "employee"
-
-  const tabOptions = [
-    { value: "photos", label: "📷 Progress Photos", icon: "📷" },
-    { value: "updates", label: "📝 Updates", icon: "📝" },
-    { value: "expenses", label: "💰 Expenses", icon: "💰" },
-    { value: 'payments', label: '💳 Payment Summary', icon: '💳' },
-    { value: "worklogs", label: "⏰ Work Logs", icon: "⏰" },
-  ]
 
   return (
     <div style={styles.container}>
@@ -90,12 +94,7 @@ const ProjectDashboard = () => {
         </button>
         <div style={styles.headerContent}>
           <h1 style={styles.title}>{dashboard.project.title}</h1>
-          <span
-            style={{
-              ...styles.statusBadge,
-              backgroundColor: getStatusColor(dashboard.project.status),
-            }}
-          >
+          <span style={{ ...styles.statusBadge, ...getStatusStyle(dashboard.project.status) }}>
             {dashboard.project.status}
           </span>
         </div>
@@ -104,23 +103,23 @@ const ProjectDashboard = () => {
       <div style={styles.projectInfo}>
         <div style={styles.infoCard}>
           <h3 style={styles.infoTitle}>Project Details</h3>
-          <p style={styles.description}>{dashboard.project.description}</p>
           <div style={styles.infoGrid}>
             <div style={styles.infoItem}>
               <span style={styles.label}>Estimated Cost:</span>
-              <span style={styles.value}>${Number.parseFloat(dashboard.project.estimated_cost).toLocaleString()}</span>
+              <span style={styles.value}>${Number(dashboard.project.estimated_cost).toLocaleString()}</span>
             </div>
-            {dashboard.project.address && (
-              <div style={styles.infoItem}>
-                <span style={styles.label}>Address:</span>
-                <span style={styles.value}>{dashboard.project.address}</span>
-              </div>
-            )}
+            <div style={styles.infoItem}>
+              <span style={styles.label}>Address:</span>
+              <span style={styles.value}>{dashboard.project.address}</span>
+            </div>
           </div>
+          {dashboard.project.description && (
+            <p style={styles.description}>{dashboard.project.description}</p>
+          )}
         </div>
 
         <div style={styles.infoCard}>
-          <h3 style={styles.infoTitle}>Owner</h3>
+          <h3 style={styles.infoTitle}>House Owner</h3>
           <div style={styles.contactInfo}>
             <div style={styles.contactItem}>
               <span style={styles.label}>Name:</span>
@@ -138,29 +137,25 @@ const ProjectDashboard = () => {
             )}
           </div>
         </div>
-
-        {dashboard.contractor && (
-          <div style={styles.infoCard}>
-            <h3 style={styles.infoTitle}>Contractor</h3>
-            <div style={styles.contactInfo}>
-              <div style={styles.contactItem}>
-                <span style={styles.label}>Name:</span>
-                <span style={styles.value}>{dashboard.contractor.name}</span>
-              </div>
-              <div style={styles.contactItem}>
-                <span style={styles.label}>Email:</span>
-                <span style={styles.value}>{dashboard.contractor.email}</span>
-              </div>
-              {dashboard.contractor.phone && (
-                <div style={styles.contactItem}>
-                  <span style={styles.label}>Phone:</span>
-                  <span style={styles.value}>{dashboard.contractor.phone}</span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
       </div>
+
+      {contractors.length > 1 && (
+        <div style={styles.filterContainer}>
+          <label style={styles.filterLabel}>Filter by Contractor:</label>
+          <select 
+            value={selectedContractor} 
+            onChange={(e) => setSelectedContractor(e.target.value)}
+            style={styles.filterDropdown}
+          >
+            <option value="all">All Contractors</option>
+            {contractors.map(contractor => (
+              <option key={contractor.contractor_id} value={contractor.contractor_id}>
+                {contractor.contractor_name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {!isEmployee && (
         <>
@@ -184,11 +179,11 @@ const ProjectDashboard = () => {
               💰 Expenses
             </button>
             <button
-  style={activeTab === 'payments' ? { ...styles.tab, ...styles.activeTab } : styles.tab}
-  onClick={() => setActiveTab('payments')}
->
-  💳 Payment Summary
-</button>
+              style={activeTab === 'payments' ? { ...styles.tab, ...styles.activeTab } : styles.tab}
+              onClick={() => setActiveTab('payments')}
+            >
+              💳 Payment Summary
+            </button>
             <button
               style={activeTab === "worklogs" ? { ...styles.tab, ...styles.activeTab } : styles.tab}
               onClick={() => setActiveTab("worklogs")}
@@ -197,120 +192,57 @@ const ProjectDashboard = () => {
             </button>
           </div>
 
-          <div className="mobile-tab-dropdown" style={styles.mobileDropdown}>
+          <div className="mobile-dropdown" style={styles.mobileDropdown}>
             <select value={activeTab} onChange={(e) => setActiveTab(e.target.value)} style={styles.dropdown}>
-              {tabOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
+              <option value="photos">📷 Progress Photos</option>
+              <option value="updates">📝 Updates</option>
+              <option value="expenses">💰 Expenses</option>
+              <option value="payments">💳 Payment Summary</option>
+              <option value="worklogs">⏰ Work Logs</option>
             </select>
-          </div>
-
-          <style>{`
-            @media (max-width: 768px) {
-              .desktop-tabs {
-                display: none !important;
-              }
-              .mobile-tab-dropdown {
-                display: block !important;
-              }
-            }
-            @media (min-width: 769px) {
-              .desktop-tabs {
-                display: flex !important;
-              }
-              .mobile-tab-dropdown {
-                display: none !important;
-              }
-            }
-          `}</style>
-
-          <div style={styles.content}>
-            {activeTab === "photos" && (
-              <PhotosSection
-                projectId={id}
-                photos={dashboard.recent_photos}
-                canUpload={isOwner || isContractor}
-                onPhotoUploaded={loadDashboard}
-              />
-            )}
-            {activeTab === "updates" && (
-              <UpdatesSection
-                projectId={id}
-                updates={dashboard.latest_updates}
-                isContractor={isContractor}
-                onUpdateCreated={loadDashboard}
-              />
-            )}
-            {activeTab === "expenses" && (
-              <ExpensesSection
-                projectId={id}
-                expenses={dashboard.recent_expenses}
-                summary={dashboard.expense_summary}
-                canAdd={isOwner || isContractor}
-                onExpenseAdded={loadDashboard}
-              />
-            )}
-            {activeTab === 'payments' && (
-  <PaymentSummarySection
-    projectId={id}
-    isOwner={isOwner}
-    isContractor={isContractor}
-    onPaymentAdded={loadDashboard}
-  />
-)}
-            {activeTab === "worklogs" && (
-              <WorkLogsSection
-                projectId={id}
-                summary={dashboard.work_logs_summary}
-                recentCheckIns={dashboard.recent_check_ins}
-              />
-            )}
           </div>
         </>
       )}
 
-      {isEmployee && (
-        <div style={styles.content}>
-          <WorkLogsSection
-            projectId={id}
-            summary={dashboard.work_logs_summary}
-            recentCheckIns={dashboard.recent_check_ins}
-            isEmployee={true}
-          />
-        </div>
-      )}
+      <div style={styles.content}>
+        {activeTab === "photos" && <PhotosSection projectId={id} isContractor={isContractor} contractorFilter={selectedContractor} />}
+        {activeTab === "updates" && <UpdatesSection projectId={id} isContractor={isContractor} contractorFilter={selectedContractor} />}
+        {activeTab === "expenses" && <ExpensesSection projectId={id} isOwner={isOwner} isContractor={isContractor} contractorFilter={selectedContractor} />}
+        {activeTab === "payments" && <PaymentSummarySection projectId={id} contractorFilter={selectedContractor} />}
+        {activeTab === "worklogs" && <WorkLogsSection projectId={id} contractorFilter={selectedContractor} />}
+      </div>
     </div>
   )
 }
 
-const getStatusColor = (status) => {
-  const colors = {
-    draft: "#6B7280",
-    active: "#10B981",
-    completed: "#3B82F6",
+const getStatusStyle = (status) => {
+  const styles = {
+    draft: { backgroundColor: "#FEF3C7", color: "#92400E" },
+    active: { backgroundColor: "#DBEAFE", color: "#1E40AF" },
+    completed: { backgroundColor: "#D1FAE5", color: "#065F46" }
   }
-  return colors[status] || "#6B7280"
+  return styles[status] || {}
 }
 
 const styles = {
   container: {
     maxWidth: "1400px",
     margin: "0 auto",
-    padding: "1.5rem 1rem",
+    padding: "2rem",
+    backgroundColor: theme.colors.background,
+    minHeight: "100vh",
   },
   loading: {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    padding: "4rem 1rem",
+    minHeight: "60vh",
     gap: "1rem",
   },
   spinner: {
-    width: "40px",
-    height: "40px",
+    width: "3rem",
+    height: "3rem",
     border: `4px solid ${theme.colors.backgroundLight}`,
     borderTop: `4px solid ${theme.colors.primary}`,
     borderRadius: "50%",
@@ -320,17 +252,17 @@ const styles = {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    padding: "3rem 1rem",
-    gap: "1rem",
+    justifyContent: "center",
+    minHeight: "60vh",
+    gap: "1.5rem",
   },
   errorIcon: {
-    fontSize: "3rem",
+    fontSize: "4rem",
   },
   errorText: {
     fontSize: "1.125rem",
-    color: theme.colors.textLight,
+    color: theme.colors.error,
     textAlign: "center",
-    margin: 0,
   },
   header: {
     marginBottom: "2rem",
@@ -339,7 +271,7 @@ const styles = {
     backgroundColor: "transparent",
     border: "none",
     color: theme.colors.primary,
-    fontSize: "1rem",
+    fontSize: "0.9375rem",
     cursor: "pointer",
     padding: "0.5rem 0",
     marginBottom: "1rem",
@@ -376,7 +308,6 @@ const styles = {
     borderRadius: theme.borderRadius.full,
     fontSize: "0.875rem",
     fontWeight: "600",
-    color: theme.colors.white,
     textTransform: "capitalize",
   },
   projectInfo: {
@@ -402,7 +333,7 @@ const styles = {
   description: {
     color: theme.colors.textLight,
     lineHeight: "1.6",
-    marginBottom: "1rem",
+    marginTop: "1rem",
     fontSize: "0.9375rem",
   },
   infoGrid: {
@@ -437,6 +368,36 @@ const styles = {
     color: theme.colors.text,
     fontWeight: "600",
     textAlign: "right",
+  },
+  filterContainer: {
+    backgroundColor: theme.colors.white,
+    padding: "1.25rem",
+    borderRadius: theme.borderRadius.lg,
+    boxShadow: theme.shadows.sm,
+    marginBottom: "2rem",
+    display: "flex",
+    alignItems: "center",
+    gap: "1rem",
+    border: `1px solid ${theme.colors.borderLight}`,
+  },
+  filterLabel: {
+    fontSize: "0.9375rem",
+    fontWeight: "600",
+    color: theme.colors.text,
+    whiteSpace: "nowrap",
+  },
+  filterDropdown: {
+    flex: 1,
+    padding: "0.625rem 1rem",
+    fontSize: "0.9375rem",
+    fontWeight: "500",
+    color: theme.colors.text,
+    backgroundColor: theme.colors.white,
+    border: `2px solid ${theme.colors.borderLight}`,
+    borderRadius: theme.borderRadius.md,
+    cursor: "pointer",
+    fontFamily: theme.typography.fontFamily,
+    transition: "border-color 0.2s ease",
   },
   tabs: {
     display: "flex",
