@@ -23,15 +23,19 @@ const ProjectDashboard = () => {
   const [contractors, setContractors] = useState([])
 
   useEffect(() => {
-    loadDashboard()
     loadContractors()
   }, [id])
+
+  useEffect(() => {
+    loadDashboard()
+  }, [id, selectedContractor])
 
   const loadDashboard = async () => {
     try {
       setLoading(true)
       setError("")
-      const data = await projectService.getProjectDashboard(id)
+      const params = selectedContractor !== 'all' ? { contractor_id: selectedContractor } : {}
+      const data = await projectService.getProjectDashboard(id, params)
       setDashboard(data)
     } catch (err) {
       if (err.response?.status === 403) {
@@ -150,7 +154,7 @@ const ProjectDashboard = () => {
             <option value="all">All Contractors</option>
             {contractors.map(contractor => (
               <option key={contractor.contractor_id} value={contractor.contractor_id}>
-                {contractor.contractor_name}
+                {contractor.name}
               </option>
             ))}
           </select>
@@ -205,8 +209,8 @@ const ProjectDashboard = () => {
       )}
 
       <div style={styles.content}>
-        {activeTab === "photos" && <PhotosSection projectId={id} isContractor={isContractor} contractorFilter={selectedContractor} />}
-        {activeTab === "updates" && <UpdatesSection projectId={id} isContractor={isContractor} contractorFilter={selectedContractor} />}
+        {activeTab === "photos" && <PhotosSection projectId={id} photos={dashboard.recent_photos} canUpload={isContractor || isOwner} onPhotoUploaded={loadDashboard} />}
+        {activeTab === "updates" && <UpdatesSection projectId={id} updates={dashboard.latest_updates} isContractor={isContractor} onUpdateCreated={loadDashboard} />}
         {activeTab === "expenses" && <ExpensesSection projectId={id} isOwner={isOwner} isContractor={isContractor} contractorFilter={selectedContractor} />}
         {activeTab === "payments" && <PaymentSummarySection projectId={id} contractorFilter={selectedContractor} />}
         {activeTab === "worklogs" && <WorkLogsSection projectId={id} contractorFilter={selectedContractor} />}
@@ -232,63 +236,20 @@ const styles = {
     backgroundColor: theme.colors.background,
     minHeight: "100vh",
   },
-  loading: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: "60vh",
-    gap: "1rem",
-  },
-  spinner: {
-    width: "3rem",
-    height: "3rem",
-    border: `4px solid ${theme.colors.backgroundLight}`,
-    borderTop: `4px solid ${theme.colors.primary}`,
-    borderRadius: "50%",
-    animation: "spin 1s linear infinite",
-  },
-  errorContainer: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: "60vh",
-    gap: "1.5rem",
-  },
-  errorIcon: {
-    fontSize: "4rem",
-  },
-  errorText: {
-    fontSize: "1.125rem",
-    color: theme.colors.error,
-    textAlign: "center",
-  },
   header: {
     marginBottom: "2rem",
   },
   backButtonLink: {
-    backgroundColor: "transparent",
-    border: "none",
     color: theme.colors.primary,
-    fontSize: "0.9375rem",
-    cursor: "pointer",
-    padding: "0.5rem 0",
+    textDecoration: "none",
+    fontSize: "0.875rem",
+    fontWeight: "500",
     marginBottom: "1rem",
-    fontWeight: "600",
-    transition: "color 0.2s ease",
-  },
-  backButton: {
-    padding: "0.875rem 2rem",
-    backgroundColor: theme.colors.primary,
-    color: theme.colors.white,
-    border: "none",
-    borderRadius: theme.borderRadius.md,
-    fontSize: "1rem",
-    fontWeight: "600",
+    display: "inline-block",
     cursor: "pointer",
-    transition: "all 0.2s ease",
-    boxShadow: theme.shadows.sm,
+    background: "none",
+    border: "none",
+    padding: "0",
   },
   headerContent: {
     display: "flex",
@@ -300,159 +261,179 @@ const styles = {
     fontSize: "2rem",
     fontWeight: "700",
     color: theme.colors.text,
-    margin: 0,
-    letterSpacing: "-0.02em",
+    margin: "0",
   },
   statusBadge: {
-    padding: "0.5rem 1rem",
-    borderRadius: theme.borderRadius.full,
+    padding: "0.25rem 0.75rem",
+    borderRadius: "9999px",
     fontSize: "0.875rem",
     fontWeight: "600",
-    textTransform: "capitalize",
   },
   projectInfo: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
     gap: "1.5rem",
     marginBottom: "2rem",
   },
   infoCard: {
-    backgroundColor: theme.colors.white,
+    backgroundColor: theme.colors.cardBg,
     padding: "1.5rem",
-    borderRadius: theme.borderRadius.lg,
-    boxShadow: theme.shadows.md,
-    border: `1px solid ${theme.colors.borderLight}`,
+    borderRadius: theme.borderRadius.md,
+    boxShadow: theme.shadows.sm,
   },
   infoTitle: {
     fontSize: "1.125rem",
     fontWeight: "600",
     color: theme.colors.text,
     marginBottom: "1rem",
-    letterSpacing: "-0.01em",
-  },
-  description: {
-    color: theme.colors.textLight,
-    lineHeight: "1.6",
-    marginTop: "1rem",
-    fontSize: "0.9375rem",
   },
   infoGrid: {
-    display: "flex",
-    flexDirection: "column",
+    display: "grid",
     gap: "0.75rem",
   },
   infoItem: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    gap: "1rem",
+  },
+  label: {
+    fontSize: "0.875rem",
+    color: theme.colors.textMuted,
+    fontWeight: "500",
+  },
+  value: {
+    fontSize: "0.875rem",
+    color: theme.colors.text,
+    fontWeight: "600",
+  },
+  description: {
+    marginTop: "1rem",
+    fontSize: "0.875rem",
+    color: theme.colors.textLight,
+    lineHeight: "1.5",
   },
   contactInfo: {
-    display: "flex",
-    flexDirection: "column",
+    display: "grid",
     gap: "0.75rem",
   },
   contactItem: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    gap: "1rem",
-  },
-  label: {
-    fontSize: "0.875rem",
-    color: theme.colors.textLight,
-    fontWeight: "500",
-  },
-  value: {
-    fontSize: "0.9375rem",
-    color: theme.colors.text,
-    fontWeight: "600",
-    textAlign: "right",
   },
   filterContainer: {
-    backgroundColor: theme.colors.white,
-    padding: "1.25rem",
-    borderRadius: theme.borderRadius.lg,
+    backgroundColor: theme.colors.cardBg,
+    padding: "1rem 1.5rem",
+    borderRadius: theme.borderRadius.md,
     boxShadow: theme.shadows.sm,
     marginBottom: "2rem",
     display: "flex",
     alignItems: "center",
     gap: "1rem",
-    border: `1px solid ${theme.colors.borderLight}`,
+    flexWrap: "wrap",
   },
   filterLabel: {
-    fontSize: "0.9375rem",
+    fontSize: "0.875rem",
     fontWeight: "600",
     color: theme.colors.text,
-    whiteSpace: "nowrap",
   },
   filterDropdown: {
-    flex: 1,
-    padding: "0.625rem 1rem",
-    fontSize: "0.9375rem",
-    fontWeight: "500",
-    color: theme.colors.text,
-    backgroundColor: theme.colors.white,
-    border: `2px solid ${theme.colors.borderLight}`,
+    padding: "0.5rem 1rem",
     borderRadius: theme.borderRadius.md,
+    border: `1px solid ${theme.colors.border}`,
+    backgroundColor: theme.colors.background,
+    color: theme.colors.text,
+    fontSize: "0.875rem",
     cursor: "pointer",
-    fontFamily: theme.typography.fontFamily,
-    transition: "border-color 0.2s ease",
+    outline: "none",
+    minWidth: "200px",
   },
   tabs: {
     display: "flex",
     gap: "0.5rem",
-    borderBottom: `2px solid ${theme.colors.backgroundLight}`,
+    borderBottom: `2px solid ${theme.colors.border}`,
     marginBottom: "2rem",
-    overflowX: "auto",
-    WebkitOverflowScrolling: "touch",
+    flexWrap: "wrap",
   },
   tab: {
-    padding: "1rem 1.5rem",
+    padding: "0.75rem 1.5rem",
+    fontSize: "0.875rem",
+    fontWeight: "500",
+    color: theme.colors.textMuted,
     backgroundColor: "transparent",
     border: "none",
-    borderBottom: "3px solid transparent",
+    borderBottom: "2px solid transparent",
     cursor: "pointer",
-    fontSize: "0.9375rem",
-    fontWeight: "600",
-    color: theme.colors.textLight,
-    transition: "all 0.2s ease",
-    whiteSpace: "nowrap",
+    transition: "all 0.2s",
+    marginBottom: "-2px",
   },
   activeTab: {
     color: theme.colors.primary,
-    borderBottom: `3px solid ${theme.colors.primary}`,
-  },
-  content: {
-    backgroundColor: theme.colors.white,
-    borderRadius: theme.borderRadius.lg,
-    boxShadow: theme.shadows.md,
-    padding: "2rem",
-    minHeight: "400px",
-    border: `1px solid ${theme.colors.borderLight}`,
+    borderBottomColor: theme.colors.primary,
+    fontWeight: "600",
   },
   mobileDropdown: {
-    marginBottom: "2rem",
     display: "none",
+    marginBottom: "2rem",
   },
   dropdown: {
     width: "100%",
-    padding: "1rem",
-    fontSize: "1rem",
-    fontWeight: "600",
-    color: theme.colors.text,
-    backgroundColor: theme.colors.white,
-    border: `2px solid ${theme.colors.primary}`,
+    padding: "0.75rem 1rem",
     borderRadius: theme.borderRadius.md,
+    border: `1px solid ${theme.colors.border}`,
+    backgroundColor: theme.colors.cardBg,
+    color: theme.colors.text,
+    fontSize: "0.875rem",
     cursor: "pointer",
-    fontFamily: theme.typography.fontFamily,
+  },
+  content: {
+    backgroundColor: theme.colors.cardBg,
+    borderRadius: theme.borderRadius.md,
+    padding: "2rem",
     boxShadow: theme.shadows.sm,
-    appearance: "none",
-    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%232563EB' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
-    backgroundRepeat: "no-repeat",
-    backgroundPosition: "right 0.75rem center",
-    backgroundSize: "1.5rem",
-    paddingRight: "3rem",
+  },
+  loading: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: "400px",
+    gap: "1rem",
+  },
+  spinner: {
+    width: "40px",
+    height: "40px",
+    border: `4px solid ${theme.colors.border}`,
+    borderTop: `4px solid ${theme.colors.primary}`,
+    borderRadius: "50%",
+    animation: "spin 1s linear infinite",
+  },
+  errorContainer: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: "400px",
+    gap: "1rem",
+  },
+  errorIcon: {
+    fontSize: "3rem",
+  },
+  errorText: {
+    fontSize: "1.125rem",
+    color: theme.colors.textMuted,
+    textAlign: "center",
+  },
+  backButton: {
+    padding: "0.75rem 1.5rem",
+    backgroundColor: theme.colors.primary,
+    color: "#FFFFFF",
+    border: "none",
+    borderRadius: theme.borderRadius.md,
+    fontSize: "0.875rem",
+    fontWeight: "600",
+    cursor: "pointer",
+    marginTop: "1rem",
   },
 }
 

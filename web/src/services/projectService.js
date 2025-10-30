@@ -11,8 +11,14 @@ const projectService = {
     return { project: response.data };
   },
 
-  getProjectDashboard: async (id) => {
-    const response = await api.get(`/projects/${id}/dashboard`);
+  getProjectDashboard: async (id, params = {}) => {
+    const queryParams = new URLSearchParams();
+    if (params.contractor_id) {
+      queryParams.append('contractor_id', params.contractor_id);
+    }
+    const queryString = queryParams.toString();
+    const url = `/projects/${id}/dashboard${queryString ? `?${queryString}` : ''}`;
+    const response = await api.get(url);
     return response.data;
   },
 

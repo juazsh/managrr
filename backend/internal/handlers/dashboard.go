@@ -162,13 +162,20 @@ func GetProjectDashboard(w http.ResponseWriter, r *http.Request) {
 		Scan(&ownerInfo.ID, &ownerInfo.Name, &ownerInfo.Email, &ownerInfo.Phone)
 	dashboard.OwnerInfo = ownerInfo
 
-	photoRows, err := db.Query(`
+	photoQuery := `
 		SELECT id, photo_url, caption, created_at 
 		FROM project_photos 
-		WHERE project_id = $1 
-		ORDER BY created_at DESC 
-		LIMIT 6
-	`, projectID)
+		WHERE project_id = $1`
+	photoArgs := []interface{}{projectID}
+
+	if contractorFilter != "" {
+		photoQuery += ` AND uploaded_by = $2`
+		photoArgs = append(photoArgs, contractorFilter)
+	}
+
+	photoQuery += ` ORDER BY created_at DESC LIMIT 6`
+
+	photoRows, err := db.Query(photoQuery, photoArgs...)
 	if err == nil {
 		defer photoRows.Close()
 		for photoRows.Next() {
@@ -212,55 +219,46 @@ func GetProjectDashboard(w http.ResponseWriter, r *http.Request) {
 
 	if !isEmployee {
 		workLogQuery := `
-			SELECT COALESCE(SUM(wl.hours_worked), 0), COUNT(DISTINCT wl.employee_id)
-			FROM work_logs wl
+			SELECT 
+				COALESCE(SUM(EXTRACT(EPOCH FROM (check_out_time - check_in_time))/3600), 0) as total_hours,
+				COUNT(DISTINCT employee_id) as active_employees
+			FROM work_logs
+			WHERE project_id = $1 
+			AND check_in_time >= NOW() - INTERVAL '7 days'
+			AND check_out_time IS NOT NULL
 		`
 		workLogArgs := []interface{}{projectID}
 		argIndex := 2
 
 		if contractorFilter != "" {
-			workLogQuery += `
-				JOIN employees e ON wl.employee_id = e.user_id
-				WHERE wl.project_id = $1 
-				AND e.contractor_id = $` + strconv.Itoa(argIndex) +
-				` AND wl.check_in_time >= date_trunc('week', NOW())
-			`
+			workLogQuery += ` AND employee_id IN (SELECT user_id FROM employees WHERE contractor_id = $` + strconv.Itoa(argIndex) + `)`
 			workLogArgs = append(workLogArgs, contractorFilter)
-		} else {
-			workLogQuery += `
-				WHERE wl.project_id = $1 
-				AND wl.check_in_time >= date_trunc('week', NOW())
-			`
 		}
 
-		db.QueryRow(workLogQuery, workLogArgs...).Scan(
-			&dashboard.WorkLogsSummary.TotalHoursThisWeek,
-			&dashboard.WorkLogsSummary.ActiveEmployees,
-		)
+		var totalHours float64
+		var activeEmployees int
+		db.QueryRow(workLogQuery, workLogArgs...).Scan(&totalHours, &activeEmployees)
+
+		dashboard.WorkLogsSummary = WorkLogsSummary{
+			TotalHoursThisWeek: totalHours,
+			ActiveEmployees:    activeEmployees,
+		}
 
 		checkInQuery := `
 			SELECT wl.id, u.name, wl.check_in_time, wl.check_in_photo_url
 			FROM work_logs wl
 			JOIN users u ON wl.employee_id = u.id
+			WHERE wl.project_id = $1
 		`
 		checkInArgs := []interface{}{projectID}
 		argIndex = 2
 
 		if contractorFilter != "" {
-			checkInQuery += `
-				JOIN employees e ON wl.employee_id = e.user_id
-				WHERE wl.project_id = $1 
-				AND e.contractor_id = $` + strconv.Itoa(argIndex) +
-				` AND wl.check_out_time IS NULL
-			`
+			checkInQuery += ` AND wl.employee_id IN (SELECT user_id FROM employees WHERE contractor_id = $` + strconv.Itoa(argIndex) + `)`
 			checkInArgs = append(checkInArgs, contractorFilter)
-		} else {
-			checkInQuery += `
-				WHERE wl.project_id = $1 AND wl.check_out_time IS NULL
-			`
 		}
 
-		checkInQuery += ` ORDER BY wl.check_in_time DESC LIMIT 3`
+		checkInQuery += ` ORDER BY wl.check_in_time DESC LIMIT 5`
 
 		checkInRows, err := db.Query(checkInQuery, checkInArgs...)
 		if err == nil {
