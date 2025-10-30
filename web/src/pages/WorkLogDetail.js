@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { theme } from '../theme';
 import workLogService from '../services/workLogService';
 
 const WorkLogDetail = () => {
@@ -61,18 +60,18 @@ const WorkLogDetail = () => {
 
   if (loading) {
     return (
-      <div style={styles.container}>
-        <div style={styles.loading}>Loading work log details...</div>
+      <div className="max-w-[1200px] mx-auto p-6">
+        <div className="text-center py-12 px-4 text-lg text-text-light">Loading work log details...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div style={styles.container}>
-        <div style={styles.error}>
+      <div className="max-w-[1200px] mx-auto p-6">
+        <div className="text-center py-12 px-4 text-error text-lg">
           {error}
-          <button onClick={handleBack} style={styles.backButton}>
+          <button onClick={handleBack} className="py-3 px-6 bg-transparent text-text border-2 border-border rounded-md cursor-pointer text-base font-semibold transition-all duration-200">
             Back to Work Logs
           </button>
         </div>
@@ -82,54 +81,54 @@ const WorkLogDetail = () => {
 
   if (!workLog) {
     return (
-      <div style={styles.container}>
-        <div style={styles.error}>Work log not found</div>
+      <div className="max-w-[1200px] mx-auto p-6">
+        <div className="text-center py-12 px-4 text-error text-lg">Work log not found</div>
       </div>
     );
   }
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <button onClick={handleBack} style={styles.backButton}>
+    <div className="max-w-[1200px] mx-auto p-6">
+      <div className="mb-6">
+        <button onClick={handleBack} className="py-3 px-6 bg-transparent text-text border-2 border-border rounded-md cursor-pointer text-base font-semibold transition-all duration-200">
           ← Back to Work Logs
         </button>
       </div>
 
-      <div style={styles.card}>
-        <h1 style={styles.title}>Work Log Details</h1>
+      <div className="bg-white p-8 rounded-lg shadow-md border border-border-light">
+        <h1 className="text-3xl font-bold text-text m-0 mb-8 tracking-tight">Work Log Details</h1>
 
-        <div style={styles.infoSection}>
-          <div style={styles.infoRow}>
-            <span style={styles.infoLabel}>Employee:</span>
-            <span style={styles.infoValue}>{workLog.employee_name}</span>
+        <div className="mb-8 p-6 bg-background-light rounded-md border border-border-light">
+          <div className="flex justify-between py-3.5 border-b border-border-light gap-4 flex-wrap">
+            <span className="text-base text-text-light font-semibold">Employee:</span>
+            <span className="text-base text-text font-semibold text-right">{workLog.employee_name}</span>
           </div>
-          <div style={styles.infoRow}>
-            <span style={styles.infoLabel}>Project:</span>
-            <span style={styles.infoValue}>{workLog.project_title}</span>
+          <div className="flex justify-between py-3.5 border-b border-border-light gap-4 flex-wrap">
+            <span className="text-base text-text-light font-semibold">Project:</span>
+            <span className="text-base text-text font-semibold text-right">{workLog.project_title}</span>
           </div>
-          <div style={styles.infoRow}>
-            <span style={styles.infoLabel}>Hours Worked:</span>
-            <span style={styles.infoValue}>
+          <div className="flex justify-between py-3.5 border-b border-border-light gap-4 flex-wrap">
+            <span className="text-base text-text-light font-semibold">Hours Worked:</span>
+            <span className="text-base text-text font-semibold text-right">
               {calculateHours(workLog.check_in_time, workLog.check_out_time)}
             </span>
           </div>
         </div>
 
-        <div style={styles.timeSection}>
-          <h2 style={styles.sectionTitle}>Time Log</h2>
-          <div style={styles.timeGrid}>
-            <div style={styles.timeCard}>
-              <div style={styles.timeLabel}>Check-in</div>
-              <div style={styles.timeValue}>{formatDateTime(workLog.check_in_time)}</div>
+        <div className="mb-8">
+          <h2 className="text-xl font-bold text-text mb-4 tracking-tight">Time Log</h2>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))] gap-4">
+            <div className="p-6 bg-background-light rounded-md border-2 border-primary">
+              <div className="text-sm text-text-light font-bold uppercase mb-2 tracking-wider">Check-in</div>
+              <div className="text-lg text-text font-semibold mb-3.5 leading-snug">{formatDateTime(workLog.check_in_time)}</div>
               {workLog.check_in_latitude && workLog.check_in_longitude && (
-                <div style={styles.gpsInfo}>
+                <div className="text-sm text-text-light flex flex-col gap-2">
                   📍 GPS: {workLog.check_in_latitude.toFixed(6)}, {workLog.check_in_longitude.toFixed(6)}
                   <a
                     href={`https://www.google.com/maps?q=${workLog.check_in_latitude},${workLog.check_in_longitude}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={styles.mapLink}
+                    className="text-primary no-underline font-semibold text-sm transition-colors duration-200"
                   >
                     View on Map
                   </a>
@@ -138,17 +137,17 @@ const WorkLogDetail = () => {
             </div>
 
             {workLog.check_out_time && (
-              <div style={styles.timeCard}>
-                <div style={styles.timeLabel}>Check-out</div>
-                <div style={styles.timeValue}>{formatDateTime(workLog.check_out_time)}</div>
+              <div className="p-6 bg-background-light rounded-md border-2 border-primary">
+                <div className="text-sm text-text-light font-bold uppercase mb-2 tracking-wider">Check-out</div>
+                <div className="text-lg text-text font-semibold mb-3.5 leading-snug">{formatDateTime(workLog.check_out_time)}</div>
                 {workLog.check_out_latitude && workLog.check_out_longitude && (
-                  <div style={styles.gpsInfo}>
+                  <div className="text-sm text-text-light flex flex-col gap-2">
                     📍 GPS: {workLog.check_out_latitude.toFixed(6)}, {workLog.check_out_longitude.toFixed(6)}
                     <a
                       href={`https://www.google.com/maps?q=${workLog.check_out_latitude},${workLog.check_out_longitude}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={styles.mapLink}
+                      className="text-primary no-underline font-semibold text-sm transition-colors duration-200"
                     >
                       View on Map
                     </a>
@@ -159,14 +158,14 @@ const WorkLogDetail = () => {
           </div>
         </div>
 
-        <div style={styles.photosSection}>
-          <h2 style={styles.sectionTitle}>Photos</h2>
-          <div style={styles.photosGrid}>
+        <div className="mb-4">
+          <h2 className="text-xl font-bold text-text mb-4 tracking-tight">Photos</h2>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,300px),1fr))] gap-4">
             {workLog.check_in_photo_url && (
-              <div style={styles.photoCard}>
-                <div style={styles.photoHeader}>
-                  <span style={styles.photoLabel}>Check-in Photo</span>
-                  <span style={styles.photoTime}>
+              <div className="border border-border rounded-md overflow-hidden shadow-sm transition-all duration-200">
+                <div className="p-4 bg-background-light flex justify-between items-center border-b border-border-light">
+                  <span className="text-sm font-semibold text-text">Check-in Photo</span>
+                  <span className="text-sm text-text-light">
                     {new Date(workLog.check_in_time).toLocaleTimeString('en-US', {
                       hour: '2-digit',
                       minute: '2-digit',
@@ -176,17 +175,17 @@ const WorkLogDetail = () => {
                 <img
                   src={workLog.check_in_photo_url}
                   alt="Check-in"
-                  style={styles.photo}
+                  className="w-full h-[400px] object-cover cursor-pointer transition-transform duration-200"
                   onClick={() => openPhotoModal(workLog.check_in_photo_url)}
                 />
               </div>
             )}
 
             {workLog.check_out_photo_url && (
-              <div style={styles.photoCard}>
-                <div style={styles.photoHeader}>
-                  <span style={styles.photoLabel}>Check-out Photo</span>
-                  <span style={styles.photoTime}>
+              <div className="border border-border rounded-md overflow-hidden shadow-sm transition-all duration-200">
+                <div className="p-4 bg-background-light flex justify-between items-center border-b border-border-light">
+                  <span className="text-sm font-semibold text-text">Check-out Photo</span>
+                  <span className="text-sm text-text-light">
                     {new Date(workLog.check_out_time).toLocaleTimeString('en-US', {
                       hour: '2-digit',
                       minute: '2-digit',
@@ -196,7 +195,7 @@ const WorkLogDetail = () => {
                 <img
                   src={workLog.check_out_photo_url}
                   alt="Check-out"
-                  style={styles.photo}
+                  className="w-full h-[400px] object-cover cursor-pointer transition-transform duration-200"
                   onClick={() => openPhotoModal(workLog.check_out_photo_url)}
                 />
               </div>
@@ -206,217 +205,17 @@ const WorkLogDetail = () => {
       </div>
 
       {selectedPhoto && (
-        <div style={styles.modal} onClick={closePhotoModal}>
-          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <button style={styles.closeButton} onClick={closePhotoModal}>
+        <div className="fixed top-0 left-0 right-0 bottom-0 bg-black/95 flex items-center justify-center z-[1000] p-4" onClick={closePhotoModal}>
+          <div className="relative max-w-[90vw] max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+            <button className="absolute top-[-3rem] right-0 bg-none border-none text-white text-5xl cursor-pointer font-light leading-none transition-opacity duration-200" onClick={closePhotoModal}>
               ×
             </button>
-            <img src={selectedPhoto} alt="Full size" style={styles.modalImage} />
+            <img src={selectedPhoto} alt="Full size" className="max-w-full max-h-[90vh] object-contain rounded-md" />
           </div>
         </div>
       )}
     </div>
   );
 };
-
-const styles = {
-    container: {
-      maxWidth: "1200px",
-      margin: "0 auto",
-      padding: theme.spacing.component,
-    },
-    loading: {
-      textAlign: "center",
-      padding: "3rem 1rem",
-      fontSize: theme.typography.bodyLarge.fontSize,
-      color: theme.colors.textLight,
-    },
-    error: {
-      textAlign: "center",
-      padding: "3rem 1rem",
-      color: theme.colors.error,
-      fontSize: theme.typography.bodyLarge.fontSize,
-    },
-    header: {
-      marginBottom: theme.spacing.component,
-    },
-    backButton: {
-      padding: "0.75rem 1.5rem",
-      backgroundColor: "transparent",
-      color: theme.colors.text,
-      border: `2px solid ${theme.colors.border}`,
-      borderRadius: theme.borderRadius.md,
-      cursor: "pointer",
-      fontSize: theme.typography.body.fontSize,
-      fontWeight: "600",
-      transition: "all 0.2s ease",
-    },
-    card: {
-      background: theme.colors.white,
-      padding: theme.spacing.section,
-      borderRadius: theme.borderRadius.lg,
-      boxShadow: theme.shadows.md,
-      border: `1px solid ${theme.colors.borderLight}`,
-    },
-    title: {
-      fontSize: theme.typography.h2.fontSize,
-      fontWeight: theme.typography.h2.fontWeight,
-      color: theme.colors.text,
-      margin: `0 0 ${theme.spacing.section} 0`,
-      letterSpacing: "-0.02em",
-    },
-    infoSection: {
-      marginBottom: theme.spacing.section,
-      padding: theme.spacing.component,
-      backgroundColor: theme.colors.backgroundLight,
-      borderRadius: theme.borderRadius.md,
-      border: `1px solid ${theme.colors.borderLight}`,
-    },
-    infoRow: {
-      display: "flex",
-      justifyContent: "space-between",
-      padding: "0.875rem 0",
-      borderBottom: `1px solid ${theme.colors.borderLight}`,
-      gap: "1rem",
-      flexWrap: "wrap",
-    },
-    infoLabel: {
-      fontSize: theme.typography.body.fontSize,
-      color: theme.colors.textLight,
-      fontWeight: "600",
-    },
-    infoValue: {
-      fontSize: theme.typography.body.fontSize,
-      color: theme.colors.text,
-      fontWeight: "600",
-      textAlign: "right",
-    },
-    timeSection: {
-      marginBottom: theme.spacing.section,
-    },
-    sectionTitle: {
-      fontSize: theme.typography.h4.fontSize,
-      fontWeight: theme.typography.h4.fontWeight,
-      color: theme.colors.text,
-      marginBottom: theme.spacing.element,
-      letterSpacing: "-0.01em",
-    },
-    timeGrid: {
-      display: "grid",
-      gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))",
-      gap: theme.spacing.element,
-    },
-    timeCard: {
-      padding: theme.spacing.component,
-      backgroundColor: theme.colors.backgroundLight,
-      borderRadius: theme.borderRadius.md,
-      border: `2px solid ${theme.colors.primary}`,
-    },
-    timeLabel: {
-      fontSize: theme.typography.small.fontSize,
-      color: theme.colors.textLight,
-      fontWeight: "700",
-      textTransform: "uppercase",
-      marginBottom: "0.5rem",
-      letterSpacing: "0.05em",
-    },
-    timeValue: {
-      fontSize: theme.typography.bodyLarge.fontSize,
-      color: theme.colors.text,
-      fontWeight: "600",
-      marginBottom: "0.875rem",
-      lineHeight: "1.4",
-    },
-    gpsInfo: {
-      fontSize: theme.typography.small.fontSize,
-      color: theme.colors.textLight,
-      display: "flex",
-      flexDirection: "column",
-      gap: "0.5rem",
-    },
-    mapLink: {
-      color: theme.colors.primary,
-      textDecoration: "none",
-      fontWeight: "600",
-      fontSize: theme.typography.small.fontSize,
-      transition: "color 0.2s ease",
-    },
-    photosSection: {
-      marginBottom: "1rem",
-    },
-    photosGrid: {
-      display: "grid",
-      gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 300px), 1fr))",
-      gap: theme.spacing.element,
-    },
-    photoCard: {
-      border: `1px solid ${theme.colors.border}`,
-      borderRadius: theme.borderRadius.md,
-      overflow: "hidden",
-      boxShadow: theme.shadows.sm,
-      transition: "all 0.2s ease",
-    },
-    photoHeader: {
-      padding: "1rem",
-      backgroundColor: theme.colors.backgroundLight,
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      borderBottom: `1px solid ${theme.colors.borderLight}`,
-    },
-    photoLabel: {
-      fontSize: theme.typography.small.fontSize,
-      fontWeight: "600",
-      color: theme.colors.text,
-    },
-    photoTime: {
-      fontSize: theme.typography.small.fontSize,
-      color: theme.colors.textLight,
-    },
-    photo: {
-      width: "100%",
-      height: "400px",
-      objectFit: "cover",
-      cursor: "pointer",
-      transition: "transform 0.2s ease",
-    },
-    modal: {
-      position: "fixed",
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: "rgba(0, 0, 0, 0.95)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      zIndex: 1000,
-      padding: "1rem",
-    },
-    modalContent: {
-      position: "relative",
-      maxWidth: "90vw",
-      maxHeight: "90vh",
-    },
-    closeButton: {
-      position: "absolute",
-      top: "-3rem",
-      right: "0",
-      background: "none",
-      border: "none",
-      color: theme.colors.white,
-      fontSize: "3rem",
-      cursor: "pointer",
-      fontWeight: "300",
-      lineHeight: "1",
-      transition: "opacity 0.2s ease",
-    },
-    modalImage: {
-      maxWidth: "100%",
-      maxHeight: "90vh",
-      objectFit: "contain",
-      borderRadius: theme.borderRadius.md,
-    },
-  }
 
 export default WorkLogDetail;

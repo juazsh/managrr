@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import projectService from '../../services/projectService';
 import ImageViewer from '../common/ImageViewer';
-import { theme } from '../../theme';
 
 const UpdatesSection = ({ projectId, updates, isContractor, onUpdateCreated }) => {
   const [showForm, setShowForm] = useState(false);
@@ -107,11 +106,11 @@ const UpdatesSection = ({ projectId, updates, isContractor, onUpdateCreated }) =
       const response = await fetch(imageUrl, {
         mode: 'cors',
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch image');
       }
-      
+
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -120,7 +119,7 @@ const UpdatesSection = ({ projectId, updates, isContractor, onUpdateCreated }) =
       link.style.display = 'none';
       document.body.appendChild(link);
       link.click();
-      
+
       setTimeout(() => {
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
@@ -133,28 +132,28 @@ const UpdatesSection = ({ projectId, updates, isContractor, onUpdateCreated }) =
 
   return (
     <div>
-      <div style={styles.header}>
-        <h2 style={styles.sectionTitle}>Project Updates</h2>
+      <div className="flex justify-between items-center mb-8">
+        <h2 className="text-2xl font-semibold text-text m-0">Project Updates</h2>
         {isContractor && !showForm && (
-          <button onClick={() => setShowForm(true)} style={styles.createButton}>
+          <button onClick={() => setShowForm(true)} className="px-6 py-3 bg-primary text-white border-0 rounded-md text-base font-semibold cursor-pointer transition-all duration-200 shadow-sm">
             + Create Update
           </button>
         )}
       </div>
 
-      {error && <div style={styles.errorMessage}>{error}</div>}
+      {error && <div className="p-4 bg-error-light text-error rounded-md mb-4 text-base">{error}</div>}
 
       {showForm && (
-        <div style={styles.formCard}>
-          <h3 style={styles.formTitle}>Create New Update</h3>
+        <div className="bg-white p-8 rounded-lg shadow-md mb-8 border border-border-light">
+          <h3 className="text-xl font-semibold text-text mb-6 m-0">Create New Update</h3>
 
-          <div style={styles.formGroup}>
-            <label style={styles.label}>
+          <div className="mb-6">
+            <label className="block text-base font-semibold text-text mb-2">
               Update Type
               <select
                 value={updateType}
                 onChange={(e) => setUpdateType(e.target.value)}
-                style={styles.select}
+                className="w-full p-3 border-2 border-border rounded-md text-base font-sans bg-white mt-2"
               >
                 <option value="daily_summary">Daily Summary</option>
                 <option value="weekly_plan">Weekly Plan</option>
@@ -162,47 +161,47 @@ const UpdatesSection = ({ projectId, updates, isContractor, onUpdateCreated }) =
             </label>
           </div>
 
-          <div style={styles.formGroup}>
-            <label style={styles.label}>
+          <div className="mb-6">
+            <label className="block text-base font-semibold text-text mb-2">
               Content
               <textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="Describe the work completed, progress made, or plans for the week..."
                 rows={5}
-                style={styles.textarea}
+                className="w-full p-3 border-2 border-border rounded-md text-base font-sans resize-y mt-2 box-border"
               />
             </label>
           </div>
 
-          <div style={styles.formGroup}>
-            <label style={styles.label}>
+          <div className="mb-6">
+            <label className="block text-base font-semibold text-text mb-2">
               Photos (optional, max 10)
               <input
                 type="file"
                 accept="image/*"
                 multiple
                 onChange={handlePhotoSelect}
-                style={styles.fileInput}
+                className="mt-2 text-base"
               />
             </label>
           </div>
 
           {photos.length > 0 && (
-            <div style={styles.photosPreview}>
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4 mb-6">
               {photos.map((photo, index) => (
-                <div key={index} style={styles.photoPreview}>
-                  <img src={photo.preview} alt={`Preview ${index + 1}`} style={styles.previewImage} />
+                <div key={index} className="relative border-2 border-border rounded-md overflow-hidden">
+                  <img src={photo.preview} alt={`Preview ${index + 1}`} className="w-full h-[150px] object-cover" />
                   <input
                     type="text"
                     value={photo.caption}
                     onChange={(e) => handlePhotoCaption(index, e.target.value)}
                     placeholder="Photo caption..."
-                    style={styles.captionInput}
+                    className="w-full p-2 border-0 border-t border-border text-sm font-sans box-border"
                   />
                   <button
                     onClick={() => handleRemovePhoto(index)}
-                    style={styles.removeButton}
+                    className="absolute top-2 right-2 w-7 h-7 bg-error text-white border-0 rounded-full cursor-pointer text-base flex items-center justify-center"
                   >
                     ✕
                   </button>
@@ -211,17 +210,17 @@ const UpdatesSection = ({ projectId, updates, isContractor, onUpdateCreated }) =
             </div>
           )}
 
-          <div style={styles.formActions}>
+          <div className="flex gap-4 justify-end">
             <button
               onClick={handleCancel}
-              style={styles.cancelButton}
+              className="px-6 py-3 bg-white text-text border-2 border-border rounded-md text-base font-semibold cursor-pointer transition-all duration-200"
               disabled={submitting}
             >
               Cancel
             </button>
             <button
               onClick={handleSubmit}
-              style={styles.submitButton}
+              className="px-6 py-3 bg-primary text-white border-0 rounded-md text-base font-semibold cursor-pointer transition-all duration-200 shadow-sm"
               disabled={submitting}
             >
               {submitting ? 'Creating...' : 'Create Update'}
@@ -231,30 +230,28 @@ const UpdatesSection = ({ projectId, updates, isContractor, onUpdateCreated }) =
       )}
 
       {!isContractor && (
-        <div style={styles.readOnlyNotice}>
-          <p style={styles.noticeText}>
+        <div className="bg-blue-50 p-4 rounded-md mb-8 border border-blue-900">
+          <p className="m-0 text-base text-blue-900">
             📖 You can view updates but only the contractor can create new ones
           </p>
         </div>
       )}
 
       {updates && updates.length > 0 ? (
-        <div style={styles.updatesList}>
+        <div className="flex flex-col gap-6">
           {updates.map((update) => (
-            <div key={update.id} style={styles.updateCard}>
-              <div style={styles.updateHeader}>
-                <span style={{
-                  ...styles.updateType,
-                  backgroundColor: update.update_type === 'daily_summary' 
-                    ? '#DBEAFE' 
-                    : '#FEF3C7',
-                  color: update.update_type === 'daily_summary' 
-                    ? '#1E40AF' 
-                    : '#92400E',
-                }}>
+            <div key={update.id} className="bg-white p-6 rounded-lg shadow-md border border-border-light">
+              <div className="flex justify-between items-center mb-3 flex-wrap gap-2">
+                <span
+                  className={`px-3.5 py-1.5 rounded-full text-sm font-semibold ${
+                    update.update_type === 'daily_summary'
+                      ? 'bg-blue-100 text-blue-900'
+                      : 'bg-amber-100 text-amber-900'
+                  }`}
+                >
                   {update.update_type === 'daily_summary' ? '📅 Daily Summary' : '📋 Weekly Plan'}
                 </span>
-                <span style={styles.updateDate}>
+                <span className="text-sm text-text-light">
                   {new Date(update.created_at).toLocaleDateString('en-US', {
                     year: 'numeric',
                     month: 'short',
@@ -264,15 +261,15 @@ const UpdatesSection = ({ projectId, updates, isContractor, onUpdateCreated }) =
                   })}
                 </span>
               </div>
-              <p style={styles.creatorName}>By {update.creator_name}</p>
-              <p style={styles.updateContent}>{update.content}</p>
-              
+              <p className="text-sm text-text-light mb-2">By {update.creator_name}</p>
+              <p className="text-base text-text leading-relaxed mb-4">{update.content}</p>
+
               {update.photos && update.photos.length > 0 && (
-                <div style={styles.updatePhotos}>
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4 mt-4">
                   {update.photos.map((photo, index) => (
-                    <div 
-                      key={photo.id} 
-                      style={styles.updatePhotoCard}
+                    <div
+                      key={photo.id}
+                      className="relative border-2 border-border-light rounded-md overflow-hidden cursor-pointer transition-all duration-200"
                       onMouseEnter={(e) => {
                         const overlay = e.currentTarget.querySelector('[data-overlay]');
                         if (overlay) overlay.style.opacity = '1';
@@ -282,19 +279,19 @@ const UpdatesSection = ({ projectId, updates, isContractor, onUpdateCreated }) =
                         if (overlay) overlay.style.opacity = '0';
                       }}
                     >
-                      <img 
-                        src={photo.photo_url} 
-                        alt={photo.caption || 'Update photo'} 
-                        style={styles.updatePhoto}
+                      <img
+                        src={photo.photo_url}
+                        alt={photo.caption || 'Update photo'}
+                        className="w-full h-[200px] object-cover block"
                         onClick={() => openImageViewer(update.photos, index)}
                       />
-                      <div style={styles.imageOverlay} data-overlay>
+                      <div data-overlay className="absolute top-0 left-0 right-0 bottom-0 bg-black/60 flex items-center justify-center gap-2 opacity-0 transition-opacity duration-200">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             openImageViewer(update.photos, index);
                           }}
-                          style={styles.overlayButton}
+                          className="w-11 h-11 bg-white/90 text-text border-0 rounded-full cursor-pointer flex items-center justify-center transition-all duration-200"
                           title="View full size"
                         >
                           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -309,7 +306,7 @@ const UpdatesSection = ({ projectId, updates, isContractor, onUpdateCreated }) =
                             e.stopPropagation();
                             handleDownloadImage(photo.photo_url, `update-photo-${photo.id}.jpg`);
                           }}
-                          style={styles.overlayButton}
+                          className="w-11 h-11 bg-white/90 text-text border-0 rounded-full cursor-pointer flex items-center justify-center transition-all duration-200"
                           title="Download image"
                         >
                           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -320,7 +317,7 @@ const UpdatesSection = ({ projectId, updates, isContractor, onUpdateCreated }) =
                         </button>
                       </div>
                       {photo.caption && (
-                        <p style={styles.photoCaption}>{photo.caption}</p>
+                        <p className="p-3 text-sm text-text bg-background-light m-0">{photo.caption}</p>
                       )}
                     </div>
                   ))}
@@ -330,10 +327,10 @@ const UpdatesSection = ({ projectId, updates, isContractor, onUpdateCreated }) =
           ))}
         </div>
       ) : (
-        <div style={styles.emptyState}>
-          <p style={styles.emptyText}>No updates yet</p>
+        <div className="text-center py-12 px-4 bg-white rounded-lg border-2 border-dashed border-border">
+          <p className="text-lg text-text-muted mb-2">No updates yet</p>
           {isContractor && (
-            <p style={styles.emptyHint}>Create your first update to keep the owner informed!</p>
+            <p className="text-base text-text-light m-0">Create your first update to keep the owner informed!</p>
           )}
         </div>
       )}
@@ -347,285 +344,6 @@ const UpdatesSection = ({ projectId, updates, isContractor, onUpdateCreated }) =
       )}
     </div>
   );
-};
-
-const styles = {
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '2rem',
-  },
-  sectionTitle: {
-    fontSize: '1.5rem',
-    fontWeight: theme.typography.h3.fontWeight,
-    color: theme.colors.text,
-    margin: 0,
-  },
-  createButton: {
-    padding: '0.75rem 1.5rem',
-    backgroundColor: theme.colors.primary,
-    color: theme.colors.white,
-    border: 'none',
-    borderRadius: theme.borderRadius.md,
-    fontSize: theme.typography.body.fontSize,
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-    boxShadow: theme.shadows.sm,
-  },
-  errorMessage: {
-    padding: '1rem',
-    backgroundColor: theme.colors.errorLight,
-    color: theme.colors.error,
-    borderRadius: theme.borderRadius.md,
-    marginBottom: '1rem',
-    fontSize: theme.typography.body.fontSize,
-  },
-  formCard: {
-    backgroundColor: theme.colors.white,
-    padding: '2rem',
-    borderRadius: theme.borderRadius.lg,
-    boxShadow: theme.shadows.md,
-    marginBottom: '2rem',
-    border: `1px solid ${theme.colors.borderLight}`,
-  },
-  formTitle: {
-    fontSize: '1.25rem',
-    fontWeight: theme.typography.h4.fontWeight,
-    color: theme.colors.text,
-    marginBottom: '1.5rem',
-    margin: 0,
-  },
-  formGroup: {
-    marginBottom: '1.5rem',
-  },
-  label: {
-    display: 'block',
-    fontSize: theme.typography.body.fontSize,
-    fontWeight: '600',
-    color: theme.colors.text,
-    marginBottom: '0.5rem',
-  },
-  select: {
-    width: '100%',
-    padding: '0.75rem',
-    border: `2px solid ${theme.colors.border}`,
-    borderRadius: theme.borderRadius.md,
-    fontSize: theme.typography.body.fontSize,
-    fontFamily: theme.typography.fontFamily,
-    backgroundColor: theme.colors.white,
-    marginTop: '0.5rem',
-  },
-  textarea: {
-    width: '100%',
-    padding: '0.75rem',
-    border: `2px solid ${theme.colors.border}`,
-    borderRadius: theme.borderRadius.md,
-    fontSize: theme.typography.body.fontSize,
-    fontFamily: theme.typography.fontFamily,
-    resize: 'vertical',
-    marginTop: '0.5rem',
-    boxSizing: 'border-box',
-  },
-  fileInput: {
-    marginTop: '0.5rem',
-    fontSize: theme.typography.body.fontSize,
-  },
-  photosPreview: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-    gap: '1rem',
-    marginBottom: '1.5rem',
-  },
-  photoPreview: {
-    position: 'relative',
-    border: `2px solid ${theme.colors.border}`,
-    borderRadius: theme.borderRadius.md,
-    overflow: 'hidden',
-  },
-  previewImage: {
-    width: '100%',
-    height: '150px',
-    objectFit: 'cover',
-  },
-  captionInput: {
-    width: '100%',
-    padding: '0.5rem',
-    border: 'none',
-    borderTop: `1px solid ${theme.colors.border}`,
-    fontSize: theme.typography.small.fontSize,
-    fontFamily: theme.typography.fontFamily,
-    boxSizing: 'border-box',
-  },
-  removeButton: {
-    position: 'absolute',
-    top: '0.5rem',
-    right: '0.5rem',
-    width: '28px',
-    height: '28px',
-    backgroundColor: theme.colors.error,
-    color: theme.colors.white,
-    border: 'none',
-    borderRadius: theme.borderRadius.full,
-    cursor: 'pointer',
-    fontSize: '1rem',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  formActions: {
-    display: 'flex',
-    gap: '1rem',
-    justifyContent: 'flex-end',
-  },
-  cancelButton: {
-    padding: '0.75rem 1.5rem',
-    backgroundColor: theme.colors.white,
-    color: theme.colors.text,
-    border: `2px solid ${theme.colors.border}`,
-    borderRadius: theme.borderRadius.md,
-    fontSize: theme.typography.body.fontSize,
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-  },
-  submitButton: {
-    padding: '0.75rem 1.5rem',
-    backgroundColor: theme.colors.primary,
-    color: theme.colors.white,
-    border: 'none',
-    borderRadius: theme.borderRadius.md,
-    fontSize: theme.typography.body.fontSize,
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-    boxShadow: theme.shadows.sm,
-  },
-  readOnlyNotice: {
-    backgroundColor: theme.colors.infoLight,
-    padding: '1rem',
-    borderRadius: theme.borderRadius.md,
-    marginBottom: '2rem',
-    border: `1px solid ${theme.colors.info}`,
-  },
-  noticeText: {
-    margin: 0,
-    fontSize: theme.typography.body.fontSize,
-    color: theme.colors.info,
-  },
-  updatesList: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1.5rem',
-  },
-  updateCard: {
-    backgroundColor: theme.colors.white,
-    padding: '1.5rem',
-    borderRadius: theme.borderRadius.lg,
-    boxShadow: theme.shadows.md,
-    border: `1px solid ${theme.colors.borderLight}`,
-  },
-  updateHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '0.75rem',
-    flexWrap: 'wrap',
-    gap: '0.5rem',
-  },
-  updateType: {
-    padding: '0.375rem 0.875rem',
-    borderRadius: theme.borderRadius.full,
-    fontSize: theme.typography.small.fontSize,
-    fontWeight: '600',
-  },
-  updateDate: {
-    fontSize: theme.typography.small.fontSize,
-    color: theme.colors.textLight,
-  },
-  creatorName: {
-    fontSize: theme.typography.small.fontSize,
-    color: theme.colors.textLight,
-    marginBottom: '0.5rem',
-  },
-  updateContent: {
-    fontSize: theme.typography.body.fontSize,
-    color: theme.colors.text,
-    lineHeight: '1.6',
-    marginBottom: '1rem',
-  },
-  updatePhotos: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-    gap: '1rem',
-    marginTop: '1rem',
-  },
-  updatePhotoCard: {
-    position: 'relative',
-    border: `2px solid ${theme.colors.borderLight}`,
-    borderRadius: theme.borderRadius.md,
-    overflow: 'hidden',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-  },
-  updatePhoto: {
-    width: '100%',
-    height: '200px',
-    objectFit: 'cover',
-    display: 'block',
-  },
-  imageOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '0.5rem',
-    opacity: 0,
-    transition: 'opacity 0.2s ease',
-  },
-  overlayButton: {
-    width: '44px',
-    height: '44px',
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    color: theme.colors.text,
-    border: 'none',
-    borderRadius: theme.borderRadius.full,
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    transition: 'all 0.2s ease',
-  },
-  photoCaption: {
-    padding: '0.75rem',
-    fontSize: theme.typography.small.fontSize,
-    color: theme.colors.text,
-    backgroundColor: theme.colors.backgroundLight,
-    margin: 0,
-  },
-  emptyState: {
-    textAlign: 'center',
-    padding: '3rem 1rem',
-    backgroundColor: theme.colors.white,
-    borderRadius: theme.borderRadius.lg,
-    border: `2px dashed ${theme.colors.border}`,
-  },
-  emptyText: {
-    fontSize: theme.typography.bodyLarge.fontSize,
-    color: theme.colors.textMuted,
-    marginBottom: '0.5rem',
-  },
-  emptyHint: {
-    fontSize: theme.typography.body.fontSize,
-    color: theme.colors.textLight,
-    margin: 0,
-  },
 };
 
 export default UpdatesSection;

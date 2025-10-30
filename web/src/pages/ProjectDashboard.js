@@ -9,7 +9,6 @@ import UpdatesSection from "../components/dashboard/UpdatesSection"
 import PaymentSummarySection from '../components/dashboard/PaymentSummarySection'
 import ExpensesSection from "../components/dashboard/ExpensesSection"
 import WorkLogsSection from "../components/dashboard/WorkLogsSection"
-import { theme } from "../theme"
 
 const ProjectDashboard = () => {
   const { id } = useParams()
@@ -82,9 +81,9 @@ const ProjectDashboard = () => {
 
   if (loading) {
     return (
-      <div style={styles.container}>
-        <div style={styles.loading}>
-          <div style={styles.spinner}></div>
+      <div className="max-w-[1400px] mx-auto p-4 bg-background min-h-screen">
+        <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+          <div className="w-10 h-10 border-4 border-border border-t-primary rounded-full animate-spin"></div>
           <p>Loading project dashboard...</p>
         </div>
       </div>
@@ -93,11 +92,11 @@ const ProjectDashboard = () => {
 
   if (error) {
     return (
-      <div style={styles.container}>
-        <div style={styles.errorContainer}>
-          <div style={styles.errorIcon}>⚠️</div>
-          <p style={styles.errorText}>{error}</p>
-          <button onClick={() => navigate("/dashboard")} style={styles.backButton}>
+      <div className="max-w-[1400px] mx-auto p-4 bg-background min-h-screen">
+        <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+          <div className="text-5xl">⚠️</div>
+          <p className="text-lg text-text-muted text-center">{error}</p>
+          <button onClick={() => navigate("/dashboard")} className="py-3 px-6 bg-primary text-white border-none rounded-md text-base font-bold cursor-pointer mt-4">
             Back to Projects
           </button>
         </div>
@@ -113,39 +112,39 @@ const ProjectDashboard = () => {
 
   const renderOverviewSection = () => (
     <div>
-      <div style={styles.projectInfo}>
-        <div style={styles.infoCard} className="project-dashboard-info-card">
-          <h3 style={styles.infoTitle}>Project Details</h3>
-          <div style={styles.infoGrid}>
-            <div style={styles.infoItem}>
-              <span style={styles.label}>Estimated Cost:</span>
-              <span style={styles.value}>${Number(dashboard.project.estimated_cost).toLocaleString()}</span>
+      <div className="grid grid-cols-1 gap-6 mb-8">
+        <div className="bg-white p-6 rounded-xl border border-border-light shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition-all duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.12)] hover:-translate-y-0.5">
+          <h3 className="text-xl font-bold text-text mb-4">Project Details</h3>
+          <div className="grid gap-4">
+            <div className="flex justify-between items-start gap-2 flex-wrap">
+              <span className="text-base text-text-muted font-semibold">Estimated Cost:</span>
+              <span className="text-base text-text font-bold text-right break-words">${Number(dashboard.project.estimated_cost).toLocaleString()}</span>
             </div>
-            <div style={styles.infoItem}>
-              <span style={styles.label}>Address:</span>
-              <span style={styles.value}>{dashboard.project.address}</span>
+            <div className="flex justify-between items-start gap-2 flex-wrap">
+              <span className="text-base text-text-muted font-semibold">Address:</span>
+              <span className="text-base text-text font-bold text-right break-words">{dashboard.project.address}</span>
             </div>
           </div>
           {dashboard.project.description && (
-            <p style={styles.description}>{dashboard.project.description}</p>
+            <p className="mt-6 text-base text-text-light leading-relaxed">{dashboard.project.description}</p>
           )}
         </div>
 
-        <div style={styles.infoCard} className="project-dashboard-info-card">
-          <h3 style={styles.infoTitle}>House Owner</h3>
-          <div style={styles.contactInfo}>
-            <div style={styles.contactItem}>
-              <span style={styles.label}>Name:</span>
-              <span style={styles.value}>{dashboard.owner_info.name}</span>
+        <div className="bg-white p-6 rounded-xl border border-border-light shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition-all duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.12)] hover:-translate-y-0.5">
+          <h3 className="text-xl font-bold text-text mb-4">House Owner</h3>
+          <div className="grid gap-4">
+            <div className="flex justify-between items-start gap-2 flex-wrap">
+              <span className="text-base text-text-muted font-semibold">Name:</span>
+              <span className="text-base text-text font-bold text-right break-words">{dashboard.owner_info.name}</span>
             </div>
-            <div style={styles.contactItem}>
-              <span style={styles.label}>Email:</span>
-              <span style={styles.value}>{dashboard.owner_info.email}</span>
+            <div className="flex justify-between items-start gap-2 flex-wrap">
+              <span className="text-base text-text-muted font-semibold">Email:</span>
+              <span className="text-base text-text font-bold text-right break-words">{dashboard.owner_info.email}</span>
             </div>
             {dashboard.owner_info.phone && (
-              <div style={styles.contactItem}>
-                <span style={styles.label}>Phone:</span>
-                <span style={styles.value}>{dashboard.owner_info.phone}</span>
+              <div className="flex justify-between items-start gap-2 flex-wrap">
+                <span className="text-base text-text-muted font-semibold">Phone:</span>
+                <span className="text-base text-text font-bold text-right break-words">{dashboard.owner_info.phone}</span>
               </div>
             )}
           </div>
@@ -153,14 +152,14 @@ const ProjectDashboard = () => {
       </div>
 
       {contractors.length > 0 && (
-        <div style={styles.infoCard} className="project-dashboard-info-card">
-          <h3 style={styles.infoTitle}>Assigned Contractors</h3>
-          <div style={styles.contractorList}>
+        <div className="bg-white p-6 rounded-xl border border-border-light shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition-all duration-200 hover:shadow-[0_4px_16px_rgba(0,0,0,0.12)] hover:-translate-y-0.5">
+          <h3 className="text-xl font-bold text-text mb-4">Assigned Contractors</h3>
+          <div className="grid gap-4">
             {contractors.map(contractor => (
-              <div key={contractor.contractor_id} style={styles.contractorItem}>
+              <div key={contractor.contractor_id} className="p-5 bg-background-light rounded-xl border border-border-light transition-all duration-200">
                 <div>
-                  <div style={styles.contractorName}>{contractor.name}</div>
-                  <div style={styles.contractorEmail}>{contractor.email}</div>
+                  <div className="font-bold text-text mb-2 text-lg">{contractor.name}</div>
+                  <div className="text-base text-text-light">{contractor.email}</div>
                 </div>
               </div>
             ))}
@@ -176,41 +175,38 @@ const ProjectDashboard = () => {
     return (
       <div>
         {showContractorFilter && (
-          <div style={styles.filterContainer}>
-            <label style={styles.filterLabel}>Filter by Contractor:</label>
-            <div style={{position: "relative", flex: 1, minWidth: "250px"}} className="contractor-filter-dropdown">
-              <div 
-                style={styles.contractorDropdown}
+          <div className="bg-white py-5 px-6 rounded-xl border border-border-light shadow-[0_2px_8px_rgba(0,0,0,0.08)] mb-8 flex items-center gap-4 flex-wrap">
+            <label className="text-base font-bold text-text whitespace-nowrap">Filter by Contractor:</label>
+            <div className="relative flex-1 min-w-[250px] contractor-filter-dropdown">
+              <div
+                className="w-full py-3.5 px-4 rounded-xl border-2 border-border bg-white text-text text-base font-semibold cursor-pointer flex justify-between items-center shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition-all duration-200 hover:border-primary hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)]"
                 onClick={() => setContractorDropdownOpen(!contractorDropdownOpen)}
               >
-                <span style={styles.dropdownLabel}>
-                  {selectedContractor === 'all' 
-                    ? 'All Contractors' 
+                <span className="flex-1">
+                  {selectedContractor === 'all'
+                    ? 'All Contractors'
                     : contractors.find(c => c.contractor_id === selectedContractor)?.name || 'All Contractors'}
                 </span>
-                <svg 
-                  style={{
-                    ...styles.dropdownCaret,
-                    transform: contractorDropdownOpen ? "rotate(180deg)" : "rotate(0deg)"
-                  }}
-                  width="20" 
-                  height="20" 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  strokeWidth="3" 
-                  strokeLinecap="round" 
+                <svg
+                  className="transition-transform duration-200 text-primary"
+                  style={{ transform: contractorDropdownOpen ? "rotate(180deg)" : "rotate(0deg)" }}
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
                   strokeLinejoin="round"
                 >
                   <polyline points="6 9 12 15 18 9"></polyline>
                 </svg>
               </div>
-              
+
               {contractorDropdownOpen && (
-                <div style={styles.contractorDropdownMenu}>
-                  <button 
-                    style={selectedContractor === 'all' ? {...styles.contractorDropdownItem, ...styles.contractorDropdownItemActive} : styles.contractorDropdownItem}
-                    className="contractor-dropdown-item"
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl border border-border shadow-[0_4px_16px_rgba(0,0,0,0.12)] z-[1000] overflow-hidden max-h-[300px] overflow-y-auto">
+                  <button
+                    className={`w-full py-3.5 px-4 text-base font-medium text-text bg-transparent border-none border-b border-border-light cursor-pointer text-left transition-all duration-200 hover:bg-[rgba(37,99,235,0.08)] ${selectedContractor === 'all' ? 'bg-primary text-white font-bold' : ''}`}
                     onClick={() => {
                       setSelectedContractor('all')
                       setContractorDropdownOpen(false)
@@ -219,10 +215,9 @@ const ProjectDashboard = () => {
                     All Contractors
                   </button>
                   {contractors.map(contractor => (
-                    <button 
+                    <button
                       key={contractor.contractor_id}
-                      style={selectedContractor === contractor.contractor_id ? {...styles.contractorDropdownItem, ...styles.contractorDropdownItemActive} : styles.contractorDropdownItem}
-                      className="contractor-dropdown-item"
+                      className={`w-full py-3.5 px-4 text-base font-medium text-text bg-transparent border-none border-b border-border-light cursor-pointer text-left transition-all duration-200 last:border-b-0 hover:bg-[rgba(37,99,235,0.08)] ${selectedContractor === contractor.contractor_id ? 'bg-primary text-white font-bold' : ''}`}
                       onClick={() => {
                         setSelectedContractor(contractor.contractor_id)
                         setContractorDropdownOpen(false)
@@ -237,7 +232,7 @@ const ProjectDashboard = () => {
           </div>
         )}
 
-        <div style={styles.content}>
+        <div className="bg-white rounded-xl p-8 border border-border-light shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
           {activeSection === "overview" && renderOverviewSection()}
           {activeSection === "photos" && <PhotosSection projectId={id} photos={dashboard.recent_photos} canUpload={isContractor || isOwner} onPhotoUploaded={loadDashboard} />}
           {activeSection === "updates" && <UpdatesSection projectId={id} updates={dashboard.latest_updates} isContractor={isContractor} onUpdateCreated={loadDashboard} />}
@@ -250,14 +245,14 @@ const ProjectDashboard = () => {
   }
 
   return (
-    <div style={styles.container} className="project-dashboard-container">
-      <div style={styles.header}>
-        <button onClick={() => navigate("/dashboard")} style={styles.backButtonLink}>
+    <div className="max-w-[1400px] mx-auto p-4 md:p-8 bg-background min-h-screen">
+      <div className="mb-8">
+        <button onClick={() => navigate("/dashboard")} className="text-primary no-underline text-base font-semibold mb-4 inline-block cursor-pointer bg-none border-none p-0">
           ← Back
         </button>
-        <div style={styles.headerContent}>
-          <h1 style={styles.title}>{dashboard.project.title}</h1>
-          <span style={{ ...styles.statusBadge, ...getStatusStyle(dashboard.project.status) }}>
+        <div className="flex items-center gap-4 flex-wrap">
+          <h1 className="text-[2rem] font-bold text-text m-0">{dashboard.project.title}</h1>
+          <span className="py-2 px-4 rounded-full text-base font-bold" style={getStatusStyle(dashboard.project.status)}>
             {dashboard.project.status}
           </span>
         </div>
@@ -265,13 +260,12 @@ const ProjectDashboard = () => {
 
       {!isEmployee && (
         <>
-          <div style={styles.mobileDropdown} className="project-dashboard-mobile-dropdown">
-            <div 
-              style={styles.customDropdown}
-              className="project-dashboard-custom-dropdown"
+          <div className="hidden mb-8 relative max-[768px]:block project-dashboard-mobile-dropdown">
+            <div
+              className="w-full py-4 px-5 rounded-lg border-2 border-border bg-white text-text text-lg font-semibold cursor-pointer flex justify-between items-center shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition-all duration-200 hover:border-primary hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)]"
               onClick={() => setDropdownOpen(!dropdownOpen)}
             >
-              <span style={styles.dropdownLabel}>
+              <span className="flex-1">
                 {activeSection === "overview" && "Overview"}
                 {activeSection === "photos" && "Project Photos"}
                 {activeSection === "updates" && "Project Updates"}
@@ -279,29 +273,26 @@ const ProjectDashboard = () => {
                 {activeSection === "payments" && "Payment Summary"}
                 {activeSection === "worklogs" && "Work Logs"}
               </span>
-              <svg 
-                style={{
-                  ...styles.dropdownCaret,
-                  transform: dropdownOpen ? "rotate(180deg)" : "rotate(0deg)"
-                }}
-                width="24" 
-                height="24" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke="currentColor" 
-                strokeWidth="3" 
-                strokeLinecap="round" 
+              <svg
+                className="transition-transform duration-200 text-primary"
+                style={{ transform: dropdownOpen ? "rotate(180deg)" : "rotate(0deg)" }}
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
                 strokeLinejoin="round"
               >
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
             </div>
-            
+
             {dropdownOpen && (
-              <div style={styles.dropdownMenu}>
-                <button 
-                  style={activeSection === "overview" ? {...styles.dropdownItem, ...styles.dropdownItemActive} : styles.dropdownItem}
-                  className="project-dashboard-dropdown-item"
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg border border-border shadow-[0_4px_16px_rgba(0,0,0,0.12)] z-[1000] overflow-hidden">
+                <button
+                  className={`w-full py-4 px-5 text-lg font-medium text-text bg-transparent border-none border-b border-border-light cursor-pointer text-left transition-all duration-200 hover:bg-[rgba(37,99,235,0.08)] ${activeSection === "overview" ? 'bg-primary text-white font-bold' : ''}`}
                   onClick={() => {
                     setActiveSection("overview")
                     setDropdownOpen(false)
@@ -309,9 +300,8 @@ const ProjectDashboard = () => {
                 >
                   Overview
                 </button>
-                <button 
-                  style={activeSection === "photos" ? {...styles.dropdownItem, ...styles.dropdownItemActive} : styles.dropdownItem}
-                  className="project-dashboard-dropdown-item"
+                <button
+                  className={`w-full py-4 px-5 text-lg font-medium text-text bg-transparent border-none border-b border-border-light cursor-pointer text-left transition-all duration-200 hover:bg-[rgba(37,99,235,0.08)] ${activeSection === "photos" ? 'bg-primary text-white font-bold' : ''}`}
                   onClick={() => {
                     setActiveSection("photos")
                     setDropdownOpen(false)
@@ -319,9 +309,8 @@ const ProjectDashboard = () => {
                 >
                   Project Photos
                 </button>
-                <button 
-                  style={activeSection === "updates" ? {...styles.dropdownItem, ...styles.dropdownItemActive} : styles.dropdownItem}
-                  className="project-dashboard-dropdown-item"
+                <button
+                  className={`w-full py-4 px-5 text-lg font-medium text-text bg-transparent border-none border-b border-border-light cursor-pointer text-left transition-all duration-200 hover:bg-[rgba(37,99,235,0.08)] ${activeSection === "updates" ? 'bg-primary text-white font-bold' : ''}`}
                   onClick={() => {
                     setActiveSection("updates")
                     setDropdownOpen(false)
@@ -329,9 +318,8 @@ const ProjectDashboard = () => {
                 >
                   Project Updates
                 </button>
-                <button 
-                  style={activeSection === "expenses" ? {...styles.dropdownItem, ...styles.dropdownItemActive} : styles.dropdownItem}
-                  className="project-dashboard-dropdown-item"
+                <button
+                  className={`w-full py-4 px-5 text-lg font-medium text-text bg-transparent border-none border-b border-border-light cursor-pointer text-left transition-all duration-200 hover:bg-[rgba(37,99,235,0.08)] ${activeSection === "expenses" ? 'bg-primary text-white font-bold' : ''}`}
                   onClick={() => {
                     setActiveSection("expenses")
                     setDropdownOpen(false)
@@ -339,9 +327,8 @@ const ProjectDashboard = () => {
                 >
                   Expenses
                 </button>
-                <button 
-                  style={activeSection === "payments" ? {...styles.dropdownItem, ...styles.dropdownItemActive} : styles.dropdownItem}
-                  className="project-dashboard-dropdown-item"
+                <button
+                  className={`w-full py-4 px-5 text-lg font-medium text-text bg-transparent border-none border-b border-border-light cursor-pointer text-left transition-all duration-200 hover:bg-[rgba(37,99,235,0.08)] ${activeSection === "payments" ? 'bg-primary text-white font-bold' : ''}`}
                   onClick={() => {
                     setActiveSection("payments")
                     setDropdownOpen(false)
@@ -349,9 +336,8 @@ const ProjectDashboard = () => {
                 >
                   Payment Summary
                 </button>
-                <button 
-                  style={activeSection === "worklogs" ? {...styles.dropdownItem, ...styles.dropdownItemActive} : styles.dropdownItem}
-                  className="project-dashboard-dropdown-item"
+                <button
+                  className={`w-full py-4 px-5 text-lg font-medium text-text bg-transparent border-none border-b-0 cursor-pointer text-left transition-all duration-200 hover:bg-[rgba(37,99,235,0.08)] ${activeSection === "worklogs" ? 'bg-primary text-white font-bold' : ''}`}
                   onClick={() => {
                     setActiveSection("worklogs")
                     setDropdownOpen(false)
@@ -363,47 +349,47 @@ const ProjectDashboard = () => {
             )}
           </div>
 
-          <div style={styles.layoutWrapper} className="project-dashboard-layout">
-            <div style={styles.sidebar} className="project-dashboard-sidebar">
+          <div className="flex gap-8 items-start max-[768px]:block">
+            <div className="w-[280px] bg-white rounded-xl p-4 border border-border-light shadow-[0_2px_8px_rgba(0,0,0,0.08)] flex flex-col gap-2 sticky top-8 max-[768px]:hidden project-dashboard-sidebar">
               <button
-                style={activeSection === "overview" ? { ...styles.sidebarItem, ...styles.sidebarItemActive } : styles.sidebarItem}
+                className={`py-5 px-6 text-lg font-semibold text-text-muted bg-transparent border-none rounded-lg cursor-pointer transition-all duration-200 text-left min-h-[60px] flex items-center hover:bg-[rgba(37,99,235,0.08)] hover:translate-x-1 ${activeSection === "overview" ? 'bg-primary text-white font-bold shadow-[0_2px_8px_rgba(37,99,235,0.3)]' : ''}`}
                 onClick={() => setActiveSection("overview")}
               >
                 Overview
               </button>
               <button
-                style={activeSection === "photos" ? { ...styles.sidebarItem, ...styles.sidebarItemActive } : styles.sidebarItem}
+                className={`py-5 px-6 text-lg font-semibold text-text-muted bg-transparent border-none rounded-lg cursor-pointer transition-all duration-200 text-left min-h-[60px] flex items-center hover:bg-[rgba(37,99,235,0.08)] hover:translate-x-1 ${activeSection === "photos" ? 'bg-primary text-white font-bold shadow-[0_2px_8px_rgba(37,99,235,0.3)]' : ''}`}
                 onClick={() => setActiveSection("photos")}
               >
                 Project Photos
               </button>
               <button
-                style={activeSection === "updates" ? { ...styles.sidebarItem, ...styles.sidebarItemActive } : styles.sidebarItem}
+                className={`py-5 px-6 text-lg font-semibold text-text-muted bg-transparent border-none rounded-lg cursor-pointer transition-all duration-200 text-left min-h-[60px] flex items-center hover:bg-[rgba(37,99,235,0.08)] hover:translate-x-1 ${activeSection === "updates" ? 'bg-primary text-white font-bold shadow-[0_2px_8px_rgba(37,99,235,0.3)]' : ''}`}
                 onClick={() => setActiveSection("updates")}
               >
                 Project Updates
               </button>
               <button
-                style={activeSection === "expenses" ? { ...styles.sidebarItem, ...styles.sidebarItemActive } : styles.sidebarItem}
+                className={`py-5 px-6 text-lg font-semibold text-text-muted bg-transparent border-none rounded-lg cursor-pointer transition-all duration-200 text-left min-h-[60px] flex items-center hover:bg-[rgba(37,99,235,0.08)] hover:translate-x-1 ${activeSection === "expenses" ? 'bg-primary text-white font-bold shadow-[0_2px_8px_rgba(37,99,235,0.3)]' : ''}`}
                 onClick={() => setActiveSection("expenses")}
               >
                 Expenses
               </button>
               <button
-                style={activeSection === "payments" ? { ...styles.sidebarItem, ...styles.sidebarItemActive } : styles.sidebarItem}
+                className={`py-5 px-6 text-lg font-semibold text-text-muted bg-transparent border-none rounded-lg cursor-pointer transition-all duration-200 text-left min-h-[60px] flex items-center hover:bg-[rgba(37,99,235,0.08)] hover:translate-x-1 ${activeSection === "payments" ? 'bg-primary text-white font-bold shadow-[0_2px_8px_rgba(37,99,235,0.3)]' : ''}`}
                 onClick={() => setActiveSection("payments")}
               >
                 Payment Summary
               </button>
               <button
-                style={activeSection === "worklogs" ? { ...styles.sidebarItem, ...styles.sidebarItemActive } : styles.sidebarItem}
+                className={`py-5 px-6 text-lg font-semibold text-text-muted bg-transparent border-none rounded-lg cursor-pointer transition-all duration-200 text-left min-h-[60px] flex items-center hover:bg-[rgba(37,99,235,0.08)] hover:translate-x-1 ${activeSection === "worklogs" ? 'bg-primary text-white font-bold shadow-[0_2px_8px_rgba(37,99,235,0.3)]' : ''}`}
                 onClick={() => setActiveSection("worklogs")}
               >
                 Work Logs
               </button>
             </div>
 
-            <div style={styles.mainContent}>
+            <div className="flex-1 min-w-0">
               {renderSectionContent()}
             </div>
           </div>
@@ -420,415 +406,6 @@ const getStatusStyle = (status) => {
     completed: { backgroundColor: "#D1FAE5", color: "#065F46" }
   }
   return styles[status] || {}
-}
-
-const styles = {
-  container: {
-    maxWidth: "1400px",
-    margin: "0 auto",
-    padding: "1rem",
-    backgroundColor: theme.colors.background,
-    minHeight: "100vh",
-  },
-  header: {
-    marginBottom: "2rem",
-  },
-  backButtonLink: {
-    color: theme.colors.primary,
-    textDecoration: "none",
-    fontSize: "1rem",
-    fontWeight: "600",
-    marginBottom: "1rem",
-    display: "inline-block",
-    cursor: "pointer",
-    background: "none",
-    border: "none",
-    padding: "0",
-  },
-  headerContent: {
-    display: "flex",
-    alignItems: "center",
-    gap: "1rem",
-    flexWrap: "wrap",
-  },
-  title: {
-    fontSize: "2rem",
-    fontWeight: "700",
-    color: theme.colors.text,
-    margin: "0",
-  },
-  statusBadge: {
-    padding: "0.5rem 1rem",
-    borderRadius: "9999px",
-    fontSize: "1rem",
-    fontWeight: "700",
-  },
-  mobileDropdown: {
-    display: "none",
-    marginBottom: "2rem",
-    position: "relative",
-  },
-  customDropdown: {
-    width: "100%",
-    padding: "1rem 1.25rem",
-    borderRadius: theme.borderRadius.lg,
-    border: `2px solid ${theme.colors.border}`,
-    backgroundColor: theme.colors.white,
-    color: theme.colors.text,
-    fontSize: "1.125rem",
-    fontWeight: "600",
-    cursor: "pointer",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
-    transition: "all 0.2s ease",
-  },
-  dropdownLabel: {
-    flex: 1,
-  },
-  dropdownCaret: {
-    transition: "transform 0.2s ease",
-    color: theme.colors.primary,
-  },
-  dropdownMenu: {
-    position: "absolute",
-    top: "100%",
-    left: "0",
-    right: "0",
-    marginTop: "0.5rem",
-    backgroundColor: theme.colors.white,
-    borderRadius: theme.borderRadius.lg,
-    border: `1px solid ${theme.colors.border}`,
-    boxShadow: "0 4px 16px rgba(0, 0, 0, 0.12)",
-    zIndex: "1000",
-    overflow: "hidden",
-  },
-  dropdownItem: {
-    width: "100%",
-    padding: "1rem 1.25rem",
-    fontSize: "1.125rem",
-    fontWeight: "500",
-    color: theme.colors.text,
-    backgroundColor: "transparent",
-    border: "none",
-    borderBottom: `1px solid ${theme.colors.borderLight}`,
-    cursor: "pointer",
-    textAlign: "left",
-    transition: "all 0.2s ease",
-  },
-  dropdownItemActive: {
-    backgroundColor: theme.colors.primary,
-    color: theme.colors.white,
-    fontWeight: "700",
-  },
-  layoutWrapper: {
-    display: "flex",
-    gap: "2rem",
-    alignItems: "flex-start",
-  },
-  sidebar: {
-    width: "280px",
-    backgroundColor: theme.colors.white,
-    borderRadius: "12px",
-    padding: "1rem",
-    border: `1px solid ${theme.colors.borderLight}`,
-    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.5rem",
-    position: "sticky",
-    top: "2rem",
-  },
-  sidebarItem: {
-    padding: "1.25rem 1.5rem",
-    fontSize: "1.125rem",
-    fontWeight: "600",
-    color: theme.colors.textMuted,
-    backgroundColor: "transparent",
-    border: "none",
-    borderRadius: "8px",
-    cursor: "pointer",
-    transition: "all 0.2s ease",
-    textAlign: "left",
-    minHeight: "60px",
-    display: "flex",
-    alignItems: "center",
-  },
-  sidebarItemActive: {
-    backgroundColor: theme.colors.primary,
-    color: theme.colors.white,
-    fontWeight: "700",
-    boxShadow: "0 2px 8px rgba(37, 99, 235, 0.3)",
-  },
-  mainContent: {
-    flex: 1,
-    minWidth: 0,
-  },
-  filterContainer: {
-    backgroundColor: theme.colors.white,
-    padding: "1.25rem 1.5rem",
-    borderRadius: "12px",
-    border: `1px solid ${theme.colors.borderLight}`,
-    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
-    marginBottom: "2rem",
-    display: "flex",
-    alignItems: "center",
-    gap: "1rem",
-    flexWrap: "wrap",
-  },
-  filterLabel: {
-    fontSize: "1rem",
-    fontWeight: "700",
-    color: theme.colors.text,
-    whiteSpace: "nowrap",
-  },
-  contractorDropdown: {
-    width: "100%",
-    padding: "0.875rem 1rem",
-    borderRadius: "12px",
-    border: `2px solid ${theme.colors.border}`,
-    backgroundColor: theme.colors.white,
-    color: theme.colors.text,
-    fontSize: "1rem",
-    fontWeight: "600",
-    cursor: "pointer",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
-    transition: "all 0.2s ease",
-  },
-  contractorDropdownMenu: {
-    position: "absolute",
-    top: "100%",
-    left: "0",
-    right: "0",
-    marginTop: "0.5rem",
-    backgroundColor: theme.colors.white,
-    borderRadius: "12px",
-    border: `1px solid ${theme.colors.border}`,
-    boxShadow: "0 4px 16px rgba(0, 0, 0, 0.12)",
-    zIndex: "1000",
-    overflow: "hidden",
-    maxHeight: "300px",
-    overflowY: "auto",
-  },
-  contractorDropdownItem: {
-    width: "100%",
-    padding: "0.875rem 1rem",
-    fontSize: "1rem",
-    fontWeight: "500",
-    color: theme.colors.text,
-    backgroundColor: "transparent",
-    border: "none",
-    borderBottom: `1px solid ${theme.colors.borderLight}`,
-    cursor: "pointer",
-    textAlign: "left",
-    transition: "all 0.2s ease",
-  },
-  contractorDropdownItemActive: {
-    backgroundColor: theme.colors.primary,
-    color: theme.colors.white,
-    fontWeight: "700",
-  },
-  content: {
-    backgroundColor: theme.colors.white,
-    borderRadius: "12px",
-    padding: "2rem",
-    border: `1px solid ${theme.colors.borderLight}`,
-    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
-  },
-  projectInfo: {
-    display: "grid",
-    gridTemplateColumns: "1fr",
-    gap: "1.5rem",
-    marginBottom: "2rem",
-  },
-  infoCard: {
-    backgroundColor: theme.colors.white,
-    padding: "1.5rem",
-    borderRadius: "12px",
-    border: `1px solid ${theme.colors.borderLight}`,
-    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
-    transition: "all 0.2s ease",
-  },
-  infoTitle: {
-    fontSize: "1.25rem",
-    fontWeight: "700",
-    color: theme.colors.text,
-    marginBottom: "1rem",
-  },
-  infoGrid: {
-    display: "grid",
-    gap: "1rem",
-  },
-  infoItem: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    gap: "0.5rem",
-    flexWrap: "wrap",
-  },
-  label: {
-    fontSize: "1rem",
-    color: theme.colors.textMuted,
-    fontWeight: "600",
-  },
-  value: {
-    fontSize: "1rem",
-    color: theme.colors.text,
-    fontWeight: "700",
-    textAlign: "right",
-    wordBreak: "break-word",
-  },
-  description: {
-    marginTop: "1.5rem",
-    fontSize: "1rem",
-    color: theme.colors.textLight,
-    lineHeight: "1.6",
-  },
-  contactInfo: {
-    display: "grid",
-    gap: "1rem",
-  },
-  contactItem: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    gap: "0.5rem",
-    flexWrap: "wrap",
-  },
-  contractorList: {
-    display: "grid",
-    gap: "1rem",
-  },
-  contractorItem: {
-    padding: "1.25rem",
-    backgroundColor: theme.colors.backgroundLight,
-    borderRadius: "12px",
-    border: `1px solid ${theme.colors.borderLight}`,
-    transition: "all 0.2s ease",
-  },
-  contractorName: {
-    fontWeight: "700",
-    color: theme.colors.text,
-    marginBottom: "0.5rem",
-    fontSize: "1.125rem",
-  },
-  contractorEmail: {
-    fontSize: "1rem",
-    color: theme.colors.textLight,
-  },
-  loading: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: "400px",
-    gap: "1rem",
-  },
-  spinner: {
-    width: "40px",
-    height: "40px",
-    border: `4px solid ${theme.colors.border}`,
-    borderTop: `4px solid ${theme.colors.primary}`,
-    borderRadius: "50%",
-    animation: "spin 1s linear infinite",
-  },
-  errorContainer: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: "400px",
-    gap: "1rem",
-  },
-  errorIcon: {
-    fontSize: "3rem",
-  },
-  errorText: {
-    fontSize: "1.125rem",
-    color: theme.colors.textMuted,
-    textAlign: "center",
-  },
-  backButton: {
-    padding: "0.75rem 1.5rem",
-    backgroundColor: theme.colors.primary,
-    color: "#FFFFFF",
-    border: "none",
-    borderRadius: theme.borderRadius.md,
-    fontSize: "1rem",
-    fontWeight: "700",
-    cursor: "pointer",
-    marginTop: "1rem",
-  },
-}
-
-const mediaQuery = `
-@media (max-width: 768px) {
-  .project-dashboard-sidebar {
-    display: none !important;
-  }
-  .project-dashboard-mobile-dropdown {
-    display: block !important;
-  }
-  .project-dashboard-layout {
-    display: block !important;
-  }
-}
-
-@media (min-width: 769px) {
-  .project-dashboard-container {
-    padding: 2rem !important;
-  }
-}
-
-.project-dashboard-sidebar button:hover:not(:disabled) {
-  background-color: rgba(37, 99, 235, 0.08);
-  transform: translateX(4px);
-}
-
-.project-dashboard-custom-dropdown:hover {
-  border-color: ${theme.colors.primary};
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-}
-
-.project-dashboard-dropdown-item:hover {
-  background-color: rgba(37, 99, 235, 0.08);
-}
-
-.project-dashboard-dropdown-item:last-child {
-  border-bottom: none;
-}
-
-.project-dashboard-info-card:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-  transform: translateY(-2px);
-}
-
-.contractor-filter-dropdown > div:first-child:hover {
-  border-color: ${theme.colors.primary};
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-}
-
-.contractor-dropdown-item:hover {
-  background-color: rgba(37, 99, 235, 0.08);
-}
-
-.contractor-dropdown-item:last-child {
-  border-bottom: none;
-}
-`
-
-if (typeof document !== 'undefined') {
-  const styleId = 'project-dashboard-responsive-styles'
-  if (!document.getElementById(styleId)) {
-    const styleElement = document.createElement('style')
-    styleElement.id = styleId
-    styleElement.textContent = mediaQuery
-    document.head.appendChild(styleElement)
-  }
 }
 
 export default ProjectDashboard

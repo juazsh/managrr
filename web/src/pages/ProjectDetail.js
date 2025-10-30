@@ -6,7 +6,6 @@ import projectService from "../services/projectService"
 import EditProjectForm from "../components/EditProjectForm"
 import PhotoUploadSection from "../components/PhotoUploadSection"
 import AssignContractorModal from "../components/AssignContractorModal"
-import { theme } from "../theme"
 
 const ProjectDetail = () => {
   const { id } = useParams()
@@ -98,33 +97,33 @@ const ProjectDetail = () => {
   }
 
   if (loading) {
-    return <div style={styles.loading}>Loading project...</div>
+    return <div className="text-center p-8 text-text-light">Loading project...</div>
   }
 
   if (error) {
-    return <div style={styles.error}>{error}</div>
+    return <div className="p-4 bg-[#FEE2E2] text-[#B91C1C] rounded-md my-8 mx-auto max-w-[600px]">{error}</div>
   }
 
   if (!project) {
-    return <div style={styles.error}>Project not found</div>
+    return <div className="p-4 bg-[#FEE2E2] text-[#B91C1C] rounded-md my-8 mx-auto max-w-[600px]">Project not found</div>
   }
 
   return (
-    <div style={styles.container}>
-      <div style={headerActionStyles.container}>
-        <button onClick={() => navigate("/projects")} style={styles.backButton}>
+    <div className="max-w-[1200px] mx-auto p-8">
+      <div className="flex gap-3 items-center flex-wrap justify-between">
+        <button onClick={() => navigate("/projects")} className="py-3 px-5 text-base font-semibold border-2 border-border rounded-md bg-white text-text cursor-pointer transition-all duration-200">
           ← Back to Projects
         </button>
-        <div style={{ display: "flex", gap: "0.75rem" }}>
-          <Link to={`/projects/${id}/dashboard`} style={headerActionStyles.dashboardLink}>
+        <div className="flex gap-3">
+          <Link to={`/projects/${id}/dashboard`} className="inline-flex items-center gap-2 py-3 px-5 bg-primary text-white no-underline rounded-md text-base font-semibold transition-all duration-200 shadow-sm border-none cursor-pointer">
             📊 View Dashboard
           </Link>
           {!isEditing && (
             <>
-              <button onClick={() => setIsEditing(true)} style={styles.editButton}>
+              <button onClick={() => setIsEditing(true)} className="py-3 px-5 text-base font-semibold border-none rounded-md bg-primary text-white cursor-pointer transition-all duration-200">
                 ✏️ Edit
               </button>
-              <button onClick={handleDelete} style={styles.deleteButton}>
+              <button onClick={handleDelete} className="py-3 px-5 text-base font-semibold border-none rounded-md bg-[#DC2626] text-white cursor-pointer transition-all duration-200">
                 🗑️ Delete
               </button>
             </>
@@ -136,41 +135,41 @@ const ProjectDetail = () => {
         <EditProjectForm project={project} onSave={handleUpdateProject} onCancel={() => setIsEditing(false)} />
       ) : (
         <>
-          <div style={styles.infoCard}>
-            <h1 style={styles.title}>{project.title}</h1>
-            <div style={styles.meta}>
-              <span style={{ ...styles.statusBadge, ...getStatusStyle(project.status) }}>{project.status}</span>
-              <span style={styles.cost}>Estimated Cost: ${Number(project.estimated_cost).toLocaleString()}</span>
+          <div className="bg-white p-8 rounded-lg shadow-md mt-8">
+            <h1 className="m-0 mb-4 text-text text-[2rem] font-bold">{project.title}</h1>
+            <div className="flex gap-4 mb-6 flex-wrap">
+              <span className="py-2 px-4 rounded-md text-sm font-semibold" style={getStatusStyle(project.status)}>{project.status}</span>
+              <span className="py-2 px-4 bg-background-light rounded-md text-sm font-semibold">Estimated Cost: ${Number(project.estimated_cost).toLocaleString()}</span>
             </div>
-            <p style={styles.description}>{project.description}</p>
-            <p style={styles.address}>
+            <p className="text-text-light leading-relaxed mb-4">{project.description}</p>
+            <p className="text-text">
               <strong>Address:</strong> {project.address}
             </p>
           </div>
 
-          <div style={styles.contractorSection}>
-            <div style={styles.contractorHeader}>
-              <h2 style={styles.sectionTitle}>Assigned Contractors</h2>
-              <button onClick={() => setShowAssignModal(true)} style={styles.assignButton}>
+          <div className="bg-white p-8 rounded-lg shadow-md mt-8">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="m-0 text-text text-[1.5rem] font-bold">Assigned Contractors</h2>
+              <button onClick={() => setShowAssignModal(true)} className="py-3 px-5 text-base font-semibold border-none rounded-md bg-primary text-white cursor-pointer transition-all duration-200">
                 + Add Contractor
               </button>
             </div>
             {contractors.length === 0 ? (
-              <p style={styles.noContractors}>No contractors assigned yet</p>
+              <p className="p-8 text-center text-text-light bg-background-light rounded-md">No contractors assigned yet</p>
             ) : (
-              <div style={styles.contractorList}>
+              <div className="flex flex-col gap-4">
                 {contractors.map((contractor) => (
-                  <div key={contractor.contractor_id} style={styles.contractorItem}>
-                    <div style={styles.contractorInfo}>
-                      <div style={styles.contractorName}>{contractor.name}</div>
-                      <div style={styles.contractorEmail}>{contractor.email}</div>
-                      <div style={styles.contractorDate}>
+                  <div key={contractor.contractor_id} className="flex justify-between items-center p-5 bg-background-light rounded-md border border-border">
+                    <div className="flex-1">
+                      <div className="font-semibold text-text mb-1">{contractor.name}</div>
+                      <div className="text-sm text-text-light mb-1">{contractor.email}</div>
+                      <div className="text-sm text-text-light">
                         Assigned: {new Date(contractor.assigned_at).toLocaleDateString()}
                       </div>
                     </div>
                     <button
                       onClick={() => handleRemoveContractor(contractor.contractor_id)}
-                      style={styles.removeButton}
+                      className="py-2 px-4 text-sm font-semibold border-none rounded-md bg-[#FEE2E2] text-[#B91C1C] cursor-pointer transition-all duration-200"
                     >
                       Remove
                     </button>
@@ -189,209 +188,10 @@ const ProjectDetail = () => {
           onClose={() => setShowAssignModal(false)}
           onAssign={handleAssignContractor}
           currentContractors={contractors}
-        /> 
+        />
       )}
     </div>
   )
-}
-
-const styles = {
-  container: {
-    maxWidth: "1200px",
-    margin: "0 auto",
-    padding: "2rem",
-  },
-  loading: {
-    textAlign: "center",
-    padding: "2rem",
-    color: theme.colors.textLight,
-  },
-  error: {
-    padding: "1rem",
-    backgroundColor: "#FEE2E2",
-    color: "#B91C1C",
-    borderRadius: theme.borderRadius.md,
-    margin: "2rem auto",
-    maxWidth: "600px",
-  },
-  backButton: {
-    padding: "0.75rem 1.25rem",
-    fontSize: theme.typography.body.fontSize,
-    fontWeight: "600",
-    border: `2px solid ${theme.colors.border}`,
-    borderRadius: theme.borderRadius.md,
-    backgroundColor: theme.colors.white,
-    color: theme.colors.text,
-    cursor: "pointer",
-    transition: "all 0.2s ease",
-  },
-  editButton: {
-    padding: "0.75rem 1.25rem",
-    fontSize: theme.typography.body.fontSize,
-    fontWeight: "600",
-    border: "none",
-    borderRadius: theme.borderRadius.md,
-    backgroundColor: theme.colors.primary,
-    color: theme.colors.white,
-    cursor: "pointer",
-    transition: "all 0.2s ease",
-  },
-  deleteButton: {
-    padding: "0.75rem 1.25rem",
-    fontSize: theme.typography.body.fontSize,
-    fontWeight: "600",
-    border: "none",
-    borderRadius: theme.borderRadius.md,
-    backgroundColor: "#DC2626",
-    color: theme.colors.white,
-    cursor: "pointer",
-    transition: "all 0.2s ease",
-  },
-  infoCard: {
-    backgroundColor: theme.colors.white,
-    padding: "2rem",
-    borderRadius: theme.borderRadius.lg,
-    boxShadow: theme.shadows.md,
-    marginTop: "2rem",
-  },
-  title: {
-    margin: "0 0 1rem 0",
-    color: theme.colors.text,
-    fontSize: theme.typography.h2.fontSize,
-    fontWeight: theme.typography.h2.fontWeight,
-  },
-  meta: {
-    display: "flex",
-    gap: "1rem",
-    marginBottom: "1.5rem",
-    flexWrap: "wrap",
-  },
-  statusBadge: {
-    padding: "0.5rem 1rem",
-    borderRadius: theme.borderRadius.md,
-    fontSize: theme.typography.small.fontSize,
-    fontWeight: "600",
-  },
-  cost: {
-    padding: "0.5rem 1rem",
-    backgroundColor: theme.colors.backgroundLight,
-    borderRadius: theme.borderRadius.md,
-    fontSize: theme.typography.small.fontSize,
-    fontWeight: "600",
-  },
-  description: {
-    color: theme.colors.textLight,
-    lineHeight: "1.6",
-    marginBottom: "1rem",
-  },
-  address: {
-    color: theme.colors.text,
-  },
-  contractorSection: {
-    backgroundColor: theme.colors.white,
-    padding: "2rem",
-    borderRadius: theme.borderRadius.lg,
-    boxShadow: theme.shadows.md,
-    marginTop: "2rem",
-  },
-  contractorHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "1.5rem",
-  },
-  sectionTitle: {
-    margin: 0,
-    color: theme.colors.text,
-    fontSize: theme.typography.h3.fontSize,
-    fontWeight: theme.typography.h3.fontWeight,
-  },
-  assignButton: {
-    padding: "0.75rem 1.25rem",
-    fontSize: theme.typography.body.fontSize,
-    fontWeight: "600",
-    border: "none",
-    borderRadius: theme.borderRadius.md,
-    backgroundColor: theme.colors.primary,
-    color: theme.colors.white,
-    cursor: "pointer",
-    transition: "all 0.2s ease",
-  },
-  noContractors: {
-    padding: "2rem",
-    textAlign: "center",
-    color: theme.colors.textLight,
-    backgroundColor: theme.colors.backgroundLight,
-    borderRadius: theme.borderRadius.md,
-  },
-  contractorList: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "1rem",
-  },
-  contractorItem: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "1.25rem",
-    backgroundColor: theme.colors.backgroundLight,
-    borderRadius: theme.borderRadius.md,
-    border: `1px solid ${theme.colors.border}`,
-  },
-  contractorInfo: {
-    flex: 1,
-  },
-  contractorName: {
-    fontWeight: "600",
-    color: theme.colors.text,
-    marginBottom: "0.25rem",
-  },
-  contractorEmail: {
-    fontSize: theme.typography.small.fontSize,
-    color: theme.colors.textLight,
-    marginBottom: "0.25rem",
-  },
-  contractorDate: {
-    fontSize: theme.typography.small.fontSize,
-    color: theme.colors.textLight,
-  },
-  removeButton: {
-    padding: "0.5rem 1rem",
-    fontSize: theme.typography.small.fontSize,
-    fontWeight: "600",
-    border: "none",
-    borderRadius: theme.borderRadius.md,
-    backgroundColor: "#FEE2E2",
-    color: "#B91C1C",
-    cursor: "pointer",
-    transition: "all 0.2s ease",
-  },
-}
-
-const headerActionStyles = {
-  container: {
-    display: "flex",
-    gap: "0.75rem",
-    alignItems: "center",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-  },
-  dashboardLink: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "0.5rem",
-    padding: "0.75rem 1.25rem",
-    backgroundColor: theme.colors.primary,
-    color: theme.colors.white,
-    textDecoration: "none",
-    borderRadius: theme.borderRadius.md,
-    fontSize: theme.typography.body.fontSize,
-    fontWeight: "600",
-    transition: "all 0.2s ease",
-    boxShadow: theme.shadows.sm,
-    border: "none",
-    cursor: "pointer",
-  },
 }
 
 export default ProjectDetail

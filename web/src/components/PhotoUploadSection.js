@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import projectService from "../services/projectService"
-import { theme } from "../theme"
 
 const PhotoUploadSection = ({ projectId, photos, onPhotoUploaded }) => {
   const [selectedFile, setSelectedFile] = useState(null)
@@ -51,221 +50,21 @@ const PhotoUploadSection = ({ projectId, photos, onPhotoUploaded }) => {
     }
   }
 
-  const styles = {
-    container: {
-      background: theme.colors.white,
-      padding: "2rem",
-      borderRadius: theme.borderRadius.lg,
-      boxShadow: theme.shadows.md,
-      border: `1px solid ${theme.colors.borderLight}`,
-    },
-    title: {
-      margin: "0 0 1.5rem 0",
-      color: theme.colors.text,
-      fontSize: theme.typography.h3.fontSize,
-      fontWeight: theme.typography.h3.fontWeight,
-      letterSpacing: "-0.02em",
-    },
-    uploadForm: {
-      display: "flex",
-      gap: "1rem",
-      marginBottom: "1.5rem",
-      flexWrap: "wrap",
-      alignItems: "flex-end",
-    },
-    fileInputWrapper: {
-      position: "relative",
-      flex: "1 1 200px",
-      minWidth: "200px",
-    },
-    fileInput: {
-      position: "absolute",
-      opacity: 0,
-      width: 0,
-      height: 0,
-    },
-    fileLabel: {
-      display: "block",
-      padding: "0.875rem 1rem",
-      backgroundColor: theme.colors.backgroundLight,
-      color: theme.colors.text,
-      borderRadius: theme.borderRadius.md,
-      cursor: "pointer",
-      fontSize: theme.typography.body.fontSize,
-      fontWeight: "600",
-      textAlign: "center",
-      transition: "all 0.2s ease",
-      border: `1px solid ${theme.colors.border}`,
-      whiteSpace: "nowrap",
-      overflow: "hidden",
-      textOverflow: "ellipsis",
-    },
-    captionInput: {
-      flex: "1 1 200px",
-      minWidth: "200px",
-      padding: "0.875rem 1rem",
-      border: `1px solid ${theme.colors.border}`,
-      borderRadius: theme.borderRadius.md,
-      fontSize: theme.typography.body.fontSize,
-      fontFamily: theme.typography.fontFamily,
-      backgroundColor: theme.colors.inputBg,
-      transition: "all 0.2s ease",
-    },
-    uploadButton: {
-      padding: "0.875rem 1.5rem",
-      backgroundColor: theme.colors.black,
-      color: theme.colors.white,
-      border: "none",
-      borderRadius: theme.borderRadius.md,
-      cursor: "pointer",
-      fontSize: theme.typography.body.fontSize,
-      fontWeight: "600",
-      transition: "all 0.2s ease",
-      flex: "0 0 auto",
-      whiteSpace: "nowrap",
-    },
-    uploadButtonDisabled: {
-      backgroundColor: theme.colors.backgroundLight,
-      color: theme.colors.textMuted,
-      cursor: "not-allowed",
-    },
-    error: {
-      backgroundColor: theme.colors.errorLight,
-      color: theme.colors.error,
-      padding: "0.875rem",
-      borderRadius: theme.borderRadius.md,
-      marginBottom: "1rem",
-      fontSize: theme.typography.small.fontSize,
-      border: `1px solid ${theme.colors.error}`,
-    },
-    grid: {
-      display: "grid",
-      gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",
-      gap: "1.5rem",
-      marginTop: "1.5rem",
-    },
-    noPhotos: {
-      textAlign: "center",
-      color: theme.colors.textMuted,
-      padding: "3rem 1rem",
-      fontSize: theme.typography.body.fontSize,
-    },
-    photoItem: {
-      border: `1px solid ${theme.colors.border}`,
-      borderRadius: theme.borderRadius.md,
-      overflow: "hidden",
-      cursor: "pointer",
-      transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-      backgroundColor: theme.colors.white,
-    },
-    photoImage: {
-      width: "100%",
-      height: "200px",
-      objectFit: "cover",
-      display: "block",
-    },
-    photoCaption: {
-      padding: "0.75rem",
-      fontSize: theme.typography.small.fontSize,
-      color: theme.colors.text,
-      lineHeight: "1.5",
-    },
-    photoDate: {
-      padding: "0 0.75rem 0.75rem",
-      fontSize: theme.typography.tiny.fontSize,
-      color: theme.colors.textMuted,
-    },
-    modal: {
-      position: "fixed",
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: "rgba(0, 0, 0, 0.9)",
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      zIndex: 1000,
-      padding: "2rem",
-    },
-    modalContent: {
-      position: "relative",
-      maxWidth: "90%",
-      maxHeight: "90%",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-    },
-    modalImage: {
-      maxWidth: "100%",
-      maxHeight: "70vh",
-      objectFit: "contain",
-      borderRadius: theme.borderRadius.md,
-    },
-    closeButton: {
-      position: "absolute",
-      top: "-40px",
-      right: 0,
-      background: "transparent",
-      border: "none",
-      color: theme.colors.white,
-      fontSize: "40px",
-      cursor: "pointer",
-      lineHeight: 1,
-      padding: 0,
-      transition: "opacity 0.2s ease",
-    },
-    modalCaption: {
-      color: theme.colors.white,
-      marginTop: "1rem",
-      fontSize: theme.typography.body.fontSize,
-      textAlign: "center",
-      maxWidth: "600px",
-    },
-    photoNav: {
-      display: "flex",
-      gap: "1.5rem",
-      alignItems: "center",
-      marginTop: "1.5rem",
-      flexWrap: "wrap",
-      justifyContent: "center",
-    },
-    navButton: {
-      padding: "0.625rem 1.25rem",
-      backgroundColor: theme.colors.white,
-      color: theme.colors.text,
-      border: "none",
-      borderRadius: theme.borderRadius.md,
-      cursor: "pointer",
-      fontSize: theme.typography.small.fontSize,
-      fontWeight: "600",
-      transition: "all 0.2s ease",
-    },
-    navButtonDisabled: {
-      opacity: 0.5,
-      cursor: "not-allowed",
-    },
-    navText: {
-      color: theme.colors.white,
-      fontSize: theme.typography.small.fontSize,
-    },
-  }
-
   return (
-    <div style={styles.container}>
-      <h2 style={styles.title}>Project Photos</h2>
+    <div className="bg-white p-8 rounded-lg shadow-md border border-border-light">
+      <h2 className="m-0 mb-6 text-text text-2xl font-bold tracking-tight">Project Photos</h2>
 
-      <div style={styles.uploadForm}>
-        <div style={styles.fileInputWrapper}>
+      <div className="flex gap-4 mb-6 flex-wrap items-end">
+        <div className="relative flex-1 min-w-[200px]">
           <input
             type="file"
             id="photo-input"
             accept="image/jpeg,image/jpg,image/png"
             onChange={handleFileSelect}
             disabled={uploading}
-            style={styles.fileInput}
+            className="absolute opacity-0 w-0 h-0"
           />
-          <label htmlFor="photo-input" style={styles.fileLabel}>
+          <label htmlFor="photo-input" className="block py-3.5 px-4 bg-background-light text-text rounded-md cursor-pointer text-base font-semibold text-center transition-all duration-200 border border-border whitespace-nowrap overflow-hidden text-ellipsis">
             {selectedFile ? selectedFile.name : "Choose Photo"}
           </label>
         </div>
@@ -276,70 +75,70 @@ const PhotoUploadSection = ({ projectId, photos, onPhotoUploaded }) => {
           value={caption}
           onChange={(e) => setCaption(e.target.value)}
           disabled={uploading}
-          style={styles.captionInput}
+          className="flex-1 min-w-[200px] py-3.5 px-4 border border-border rounded-md text-base bg-white transition-all duration-200"
         />
 
         <button
           onClick={handleUpload}
           disabled={!selectedFile || uploading}
-          style={{
-            ...styles.uploadButton,
-            ...(!selectedFile || uploading ? styles.uploadButtonDisabled : {}),
-          }}
+          className={`py-3.5 px-6 border-none rounded-md text-base font-semibold transition-all duration-200 flex-none whitespace-nowrap ${
+            !selectedFile || uploading
+              ? "bg-background-light text-text-muted cursor-not-allowed"
+              : "bg-black text-white cursor-pointer"
+          }`}
         >
           {uploading ? "Uploading..." : "Upload"}
         </button>
       </div>
 
-      {error && <div style={styles.error}>{error}</div>}
+      {error && <div className="bg-error-light text-error py-3.5 px-4 rounded-md mb-4 text-sm border border-error">{error}</div>}
 
-      <div style={styles.grid}>
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-6 mt-6">
         {photos.length === 0 ? (
-          <p style={styles.noPhotos}>No photos uploaded yet</p>
+          <p className="text-center text-text-muted py-12 px-4 text-base">No photos uploaded yet</p>
         ) : (
           photos.map((photo, index) => (
-            <div key={photo.id} style={styles.photoItem} onClick={() => setSelectedPhotoIndex(index)}>
+            <div key={photo.id} className="border border-border rounded-md overflow-hidden cursor-pointer transition-all duration-300 bg-white" onClick={() => setSelectedPhotoIndex(index)}>
               <img
                 src={photo.photo_url || "/placeholder.svg"}
                 alt={photo.caption || "Project photo"}
-                style={styles.photoImage}
+                className="w-full h-[200px] object-cover block"
               />
-              {photo.caption && <p style={styles.photoCaption}>{photo.caption}</p>}
-              <p style={styles.photoDate}>{new Date(photo.created_at).toLocaleDateString()}</p>
+              {photo.caption && <p className="p-3 text-sm text-text leading-6">{photo.caption}</p>}
+              <p className="px-3 pb-3 text-xs text-text-muted">{new Date(photo.created_at).toLocaleDateString()}</p>
             </div>
           ))
         )}
       </div>
 
       {selectedPhotoIndex !== null && (
-        <div style={styles.modal} onClick={() => setSelectedPhotoIndex(null)}>
-          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <button style={styles.closeButton} onClick={() => setSelectedPhotoIndex(null)}>
+        <div className="fixed top-0 left-0 right-0 bottom-0 bg-black/90 flex justify-center items-center z-[1000] p-8" onClick={() => setSelectedPhotoIndex(null)}>
+          <div className="relative max-w-[90%] max-h-[90%] flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
+            <button className="absolute -top-10 right-0 bg-transparent border-none text-white text-[40px] cursor-pointer leading-none p-0 transition-opacity duration-200" onClick={() => setSelectedPhotoIndex(null)}>
               ×
             </button>
             <img
               src={photos[selectedPhotoIndex].photo_url || "/placeholder.svg"}
               alt={photos[selectedPhotoIndex].caption || "Project photo"}
-              style={styles.modalImage}
+              className="max-w-full max-h-[70vh] object-contain rounded-md"
             />
             {photos[selectedPhotoIndex].caption && (
-              <p style={styles.modalCaption}>{photos[selectedPhotoIndex].caption}</p>
+              <p className="text-white mt-4 text-base text-center max-w-[600px]">{photos[selectedPhotoIndex].caption}</p>
             )}
-            <div style={styles.photoNav}>
+            <div className="flex gap-6 items-center mt-6 flex-wrap justify-center">
               <button
                 onClick={(e) => {
                   e.stopPropagation()
                   setSelectedPhotoIndex(Math.max(0, selectedPhotoIndex - 1))
                 }}
                 disabled={selectedPhotoIndex === 0}
-                style={{
-                  ...styles.navButton,
-                  ...(selectedPhotoIndex === 0 ? styles.navButtonDisabled : {}),
-                }}
+                className={`py-2.5 px-5 bg-white text-text border-none rounded-md cursor-pointer text-sm font-semibold transition-all duration-200 ${
+                  selectedPhotoIndex === 0 ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               >
                 ← Previous
               </button>
-              <span style={styles.navText}>
+              <span className="text-white text-sm">
                 {selectedPhotoIndex + 1} / {photos.length}
               </span>
               <button
@@ -348,10 +147,9 @@ const PhotoUploadSection = ({ projectId, photos, onPhotoUploaded }) => {
                   setSelectedPhotoIndex(Math.min(photos.length - 1, selectedPhotoIndex + 1))
                 }}
                 disabled={selectedPhotoIndex === photos.length - 1}
-                style={{
-                  ...styles.navButton,
-                  ...(selectedPhotoIndex === photos.length - 1 ? styles.navButtonDisabled : {}),
-                }}
+                className={`py-2.5 px-5 bg-white text-text border-none rounded-md cursor-pointer text-sm font-semibold transition-all duration-200 ${
+                  selectedPhotoIndex === photos.length - 1 ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               >
                 Next →
               </button>

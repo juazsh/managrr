@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { theme } from "../../theme"
 
 const ImageViewer = ({ images, initialIndex = 0, onClose }) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex)
@@ -107,24 +106,24 @@ const ImageViewer = ({ images, initialIndex = 0, onClose }) => {
   }
 
   return (
-    <div style={styles.overlay} onClick={handleBackdropClick}>
-      <div style={styles.container}>
-        <div style={styles.header}>
-          <div style={styles.imageCounter}>
+    <div className="fixed inset-0 bg-black/95 z-[10000] flex items-center justify-center p-4" onClick={handleBackdropClick}>
+      <div className="w-full max-w-[1400px] max-h-full flex flex-col">
+        <div className="flex justify-between items-center mb-4 px-2 z-[10001]">
+          <div className="text-white text-base font-semibold">
             {currentIndex + 1} / {images.length}
           </div>
-          <div style={styles.actions}>
-            <button onClick={handleDownload} style={styles.actionButton} title="Download image">
+          <div className="flex gap-2 items-center">
+            <button onClick={handleDownload} className="flex items-center gap-2 px-4 py-2.5 bg-white/90 text-text border-0 rounded-md text-sm font-semibold cursor-pointer transition-all duration-200 hover:bg-white" title="Download image">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                 <polyline points="7 10 12 15 17 10" />
                 <line x1="12" y1="15" x2="12" y2="3" />
               </svg>
-              <span style={styles.buttonText}>Download</span>
+              <span className="button-text">Download</span>
             </button>
             <button
               onClick={() => setIsZoomed(!isZoomed)}
-              style={styles.actionButton}
+              className="flex items-center gap-2 px-4 py-2.5 bg-white/90 text-text border-0 rounded-md text-sm font-semibold cursor-pointer transition-all duration-200 hover:bg-white"
               title={isZoomed ? "Zoom out" : "Zoom in"}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -143,9 +142,9 @@ const ImageViewer = ({ images, initialIndex = 0, onClose }) => {
                   </>
                 )}
               </svg>
-              <span style={styles.buttonText}>{isZoomed ? "Zoom Out" : "Zoom In"}</span>
+              <span className="button-text">{isZoomed ? "Zoom Out" : "Zoom In"}</span>
             </button>
-            <button onClick={onClose} style={styles.closeButton} title="Close (Esc)">
+            <button onClick={onClose} className="flex items-center justify-center w-11 h-11 bg-white/90 text-text border-0 rounded-md cursor-pointer transition-all duration-200 hover:bg-white" title="Close (Esc)">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
@@ -155,32 +154,29 @@ const ImageViewer = ({ images, initialIndex = 0, onClose }) => {
         </div>
 
         <div
-          style={styles.imageContainer}
+          className="flex-1 relative flex items-center justify-center min-h-0"
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
         >
           {currentIndex > 0 && (
-            <button onClick={handlePrevious} style={{ ...styles.navButton, ...styles.prevButton }} title="Previous (←)">
+            <button onClick={handlePrevious} className="absolute top-1/2 -translate-y-1/2 left-4 w-14 h-14 bg-white/90 text-text border-0 rounded-full cursor-pointer flex items-center justify-center transition-all duration-200 z-[10001] hover:bg-white" title="Previous (←)">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polyline points="15 18 9 12 15 6" />
               </svg>
             </button>
           )}
 
-          <div style={styles.imageWrapper}>
+          <div className="flex-1 flex items-center justify-center overflow-auto p-4">
             <img
               src={currentImage.url || "/placeholder.svg"}
               alt={currentImage.caption || `Image ${currentIndex + 1}`}
-              style={{
-                ...styles.image,
-                ...(isZoomed ? styles.imageZoomed : {}),
-              }}
+              className={`max-w-full max-h-full object-contain rounded-lg transition-transform duration-300 ${isZoomed ? "!max-w-none !max-h-none !w-[150%] cursor-move" : ""}`}
             />
           </div>
 
           {currentIndex < images.length - 1 && (
-            <button onClick={handleNext} style={{ ...styles.navButton, ...styles.nextButton }} title="Next (→)">
+            <button onClick={handleNext} className="absolute top-1/2 -translate-y-1/2 right-4 w-14 h-14 bg-white/90 text-text border-0 rounded-full cursor-pointer flex items-center justify-center transition-all duration-200 z-[10001] hover:bg-white" title="Next (→)">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polyline points="9 18 15 12 9 6" />
               </svg>
@@ -189,24 +185,21 @@ const ImageViewer = ({ images, initialIndex = 0, onClose }) => {
         </div>
 
         {images.length > 1 && (
-          <div style={styles.thumbnailStrip}>
+          <div className="flex gap-2 py-4 px-2 overflow-x-auto justify-center z-[10001]" style={{ WebkitOverflowScrolling: "touch" }}>
             {images.map((img, index) => (
               <button
                 key={index}
                 onClick={() => handleThumbnailClick(index)}
-                style={{
-                  ...styles.thumbnail,
-                  ...(index === currentIndex ? styles.thumbnailActive : {}),
-                }}
+                className={`w-20 h-[60px] p-0 border-[3px] rounded-md cursor-pointer transition-all duration-200 flex-shrink-0 overflow-hidden bg-white/10 ${index === currentIndex ? "border-primary" : "border-transparent"}`}
                 title={`Go to image ${index + 1}`}
               >
-                <img src={img.url || "/placeholder.svg"} alt={`Thumbnail ${index + 1}`} style={styles.thumbnailImage} />
+                <img src={img.url || "/placeholder.svg"} alt={`Thumbnail ${index + 1}`} className="w-full h-full object-cover" />
               </button>
             ))}
           </div>
         )}
 
-        {currentImage.caption && <div style={styles.caption}>{currentImage.caption}</div>}
+        {currentImage.caption && <div className="mt-4 p-4 bg-white/10 text-white rounded-md text-base leading-relaxed text-center z-[10001]">{currentImage.caption}</div>}
       </div>
 
       <style>{`
@@ -218,173 +211,6 @@ const ImageViewer = ({ images, initialIndex = 0, onClose }) => {
       `}</style>
     </div>
   )
-}
-
-const styles = {
-  overlay: {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.95)",
-    zIndex: 10000,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "1rem",
-  },
-  container: {
-    width: "100%",
-    maxWidth: "1400px",
-    maxHeight: "100%",
-    display: "flex",
-    flexDirection: "column",
-  },
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "1rem",
-    padding: "0 0.5rem",
-    zIndex: 10001,
-  },
-  imageCounter: {
-    color: theme.colors.white,
-    fontSize: theme.typography.body.fontSize,
-    fontWeight: "600",
-  },
-  actions: {
-    display: "flex",
-    gap: "0.5rem",
-    alignItems: "center",
-  },
-  actionButton: {
-    display: "flex",
-    alignItems: "center",
-    gap: "0.5rem",
-    padding: "0.625rem 1rem",
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
-    color: theme.colors.text,
-    border: "none",
-    borderRadius: theme.borderRadius.md,
-    fontSize: theme.typography.small.fontSize,
-    fontWeight: "600",
-    cursor: "pointer",
-    transition: "all 0.2s ease",
-    fontFamily: theme.typography.fontFamily,
-  },
-  buttonText: {
-    className: "button-text",
-  },
-  closeButton: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "44px",
-    height: "44px",
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
-    color: theme.colors.text,
-    border: "none",
-    borderRadius: theme.borderRadius.md,
-    cursor: "pointer",
-    transition: "all 0.2s ease",
-    fontSize: "1.5rem",
-    fontWeight: "300",
-  },
-  imageContainer: {
-    flex: 1,
-    position: "relative",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 0,
-  },
-  imageWrapper: {
-    flex: 1,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    overflow: "auto",
-    padding: "1rem",
-  },
-  image: {
-    maxWidth: "100%",
-    maxHeight: "100%",
-    objectFit: "contain",
-    borderRadius: theme.borderRadius.lg,
-    transition: "transform 0.3s ease",
-  },
-  imageZoomed: {
-    maxWidth: "none",
-    maxHeight: "none",
-    width: "150%",
-    cursor: "move",
-  },
-  navButton: {
-    position: "absolute",
-    top: "50%",
-    transform: "translateY(-50%)",
-    width: "56px",
-    height: "56px",
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
-    color: theme.colors.text,
-    border: "none",
-    borderRadius: theme.borderRadius.full,
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    transition: "all 0.2s ease",
-    zIndex: 10001,
-    fontSize: "1.5rem",
-  },
-  prevButton: {
-    left: "1rem",
-  },
-  nextButton: {
-    right: "1rem",
-  },
-  thumbnailStrip: {
-    display: "flex",
-    gap: "0.5rem",
-    padding: "1rem 0.5rem",
-    overflowX: "auto",
-    WebkitOverflowScrolling: "touch",
-    justifyContent: "center",
-    zIndex: 10001,
-  },
-  thumbnail: {
-    width: "80px",
-    height: "60px",
-    padding: 0,
-    border: "3px solid transparent",
-    borderRadius: theme.borderRadius.md,
-    cursor: "pointer",
-    transition: "all 0.2s ease",
-    flexShrink: 0,
-    overflow: "hidden",
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-  },
-  thumbnailActive: {
-    border: `3px solid ${theme.colors.primary}`,
-  },
-  thumbnailImage: {
-    width: "100%",
-    height: "100%",
-    objectFit: "cover",
-  },
-  caption: {
-    marginTop: "1rem",
-    padding: "1rem",
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    color: theme.colors.white,
-    borderRadius: theme.borderRadius.md,
-    fontSize: theme.typography.body.fontSize,
-    lineHeight: "1.6",
-    textAlign: "center",
-    zIndex: 10001,
-  },
 }
 
 export default ImageViewer

@@ -4,25 +4,14 @@ import Footer from '../components/marketing/Footer';
 
 const MarketingLayout = ({ children }) => {
   return (
-    <div style={styles.layout}>
+    <div className="flex flex-col min-h-screen">
       <Navbar />
-      <main style={styles.main}>
+      <main className="flex-1">
         {children}
       </main>
       <Footer />
     </div>
   );
-};
-
-const styles = {
-  layout: {
-    display: 'flex',
-    flexDirection: 'column',
-    minHeight: '100vh',
-  },
-  main: {
-    flex: 1,
-  },
 };
 
 export default MarketingLayout;

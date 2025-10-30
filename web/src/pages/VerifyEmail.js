@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { theme } from '../theme';
 
 const VerifyEmail = () => {
   const [searchParams] = useSearchParams();
@@ -27,7 +26,7 @@ const VerifyEmail = () => {
         await api.get(`/auth/verify-email?token=${token}`);
         setStatus('success');
         setMessage('Email verified successfully! Redirecting to login...');
-        
+
         setTimeout(() => {
           navigate('/login');
         }, 2000);
@@ -42,88 +41,30 @@ const VerifyEmail = () => {
   }, []);
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
+    <div className="min-h-[calc(100vh-100px)] flex items-center justify-center bg-background font-sans p-component">
+      <div className="bg-white p-section rounded-lg shadow-lg w-full max-w-[400px] text-center">
         {status === 'verifying' && (
           <>
-            <h2 style={styles.title}>Verifying Email...</h2>
-            <p style={styles.message}>Please wait while we verify your email.</p>
+            <h2 className="text-text text-[2.5rem] font-semibold mb-element">Verifying Email...</h2>
+            <p className="text-text text-base mb-component">Please wait while we verify your email.</p>
           </>
         )}
         {status === 'success' && (
           <>
-            <h2 style={styles.titleSuccess}>Email Verified!</h2>
-            <p style={styles.message}>{message}</p>
-            <div style={styles.spinner}></div>
+            <h2 className="text-success text-[2.5rem] font-semibold mb-element">Email Verified!</h2>
+            <p className="text-text text-base mb-component">{message}</p>
+            <div className="w-10 h-10 mx-auto border-4 border-border border-t-primary rounded-full animate-spin"></div>
           </>
         )}
         {status === 'error' && (
           <>
-            <h2 style={styles.titleError}>Verification Failed</h2>
-            <p style={styles.messageError}>{message}</p>
+            <h2 className="text-error text-[2.5rem] font-semibold mb-element">Verification Failed</h2>
+            <p className="text-text-light text-base mb-component">{message}</p>
           </>
         )}
       </div>
     </div>
   );
-};
-
-const styles = {
-  container: {
-    minHeight: 'calc(100vh - 100px)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.colors.background,
-    fontFamily: theme.typography.fontFamily,
-    padding: theme.spacing.component,
-  },
-  card: {
-    backgroundColor: theme.colors.white,
-    padding: theme.spacing.section,
-    borderRadius: theme.borderRadius.lg,
-    boxShadow: theme.shadows.lg,
-    width: '100%',
-    maxWidth: '400px',
-    textAlign: 'center',
-  },
-  title: {
-    color: theme.colors.text,
-    fontSize: theme.typography.h2.fontSize,
-    fontWeight: theme.typography.h2.fontWeight,
-    marginBottom: theme.spacing.element,
-  },
-  titleSuccess: {
-    color: theme.colors.success,
-    fontSize: theme.typography.h2.fontSize,
-    fontWeight: theme.typography.h2.fontWeight,
-    marginBottom: theme.spacing.element,
-  },
-  titleError: {
-    color: theme.colors.error,
-    fontSize: theme.typography.h2.fontSize,
-    fontWeight: theme.typography.h2.fontWeight,
-    marginBottom: theme.spacing.element,
-  },
-  message: {
-    color: theme.colors.text,
-    fontSize: theme.typography.body.fontSize,
-    marginBottom: theme.spacing.component,
-  },
-  messageError: {
-    color: theme.colors.textLight,
-    fontSize: theme.typography.body.fontSize,
-    marginBottom: theme.spacing.component,
-  },
-  spinner: {
-    width: '40px',
-    height: '40px',
-    margin: '0 auto',
-    border: '4px solid ' + theme.colors.border,
-    borderTop: '4px solid ' + theme.colors.primary,
-    borderRadius: '50%',
-    animation: 'spin 1s linear infinite',
-  },
 };
 
 export default VerifyEmail;

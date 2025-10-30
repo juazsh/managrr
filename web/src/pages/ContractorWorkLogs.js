@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { theme } from '../theme';
 import workLogService from '../services/workLogService';
 import employeeService from '../services/employeeService';
 import projectService from '../services/projectService';
@@ -32,7 +31,7 @@ const ContractorWorkLogs = () => {
     try {
       setLoading(true);
       setError('');
-      
+
       const [employeesData, projectsData, weeklyData, empSummary, projSummary] = await Promise.all([
         employeeService.getAllEmployees(),
         projectService.getAllProjects(),
@@ -42,14 +41,14 @@ const ContractorWorkLogs = () => {
       ]);
 
       setEmployees(Array.isArray(employeesData) ? employeesData : []);
-      
+
       const allProjects = projectsData?.projects || projectsData || [];
       setProjects(Array.isArray(allProjects) ? allProjects.filter(p => p.contractor_id) : []);
-      
+
       setWeeklySummary(weeklyData || { total_hours: 0 });
       setEmployeeSummary(Array.isArray(empSummary) ? empSummary : []);
       setProjectSummary(Array.isArray(projSummary) ? projSummary : []);
-      
+
       await fetchWorkLogs();
     } catch (err) {
       const errorMsg = err.response?.data?.error || err.message || 'Failed to load data';
@@ -113,27 +112,27 @@ const ContractorWorkLogs = () => {
 
   if (loading) {
     return (
-      <div style={styles.container}>
-        <div style={styles.loading}>Loading work logs...</div>
+      <div className="max-w-[1200px] mx-auto py-10 px-5">
+        <div className="text-center py-12 text-text-light text-base">Loading work logs...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div style={styles.container}>
-        <div style={styles.errorContainer}>
-          <h2 style={styles.errorTitle}>Unable to Load Work Logs</h2>
-          <div style={styles.error}>{error}</div>
-          <p style={styles.errorHint}>
+      <div className="max-w-[1200px] mx-auto py-10 px-5">
+        <div>
+          <h2>Unable to Load Work Logs</h2>
+          <div className="bg-[#FEE] text-[#C00] p-4 rounded-md mb-6 border border-[#FCC]">{error}</div>
+          <p>
             This could be due to:
           </p>
-          <ul style={styles.errorList}>
+          <ul>
             <li>Network connectivity issues</li>
             <li>Server is temporarily unavailable</li>
             <li>Missing API endpoints (check if migration was run)</li>
           </ul>
-          <button onClick={fetchInitialData} style={styles.retryButton}>
+          <button onClick={fetchInitialData} className="mt-4 py-3 px-6 bg-black text-white border-none rounded-md cursor-pointer text-base font-semibold">
             Try Again
           </button>
         </div>
@@ -142,43 +141,43 @@ const ContractorWorkLogs = () => {
   }
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <div style={styles.headerLeft}>
-          <button onClick={() => navigate('/contractor/dashboard')} style={styles.backButton}>
+    <div className="max-w-[1200px] mx-auto py-10 px-5">
+      <div className="flex justify-between items-center mb-8 gap-4 flex-wrap">
+        <div>
+          <button onClick={() => navigate('/contractor/dashboard')} className="py-2 px-4 bg-transparent text-text border border-border rounded-md cursor-pointer text-base font-medium mb-4">
             ← Back to Dashboard
           </button>
-          <h1 style={styles.title}>Employee Work Logs</h1>
+          <h1 className="text-[32px] font-bold text-text m-0">Employee Work Logs</h1>
         </div>
       </div>
 
-      <div style={styles.summarySection}>
-        <h2 style={styles.sectionTitle}>Summary Statistics</h2>
-        <div style={styles.statsGrid}>
-          <div style={styles.statCard}>
-            <div style={styles.statValue}>{(weeklySummary?.total_hours || 0).toFixed(1)} hrs</div>
-            <div style={styles.statLabel}>Total Hours This Week</div>
+      <div className="mb-6">
+        <h2 className="text-xl font-bold text-text mb-4">Summary Statistics</h2>
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 mb-6">
+          <div className="bg-white p-6 rounded-lg shadow-md text-center">
+            <div className="text-[2rem] font-bold text-text mb-2">{(weeklySummary?.total_hours || 0).toFixed(1)} hrs</div>
+            <div className="text-sm text-text-light">Total Hours This Week</div>
           </div>
-          <div style={styles.statCard}>
-            <div style={styles.statValue}>{employeeSummary?.length || 0}</div>
-            <div style={styles.statLabel}>Active Employees</div>
+          <div className="bg-white p-6 rounded-lg shadow-md text-center">
+            <div className="text-[2rem] font-bold text-text mb-2">{employeeSummary?.length || 0}</div>
+            <div className="text-sm text-text-light">Active Employees</div>
           </div>
-          <div style={styles.statCard}>
-            <div style={styles.statValue}>{workLogs?.length || 0}</div>
-            <div style={styles.statLabel}>Total Work Sessions</div>
+          <div className="bg-white p-6 rounded-lg shadow-md text-center">
+            <div className="text-[2rem] font-bold text-text mb-2">{workLogs?.length || 0}</div>
+            <div className="text-sm text-text-light">Total Work Sessions</div>
           </div>
         </div>
 
         {(employeeSummary?.length > 0 || projectSummary?.length > 0) && (
-          <div style={styles.summaryTables}>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-4">
             {employeeSummary?.length > 0 && (
-              <div style={styles.summaryTableContainer}>
-                <h3 style={styles.summaryTableTitle}>Hours by Employee</h3>
-                <div style={styles.summaryTable}>
+              <div className="bg-white p-6 rounded-lg shadow-md">
+                <h3 className="text-base font-semibold text-text mb-4">Hours by Employee</h3>
+                <div className="flex flex-col gap-2">
                   {employeeSummary.map((emp) => (
-                    <div key={emp.employee_id} style={styles.summaryRow}>
-                      <span style={styles.summaryName}>{emp.employee_name}</span>
-                      <span style={styles.summaryHours}>{(emp.total_hours || 0).toFixed(1)} hrs</span>
+                    <div key={emp.employee_id} className="flex justify-between py-3 px-3 bg-background rounded-md">
+                      <span className="text-sm text-text">{emp.employee_name}</span>
+                      <span className="text-sm font-semibold text-text">{(emp.total_hours || 0).toFixed(1)} hrs</span>
                     </div>
                   ))}
                 </div>
@@ -186,13 +185,13 @@ const ContractorWorkLogs = () => {
             )}
 
             {projectSummary?.length > 0 && (
-              <div style={styles.summaryTableContainer}>
-                <h3 style={styles.summaryTableTitle}>Hours by Project</h3>
-                <div style={styles.summaryTable}>
+              <div className="bg-white p-6 rounded-lg shadow-md">
+                <h3 className="text-base font-semibold text-text mb-4">Hours by Project</h3>
+                <div className="flex flex-col gap-2">
                   {projectSummary.map((proj) => (
-                    <div key={proj.project_id} style={styles.summaryRow}>
-                      <span style={styles.summaryName}>{proj.project_title}</span>
-                      <span style={styles.summaryHours}>{(proj.total_hours || 0).toFixed(1)} hrs</span>
+                    <div key={proj.project_id} className="flex justify-between py-3 px-3 bg-background rounded-md">
+                      <span className="text-sm text-text">{proj.project_title}</span>
+                      <span className="text-sm font-semibold text-text">{(proj.total_hours || 0).toFixed(1)} hrs</span>
                     </div>
                   ))}
                 </div>
@@ -202,15 +201,15 @@ const ContractorWorkLogs = () => {
         )}
       </div>
 
-      <div style={styles.filtersSection}>
-        <h2 style={styles.sectionTitle}>Filter Work Logs</h2>
-        <div style={styles.filtersGrid}>
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Employee</label>
+      <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+        <h2 className="text-xl font-bold text-text mb-4">Filter Work Logs</h2>
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 items-end">
+          <div className="flex flex-col">
+            <label className="mb-2 text-text font-semibold text-sm">Employee</label>
             <select
               value={selectedEmployee}
               onChange={(e) => setSelectedEmployee(e.target.value)}
-              style={styles.select}
+              className="py-3 px-3 border border-border rounded-md text-base bg-background cursor-pointer"
             >
               <option value="">All Employees</option>
               {employees && employees.length > 0 && employees.map((emp) => (
@@ -219,12 +218,12 @@ const ContractorWorkLogs = () => {
             </select>
           </div>
 
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Project</label>
+          <div className="flex flex-col">
+            <label className="mb-2 text-text font-semibold text-sm">Project</label>
             <select
               value={selectedProject}
               onChange={(e) => setSelectedProject(e.target.value)}
-              style={styles.select}
+              className="py-3 px-3 border border-border rounded-md text-base bg-background cursor-pointer"
             >
               <option value="">All Projects</option>
               {projects && projects.length > 0 && projects.map((proj) => (
@@ -233,94 +232,94 @@ const ContractorWorkLogs = () => {
             </select>
           </div>
 
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Start Date</label>
+          <div className="flex flex-col">
+            <label className="mb-2 text-text font-semibold text-sm">Start Date</label>
             <input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              style={styles.input}
+              className="py-3 px-3 border border-border rounded-md text-base bg-background"
             />
           </div>
 
-          <div style={styles.formGroup}>
-            <label style={styles.label}>End Date</label>
+          <div className="flex flex-col">
+            <label className="mb-2 text-text font-semibold text-sm">End Date</label>
             <input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              style={styles.input}
+              className="py-3 px-3 border border-border rounded-md text-base bg-background"
             />
           </div>
 
-          <div style={styles.clearButtonContainer}>
-            <button onClick={clearFilters} style={styles.clearButton}>
+          <div className="flex items-end">
+            <button onClick={clearFilters} className="py-3 px-6 bg-background-light text-text border border-border rounded-md cursor-pointer text-base font-semibold w-full">
               Clear Filters
             </button>
           </div>
         </div>
       </div>
 
-      <div style={styles.logsSection}>
-        <h2 style={styles.sectionTitle}>Work Logs</h2>
+      <div className="mb-6">
+        <h2 className="text-xl font-bold text-text mb-4">Work Logs</h2>
         {!workLogs || workLogs.length === 0 ? (
-          <div style={styles.emptyState}>
+          <div className="bg-white py-12 px-12 rounded-lg shadow-md text-center text-text-light text-base">
             <p>No work logs found{(selectedEmployee || selectedProject || startDate || endDate) ? ' with the current filters.' : ' yet.'}</p>
             {(selectedEmployee || selectedProject || startDate || endDate) && (
-              <button onClick={clearFilters} style={styles.clearFiltersButton}>
+              <button onClick={clearFilters} className="mt-4 py-3 px-6 bg-black text-white border-none rounded-md cursor-pointer text-base font-semibold">
                 Clear Filters
               </button>
             )}
           </div>
         ) : (
-          <div style={styles.logsGrid}>
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(350px,1fr))] gap-4">
             {workLogs.map((log) => (
-              <div key={log.id} style={styles.logCard}>
-                <div style={styles.logHeader}>
+              <div key={log.id} className="bg-white rounded-lg shadow-md overflow-hidden">
+                <div className="py-5 px-5 border-b border-border-light flex justify-between items-start">
                   <div>
-                    <div style={styles.employeeName}>{log.employee_name}</div>
-                    <div style={styles.projectName}>{log.project_title}</div>
+                    <div className="text-base font-semibold text-text mb-1">{log.employee_name}</div>
+                    <div className="text-sm text-text-light">{log.project_title}</div>
                   </div>
-                  <div style={styles.dateInfo}>{formatDate(log.check_in_time)}</div>
+                  <div className="text-sm text-text-light">{formatDate(log.check_in_time)}</div>
                 </div>
 
-                <div style={styles.logContent}>
-                  <div style={styles.photoSection}>
+                <div className="py-5 px-5">
+                  <div className="flex gap-4 mb-4">
                     {log.check_in_photo_url && (
-                      <div style={styles.photoContainer}>
-                        <div style={styles.photoLabel}>Check-in</div>
+                      <div className="flex-1 text-center">
+                        <div className="text-xs text-text-light mb-2 font-semibold uppercase">Check-in</div>
                         <img
                           src={log.check_in_photo_url}
                           alt="Check-in"
-                          style={styles.thumbnail}
+                          className="w-full h-[120px] object-cover rounded-md mb-2"
                         />
-                        <div style={styles.photoTime}>{formatTime(log.check_in_time)}</div>
+                        <div className="text-sm text-text font-semibold">{formatTime(log.check_in_time)}</div>
                       </div>
                     )}
                     {log.check_out_photo_url && (
-                      <div style={styles.photoContainer}>
-                        <div style={styles.photoLabel}>Check-out</div>
+                      <div className="flex-1 text-center">
+                        <div className="text-xs text-text-light mb-2 font-semibold uppercase">Check-out</div>
                         <img
                           src={log.check_out_photo_url}
                           alt="Check-out"
-                          style={styles.thumbnail}
+                          className="w-full h-[120px] object-cover rounded-md mb-2"
                         />
-                        <div style={styles.photoTime}>{formatTime(log.check_out_time)}</div>
+                        <div className="text-sm text-text font-semibold">{formatTime(log.check_out_time)}</div>
                       </div>
                     )}
                   </div>
 
-                  <div style={styles.logDetails}>
-                    <div style={styles.detailRow}>
-                      <span style={styles.detailLabel}>Hours:</span>
-                      <span style={styles.detailValue}>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-text-light">Hours:</span>
+                      <span className="text-text font-semibold">
                         {calculateHours(log.check_in_time, log.check_out_time)}
                       </span>
                     </div>
                     {log.check_in_latitude && (
-                      <div style={styles.detailRow}>
-                        <span style={styles.detailLabel}>GPS:</span>
-                        <span style={styles.detailValue}>Available</span>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-text-light">GPS:</span>
+                        <span className="text-text font-semibold">Available</span>
                       </div>
                     )}
                   </div>
@@ -328,7 +327,7 @@ const ContractorWorkLogs = () => {
 
                 <button
                   onClick={() => handleViewDetails(log.id)}
-                  style={styles.viewButton}
+                  className="w-full py-3.5 px-3.5 bg-black text-white border-none rounded-b-lg cursor-pointer text-base font-semibold transition-colors"
                 >
                   View Details
                 </button>
@@ -340,303 +339,5 @@ const ContractorWorkLogs = () => {
     </div>
   );
 };
-
-const styles = {
-    container: {
-      maxWidth: '1200px',
-      margin: '0 auto',
-      padding: '40px 20px',
-    },
-    backButton: {
-      padding: '8px 16px',
-      backgroundColor: 'transparent',
-      color: theme.colors.text,
-      border: `1px solid ${theme.colors.border}`,
-      borderRadius: theme.borderRadius.md,
-      cursor: 'pointer',
-      fontSize: theme.typography.body.fontSize,
-      fontWeight: '500',
-      marginBottom: theme.spacing.element,
-    },
-    header: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: '32px',
-      gap: '16px',
-      flexWrap: 'wrap',
-    },
-    title: {
-      fontSize: '32px',
-      fontWeight: '700',
-      color: theme.colors.text,
-      margin: 0,
-    },
-    summarySection: {
-      marginBottom: theme.spacing.component,
-    },
-    sectionTitle: {
-      fontSize: theme.typography.h4.fontSize,
-      fontWeight: theme.typography.h4.fontWeight,
-      color: theme.colors.text,
-      marginBottom: theme.spacing.element,
-    },
-    statsGrid: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-      gap: theme.spacing.element,
-      marginBottom: theme.spacing.component,
-    },
-    statCard: {
-      background: theme.colors.white,
-      padding: '1.5rem',
-      borderRadius: theme.borderRadius.lg,
-      boxShadow: theme.shadows.md,
-      textAlign: 'center',
-    },
-    statValue: {
-      fontSize: '2rem',
-      fontWeight: '700',
-      color: theme.colors.text,
-      marginBottom: '0.5rem',
-    },
-    statLabel: {
-      fontSize: theme.typography.small.fontSize,
-      color: theme.colors.textLight,
-    },
-    summaryTables: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-      gap: theme.spacing.element,
-    },
-    summaryTableContainer: {
-      background: theme.colors.white,
-      padding: '1.5rem',
-      borderRadius: theme.borderRadius.lg,
-      boxShadow: theme.shadows.md,
-    },
-    summaryTableTitle: {
-      fontSize: theme.typography.body.fontSize,
-      fontWeight: '600',
-      color: theme.colors.text,
-      marginBottom: theme.spacing.element,
-    },
-    summaryTable: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '0.5rem',
-    },
-    summaryRow: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      padding: '0.75rem',
-      backgroundColor: theme.colors.background,
-      borderRadius: theme.borderRadius.md,
-    },
-    summaryName: {
-      fontSize: theme.typography.small.fontSize,
-      color: theme.colors.text,
-    },
-    summaryHours: {
-      fontSize: theme.typography.small.fontSize,
-      fontWeight: '600',
-      color: theme.colors.text,
-    },
-    filtersSection: {
-      background: theme.colors.white,
-      padding: '1.5rem',
-      borderRadius: theme.borderRadius.lg,
-      boxShadow: theme.shadows.md,
-      marginBottom: theme.spacing.component,
-    },
-    filtersGrid: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-      gap: theme.spacing.element,
-      alignItems: 'end',
-    },
-    formGroup: {
-      display: 'flex',
-      flexDirection: 'column',
-    },
-    label: {
-      marginBottom: '0.5rem',
-      color: theme.colors.text,
-      fontWeight: '600',
-      fontSize: theme.typography.small.fontSize,
-    },
-    input: {
-      padding: '0.75rem',
-      border: `1px solid ${theme.colors.border}`,
-      borderRadius: theme.borderRadius.md,
-      fontSize: theme.typography.body.fontSize,
-      fontFamily: theme.typography.fontFamily,
-      backgroundColor: theme.colors.inputBg,
-    },
-    select: {
-      padding: '0.75rem',
-      border: `1px solid ${theme.colors.border}`,
-      borderRadius: theme.borderRadius.md,
-      fontSize: theme.typography.body.fontSize,
-      fontFamily: theme.typography.fontFamily,
-      backgroundColor: theme.colors.inputBg,
-      cursor: 'pointer',
-    },
-    clearButtonContainer: {
-      display: 'flex',
-      alignItems: 'flex-end',
-    },
-    clearButton: {
-      padding: '0.75rem 1.5rem',
-      backgroundColor: theme.colors.backgroundLight,
-      color: theme.colors.text,
-      border: `1px solid ${theme.colors.border}`,
-      borderRadius: theme.borderRadius.md,
-      cursor: 'pointer',
-      fontSize: theme.typography.body.fontSize,
-      fontWeight: '600',
-      width: '100%',
-    },
-    logsSection: {
-      marginBottom: theme.spacing.component,
-    },
-    emptyState: {
-      background: theme.colors.white,
-      padding: '3rem',
-      borderRadius: theme.borderRadius.lg,
-      boxShadow: theme.shadows.md,
-      textAlign: 'center',
-      color: theme.colors.textLight,
-      fontSize: theme.typography.body.fontSize,
-    },
-    clearFiltersButton: {
-      marginTop: theme.spacing.element,
-      padding: '0.75rem 1.5rem',
-      backgroundColor: theme.colors.black,
-      color: theme.colors.white,
-      border: 'none',
-      borderRadius: theme.borderRadius.md,
-      cursor: 'pointer',
-      fontSize: theme.typography.body.fontSize,
-      fontWeight: '600',
-    },
-    logsGrid: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
-      gap: theme.spacing.element,
-    },
-    logCard: {
-      background: theme.colors.white,
-      borderRadius: theme.borderRadius.lg,
-      boxShadow: theme.shadows.md,
-      overflow: 'hidden',
-    },
-    logHeader: {
-      padding: '1.25rem',
-      borderBottom: `1px solid ${theme.colors.borderLight}`,
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'flex-start',
-    },
-    employeeName: {
-      fontSize: theme.typography.body.fontSize,
-      fontWeight: '600',
-      color: theme.colors.text,
-      marginBottom: '0.25rem',
-    },
-    projectName: {
-      fontSize: theme.typography.small.fontSize,
-      color: theme.colors.textLight,
-    },
-    dateInfo: {
-      fontSize: theme.typography.small.fontSize,
-      color: theme.colors.textLight,
-    },
-    logContent: {
-      padding: '1.25rem',
-    },
-    photoSection: {
-      display: 'flex',
-      gap: '1rem',
-      marginBottom: '1rem',
-    },
-    photoContainer: {
-      flex: 1,
-      textAlign: 'center',
-    },
-    photoLabel: {
-      fontSize: theme.typography.tiny.fontSize,
-      color: theme.colors.textLight,
-      marginBottom: '0.5rem',
-      fontWeight: '600',
-      textTransform: 'uppercase',
-    },
-    thumbnail: {
-      width: '100%',
-      height: '120px',
-      objectFit: 'cover',
-      borderRadius: theme.borderRadius.md,
-      marginBottom: '0.5rem',
-    },
-    photoTime: {
-      fontSize: theme.typography.small.fontSize,
-      color: theme.colors.text,
-      fontWeight: '600',
-    },
-    logDetails: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '0.5rem',
-    },
-    detailRow: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      fontSize: theme.typography.small.fontSize,
-    },
-    detailLabel: {
-      color: theme.colors.textLight,
-    },
-    detailValue: {
-      color: theme.colors.text,
-      fontWeight: '600',
-    },
-    viewButton: {
-      width: '100%',
-      padding: '0.875rem',
-      backgroundColor: theme.colors.black,
-      color: theme.colors.white,
-      border: 'none',
-      borderRadius: `0 0 ${theme.borderRadius.lg} ${theme.borderRadius.lg}`,
-      cursor: 'pointer',
-      fontSize: theme.typography.body.fontSize,
-      fontWeight: '600',
-      transition: 'background-color 0.2s',
-    },
-    loading: {
-      textAlign: 'center',
-      padding: '3rem',
-      color: theme.colors.textLight,
-      fontSize: theme.typography.body.fontSize,
-    },
-    error: {
-      backgroundColor: '#FEE',
-      color: '#C00',
-      padding: '1rem',
-      borderRadius: theme.borderRadius.md,
-      marginBottom: '1.5rem',
-      border: '1px solid #FCC',
-    },
-    retryButton: {
-      marginTop: '1rem',
-      padding: '0.75rem 1.5rem',
-      backgroundColor: theme.colors.black,
-      color: theme.colors.white,
-      border: 'none',
-      borderRadius: theme.borderRadius.md,
-      cursor: 'pointer',
-      fontSize: theme.typography.body.fontSize,
-      fontWeight: '600',
-    },
-  };
 
 export default ContractorWorkLogs;

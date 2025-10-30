@@ -1,94 +1,48 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { theme } from '../../theme';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer style={styles.footer}>
-      <div style={styles.container}>
-        <div style={styles.grid}>
-          <div style={styles.column}>
-            <h4 style={styles.heading}>Product</h4>
-            <Link to="/features" style={styles.link}>Features</Link>
-            <Link to="/pricing" style={styles.link}>Pricing</Link>
-            <Link to="/how-it-works" style={styles.link}>How It Works</Link>
+    <footer className="bg-text text-white pt-section pb-component">
+      <div className="max-w-[1200px] mx-auto px-component">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-component mb-component">
+          <div className="flex flex-col gap-element">
+            <h4 className="text-base font-semibold mb-2 text-white">Product</h4>
+            <Link to="/features" className="text-white/70 no-underline text-sm transition-colors duration-200 hover:text-white">Features</Link>
+            <Link to="/pricing" className="text-white/70 no-underline text-sm transition-colors duration-200 hover:text-white">Pricing</Link>
+            <Link to="/how-it-works" className="text-white/70 no-underline text-sm transition-colors duration-200 hover:text-white">How It Works</Link>
           </div>
 
-          <div style={styles.column}>
-            <h4 style={styles.heading}>Company</h4>
-            <Link to="/about" style={styles.link}>About</Link>
-            <Link to="/contact" style={styles.link}>Contact</Link>
+          <div className="flex flex-col gap-element">
+            <h4 className="text-base font-semibold mb-2 text-white">Company</h4>
+            <Link to="/about" className="text-white/70 no-underline text-sm transition-colors duration-200 hover:text-white">About</Link>
+            <Link to="/contact" className="text-white/70 no-underline text-sm transition-colors duration-200 hover:text-white">Contact</Link>
           </div>
 
-          <div style={styles.column}>
-            <h4 style={styles.heading}>Legal</h4>
-            <Link to="/terms" style={styles.link}>Terms of Service</Link>
-            <Link to="/privacy" style={styles.link}>Privacy Policy</Link>
+          <div className="flex flex-col gap-element">
+            <h4 className="text-base font-semibold mb-2 text-white">Legal</h4>
+            <Link to="/terms" className="text-white/70 no-underline text-sm transition-colors duration-200 hover:text-white">Terms of Service</Link>
+            <Link to="/privacy" className="text-white/70 no-underline text-sm transition-colors duration-200 hover:text-white">Privacy Policy</Link>
           </div>
 
-          <div style={styles.column}>
-            <h4 style={styles.heading}>Contact</h4>
-            <a href="mailto:support@managrr.com" style={styles.link}>
+          <div className="flex flex-col gap-element">
+            <h4 className="text-base font-semibold mb-2 text-white">Contact</h4>
+            <a href="mailto:support@managrr.com" className="text-white/70 no-underline text-sm transition-colors duration-200 hover:text-white">
               support@managrr.com
             </a>
           </div>
         </div>
 
-        <div style={styles.bottom}>
-          <p style={styles.copyright}>
+        <div className="border-t border-white/10 pt-component text-center">
+          <p className="text-sm text-white/70">
             © {currentYear} Managrr. All rights reserved.
           </p>
         </div>
       </div>
     </footer>
   );
-};
-
-const styles = {
-  footer: {
-    backgroundColor: theme.colors.text,
-    color: theme.colors.white,
-    padding: `${theme.spacing.section} 0 ${theme.spacing.component} 0`,
-  },
-  container: {
-    maxWidth: '1200px',
-    margin: '0 auto',
-    padding: `0 ${theme.spacing.component}`,
-  },
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: theme.spacing.component,
-    marginBottom: theme.spacing.component,
-  },
-  column: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing.element,
-  },
-  heading: {
-    fontSize: theme.typography.body.fontSize,
-    fontWeight: '600',
-    marginBottom: '0.5rem',
-    color: theme.colors.white,
-  },
-  link: {
-    color: 'rgba(255, 255, 255, 0.7)',
-    textDecoration: 'none',
-    fontSize: theme.typography.small.fontSize,
-    transition: 'color 0.2s',
-  },
-  bottom: {
-    borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-    paddingTop: theme.spacing.component,
-    textAlign: 'center',
-  },
-  copyright: {
-    fontSize: theme.typography.small.fontSize,
-    color: 'rgba(255, 255, 255, 0.7)',
-  },
 };
 
 export default Footer;

@@ -1,34 +1,33 @@
 import React from 'react';
-import { theme } from '../../theme';
 
 const WorkLogsSection = ({ projectId, summary, recentCheckIns, isEmployee }) => {
   return (
     <div>
-      <h2 style={styles.sectionTitle}>
+      <h2 className="text-2xl font-semibold text-text mb-8">
         {isEmployee ? 'My Work Logs' : 'Work Logs'}
       </h2>
 
       {summary && (
-        <div style={styles.summaryCards}>
-          <div style={styles.summaryCard}>
-            <div style={styles.summaryIcon}>⏱️</div>
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 mb-8">
+          <div className="flex items-center gap-4 bg-background-light p-5 rounded-md">
+            <div className="w-[50px] h-[50px] rounded-full bg-amber-100 text-amber-900 flex items-center justify-center text-2xl">⏱️</div>
             <div>
-              <p style={styles.summaryLabel}>Hours This Week</p>
-              <p style={styles.summaryValue}>
+              <p className="text-sm text-text-light m-0 mb-1">Hours This Week</p>
+              <p className="text-2xl font-bold text-text m-0">
                 {summary.total_hours_this_week?.toFixed(1) || '0'} hrs
               </p>
             </div>
           </div>
 
-          <div style={styles.summaryCard}>
-            <div style={{...styles.summaryIcon, backgroundColor: '#DBEAFE', color: '#1E40AF'}}>
+          <div className="flex items-center gap-4 bg-background-light p-5 rounded-md">
+            <div className="w-[50px] h-[50px] rounded-full bg-blue-100 text-blue-900 flex items-center justify-center text-2xl">
               👷
             </div>
             <div>
-              <p style={styles.summaryLabel}>
+              <p className="text-sm text-text-light m-0 mb-1">
                 {isEmployee ? 'You' : 'Active Employees'}
               </p>
-              <p style={styles.summaryValue}>
+              <p className="text-2xl font-bold text-text m-0">
                 {summary.active_employees || 0}
               </p>
             </div>
@@ -36,16 +35,16 @@ const WorkLogsSection = ({ projectId, summary, recentCheckIns, isEmployee }) => 
         </div>
       )}
 
-      <h3 style={styles.recentTitle}>Recent Check-ins</h3>
+      <h3 className="text-lg font-semibold text-text mb-4">Recent Check-ins</h3>
 
       {recentCheckIns && recentCheckIns.length > 0 ? (
-        <div style={styles.checkInsList}>
+        <div className="flex flex-col gap-4">
           {recentCheckIns.map((checkIn) => (
-            <div key={checkIn.id} style={styles.checkInCard}>
-              <div style={styles.checkInHeader}>
-                <div style={styles.employeeInfo}>
-                  <h4 style={styles.employeeName}>{checkIn.employee_name}</h4>
-                  <p style={styles.checkInTime}>
+            <div key={checkIn.id} className="bg-white border border-border rounded-md p-5">
+              <div className="flex justify-between items-start">
+                <div className="flex-1">
+                  <h4 className="text-lg font-semibold text-text m-0 mb-1">{checkIn.employee_name}</h4>
+                  <p className="text-sm text-text-light m-0">
                     {new Date(checkIn.check_in_time).toLocaleString('en-US', {
                       month: 'short',
                       day: 'numeric',
@@ -56,11 +55,11 @@ const WorkLogsSection = ({ projectId, summary, recentCheckIns, isEmployee }) => 
                   </p>
                 </div>
                 {checkIn.check_in_photo_url && (
-                  <div style={styles.photoPreview}>
-                    <img 
-                      src={checkIn.check_in_photo_url} 
+                  <div className="ml-4">
+                    <img
+                      src={checkIn.check_in_photo_url}
                       alt={`${checkIn.employee_name} check-in`}
-                      style={styles.checkInPhoto}
+                      className="w-20 h-20 rounded-md object-cover cursor-pointer"
                     />
                   </div>
                 )}
@@ -69,9 +68,9 @@ const WorkLogsSection = ({ projectId, summary, recentCheckIns, isEmployee }) => 
           ))}
         </div>
       ) : (
-        <div style={styles.emptyState}>
-          <p style={styles.emptyText}>
-            {isEmployee 
+        <div className="text-center p-12 bg-background-light rounded-md">
+          <p className="text-base text-text-light">
+            {isEmployee
               ? 'No check-ins yet. Check in when you arrive at the work site!'
               : 'No employee check-ins yet'
             }
@@ -80,126 +79,14 @@ const WorkLogsSection = ({ projectId, summary, recentCheckIns, isEmployee }) => 
       )}
 
       {isEmployee && (
-        <div style={styles.mobileHint}>
-          <p style={styles.hintText}>
+        <div className="mt-6 p-4 bg-blue-50 rounded-md">
+          <p className="m-0 text-sm text-blue-900">
             💡 Use the mobile app to check in and out of work
           </p>
         </div>
       )}
     </div>
   );
-};
-
-const styles = {
-  sectionTitle: {
-    fontSize: '1.5rem',
-    fontWeight: '600',
-    color: theme.colors.text,
-    marginBottom: '2rem',
-  },
-  summaryCards: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: '1rem',
-    marginBottom: '2rem',
-  },
-  summaryCard: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '1rem',
-    backgroundColor: theme.colors.backgroundLight,
-    padding: '1.25rem',
-    borderRadius: theme.borderRadius.md,
-  },
-  summaryIcon: {
-    width: '50px',
-    height: '50px',
-    borderRadius: '50%',
-    backgroundColor: '#FEF3C7',
-    color: '#92400E',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '1.5rem',
-  },
-  summaryLabel: {
-    fontSize: '0.875rem',
-    color: theme.colors.textLight,
-    margin: '0 0 0.25rem 0',
-  },
-  summaryValue: {
-    fontSize: '1.5rem',
-    fontWeight: '700',
-    color: theme.colors.text,
-    margin: 0,
-  },
-  recentTitle: {
-    fontSize: '1.125rem',
-    fontWeight: '600',
-    color: theme.colors.text,
-    marginBottom: '1rem',
-  },
-  checkInsList: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1rem',
-  },
-  checkInCard: {
-    backgroundColor: theme.colors.white,
-    border: `1px solid ${theme.colors.border}`,
-    borderRadius: theme.borderRadius.md,
-    padding: '1.25rem',
-  },
-  checkInHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  employeeInfo: {
-    flex: 1,
-  },
-  employeeName: {
-    fontSize: '1.125rem',
-    fontWeight: '600',
-    color: theme.colors.text,
-    margin: '0 0 0.25rem 0',
-  },
-  checkInTime: {
-    fontSize: '0.875rem',
-    color: theme.colors.textLight,
-    margin: 0,
-  },
-  photoPreview: {
-    marginLeft: '1rem',
-  },
-  checkInPhoto: {
-    width: '80px',
-    height: '80px',
-    borderRadius: theme.borderRadius.md,
-    objectFit: 'cover',
-    cursor: 'pointer',
-  },
-  emptyState: {
-    textAlign: 'center',
-    padding: '3rem',
-    backgroundColor: theme.colors.backgroundLight,
-    borderRadius: theme.borderRadius.md,
-  },
-  emptyText: {
-    fontSize: '1rem',
-    color: theme.colors.textLight,
-  },
-  mobileHint: {
-    marginTop: '1.5rem',
-    padding: '1rem',
-    backgroundColor: '#EFF6FF',
-    borderRadius: theme.borderRadius.md,
-  },
-  hintText: {
-    margin: 0,
-    fontSize: '0.875rem',
-    color: '#1E40AF',
-  },
 };
 
 export default WorkLogsSection;

@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { theme } from "../../theme"
 import contactHero from "../../assets/images/undraw_add-information_06qr.svg"
 
 export const Contact = () => {
@@ -41,34 +40,38 @@ export const Contact = () => {
   }
 
   return (
-    <div style={styles.page}>
-      <section style={styles.hero}>
-        <div style={styles.container}>
-          <div style={styles.heroBadge}>💬 We're Here to Help</div>
-          <h1 style={styles.title}>Contact Us</h1>
-          <p style={styles.subtitle}>Have questions? We typically respond within 24 hours</p>
-          <div style={styles.heroImageContainer}>
-            <img src={contactHero || "/placeholder.svg"} alt="Contact Us" style={styles.heroImage} />
+    <div>
+      <section className="bg-gradient-to-br from-primary to-blue-700 py-12 md:py-20 px-4 text-center text-white">
+        <div className="max-w-7xl mx-auto">
+          <div className="inline-block bg-white/20 text-white px-5 py-2 rounded-full text-sm font-semibold mb-6 backdrop-blur-sm">
+            💬 We're Here to Help
+          </div>
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 leading-tight">Contact Us</h1>
+          <p className="text-lg md:text-xl lg:text-2xl opacity-95 leading-relaxed">
+            Have questions? We typically respond within 24 hours
+          </p>
+          <div className="max-w-sm mx-auto mt-8">
+            <img src={contactHero || "/placeholder.svg"} alt="Contact Us" className="w-full h-auto drop-shadow-lg" />
           </div>
         </div>
       </section>
 
-      <section style={styles.section}>
-        <div style={styles.container}>
-          <div style={styles.contentGrid}>
-            <div style={styles.formContainer}>
-              <h2 style={styles.formTitle}>Send Us a Message</h2>
+      <section className="py-12 md:py-20 px-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-start">
+            <div className="bg-white p-6 md:p-10 rounded-lg shadow-lg border border-border">
+              <h2 className="text-2xl md:text-3xl font-bold text-text mb-8">Send Us a Message</h2>
 
               {submitted && (
-                <div style={styles.successMessage}>
+                <div className="bg-green-100 text-green-800 p-4 rounded-lg mb-6 border border-green-200 text-sm leading-relaxed">
                   ✓ Your email client should open. If not, please email us directly at support@managrr.com
                 </div>
               )}
 
-              <form onSubmit={handleSubmit} style={styles.form}>
-                <div style={styles.formGroup}>
-                  <label style={styles.label} htmlFor="name">
-                    Name <span style={styles.required}>*</span>
+              <form onSubmit={handleSubmit} className="flex flex-col">
+                <div className="mb-6">
+                  <label className="block text-base font-semibold text-text mb-2" htmlFor="name">
+                    Name <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -77,14 +80,14 @@ export const Contact = () => {
                     value={formData.name}
                     onChange={handleChange}
                     required
-                    style={styles.input}
+                    className="w-full px-4 py-3 text-base border-2 border-border rounded-lg outline-none transition-all focus:border-primary"
                     placeholder="Your name"
                   />
                 </div>
 
-                <div style={styles.formGroup}>
-                  <label style={styles.label} htmlFor="email">
-                    Email <span style={styles.required}>*</span>
+                <div className="mb-6">
+                  <label className="block text-base font-semibold text-text mb-2" htmlFor="email">
+                    Email <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="email"
@@ -93,14 +96,14 @@ export const Contact = () => {
                     value={formData.email}
                     onChange={handleChange}
                     required
-                    style={styles.input}
+                    className="w-full px-4 py-3 text-base border-2 border-border rounded-lg outline-none transition-all focus:border-primary"
                     placeholder="your.email@example.com"
                   />
                 </div>
 
-                <div style={styles.formGroup}>
-                  <label style={styles.label} htmlFor="subject">
-                    Subject <span style={styles.required}>*</span>
+                <div className="mb-6">
+                  <label className="block text-base font-semibold text-text mb-2" htmlFor="subject">
+                    Subject <span className="text-red-500">*</span>
                   </label>
                   <select
                     id="subject"
@@ -108,7 +111,7 @@ export const Contact = () => {
                     value={formData.subject}
                     onChange={handleChange}
                     required
-                    style={styles.select}
+                    className="w-full px-4 py-3 text-base border-2 border-border rounded-lg bg-white outline-none transition-all cursor-pointer focus:border-primary"
                   >
                     <option value="general">General Inquiry</option>
                     <option value="support">Support</option>
@@ -117,9 +120,9 @@ export const Contact = () => {
                   </select>
                 </div>
 
-                <div style={styles.formGroup}>
-                  <label style={styles.label} htmlFor="message">
-                    Message <span style={styles.required}>*</span>
+                <div className="mb-6">
+                  <label className="block text-base font-semibold text-text mb-2" htmlFor="message">
+                    Message <span className="text-red-500">*</span>
                   </label>
                   <textarea
                     id="message"
@@ -128,59 +131,73 @@ export const Contact = () => {
                     onChange={handleChange}
                     required
                     rows="6"
-                    style={styles.textarea}
+                    className="w-full px-4 py-3 text-base border-2 border-border rounded-lg resize-y outline-none transition-all leading-relaxed focus:border-primary"
                     placeholder="Tell us how we can help..."
                   />
                 </div>
 
-                <button type="submit" style={styles.submitButton}>
+                <button
+                  type="submit"
+                  className="bg-primary text-white px-4 py-4 text-lg font-semibold border-none rounded-lg cursor-pointer transition-all shadow-md hover:shadow-lg"
+                >
                   Send Message
                 </button>
               </form>
             </div>
 
-            <div style={styles.infoContainer}>
-              <div style={styles.infoCardPrimary}>
-                <h3 style={styles.infoTitle}>📧 Email Us Directly</h3>
-                <p style={styles.infoText}>For immediate assistance, you can email us at:</p>
-                <a href="mailto:support@managrr.com" style={styles.emailLink}>
+            <div className="flex flex-col gap-6">
+              <div className="bg-primary text-white p-6 md:p-8 rounded-lg shadow-lg">
+                <h3 className="text-xl md:text-2xl font-bold mb-4">📧 Email Us Directly</h3>
+                <p className="text-base leading-relaxed mb-4 opacity-95">
+                  For immediate assistance, you can email us at:
+                </p>
+                <a
+                  href="mailto:support@managrr.com"
+                  className="block text-xl text-white no-underline font-bold mb-4 px-3 py-3 bg-white/20 rounded-lg text-center transition-all hover:bg-white/30"
+                >
                   support@managrr.com
                 </a>
-                <p style={styles.responseTime}>⏱️ We typically respond within 24 hours</p>
+                <p className="text-sm italic opacity-90">⏱️ We typically respond within 24 hours</p>
               </div>
 
-              <div style={styles.infoCard}>
-                <h3 style={styles.infoCardTitle}>💬 General Inquiry</h3>
-                <p style={styles.infoCardText}>
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-border transition-all">
+                <h3 className="text-lg font-semibold text-text mb-3">💬 General Inquiry</h3>
+                <p className="text-sm text-text-light leading-relaxed">
                   Questions about Managrr, our features, or how we can help your project
                 </p>
               </div>
 
-              <div style={styles.infoCard}>
-                <h3 style={styles.infoCardTitle}>🛠️ Support</h3>
-                <p style={styles.infoCardText}>Technical issues, account problems, or help using the platform</p>
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-border transition-all">
+                <h3 className="text-lg font-semibold text-text mb-3">🛠️ Support</h3>
+                <p className="text-sm text-text-light leading-relaxed">
+                  Technical issues, account problems, or help using the platform
+                </p>
               </div>
 
-              <div style={styles.infoCard}>
-                <h3 style={styles.infoCardTitle}>💼 Sales</h3>
-                <p style={styles.infoCardText}>Pricing questions, plan comparisons, or enterprise inquiries</p>
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-border transition-all">
+                <h3 className="text-lg font-semibold text-text mb-3">💼 Sales</h3>
+                <p className="text-sm text-text-light leading-relaxed">
+                  Pricing questions, plan comparisons, or enterprise inquiries
+                </p>
               </div>
 
-              <div style={styles.infoCard}>
-                <h3 style={styles.infoCardTitle}>🤝 Partnership</h3>
-                <p style={styles.infoCardText}>Interested in partnering with Managrr or integration opportunities</p>
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-border transition-all">
+                <h3 className="text-lg font-semibold text-text mb-3">🤝 Partnership</h3>
+                <p className="text-sm text-text-light leading-relaxed">
+                  Interested in partnering with Managrr or integration opportunities
+                </p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section style={{ ...styles.section, backgroundColor: theme.colors.backgroundLight }}>
-        <div style={styles.container}>
-          <div style={styles.noteBox}>
-            <div style={styles.noteIcon}>ℹ️</div>
-            <h3 style={styles.noteTitle}>Note on Contact Form</h3>
-            <p style={styles.noteText}>
+      <section className="py-12 md:py-20 px-4 bg-background">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-white p-6 md:p-8 rounded-lg shadow-sm max-w-3xl mx-auto text-center border border-border">
+            <div className="text-5xl mb-4">ℹ️</div>
+            <h3 className="text-xl md:text-2xl font-semibold text-text mb-4">Note on Contact Form</h3>
+            <p className="text-base text-text-light leading-relaxed">
               Currently, clicking "Send Message" will open your email client with a pre-filled message. A dedicated
               contact form with backend integration is planned for version 1.5. For now, you can also email us directly
               at support@managrr.com.
@@ -190,232 +207,4 @@ export const Contact = () => {
       </section>
     </div>
   )
-}
-
-const styles = {
-  page: {
-    fontFamily: theme.typography.fontFamily,
-  },
-  hero: {
-    background: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.primaryDark} 100%)`,
-    padding: "clamp(3rem, 8vw, 5rem) 0",
-    textAlign: "center",
-    color: theme.colors.white,
-  },
-  heroBadge: {
-    display: "inline-block",
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    color: theme.colors.white,
-    padding: "0.5rem 1.25rem",
-    borderRadius: "50px",
-    fontSize: "0.875rem",
-    fontWeight: "600",
-    marginBottom: "1.5rem",
-    backdropFilter: "blur(10px)",
-  },
-  container: {
-    maxWidth: "1200px",
-    margin: "0 auto",
-    padding: `0 ${theme.spacing.component}`,
-  },
-  title: {
-    fontSize: "clamp(2rem, 5vw, 3rem)",
-    fontWeight: "700",
-    marginBottom: theme.spacing.element,
-    lineHeight: "1.2",
-  },
-  subtitle: {
-    fontSize: "clamp(1.125rem, 2.5vw, 1.375rem)",
-    opacity: 0.95,
-    lineHeight: "1.6",
-  },
-  heroImageContainer: {
-    maxWidth: "350px",
-    margin: "2rem auto 0",
-  },
-  heroImage: {
-    width: "100%",
-    height: "auto",
-    filter: "drop-shadow(0 10px 30px rgba(0, 0, 0, 0.1))",
-  },
-  section: {
-    padding: "clamp(3rem, 8vw, 5rem) 0",
-  },
-  contentGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-    gap: "clamp(2rem, 5vw, 3rem)",
-    alignItems: "start",
-  },
-  formContainer: {
-    backgroundColor: theme.colors.white,
-    padding: "clamp(1.5rem, 4vw, 2.5rem)",
-    borderRadius: theme.borderRadius.lg,
-    boxShadow: theme.shadows.lg,
-    border: `1px solid ${theme.colors.border}`,
-  },
-  formTitle: {
-    fontSize: "clamp(1.5rem, 3vw, 1.75rem)",
-    fontWeight: "700",
-    color: theme.colors.text,
-    marginBottom: "2rem",
-  },
-  successMessage: {
-    backgroundColor: "#d4edda",
-    color: "#155724",
-    padding: "1rem",
-    borderRadius: theme.borderRadius.md,
-    marginBottom: "1.5rem",
-    border: "1px solid #c3e6cb",
-    fontSize: "0.9375rem",
-    lineHeight: "1.5",
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-  },
-  formGroup: {
-    marginBottom: "1.5rem",
-  },
-  label: {
-    display: "block",
-    fontSize: "1rem",
-    fontWeight: "600",
-    color: theme.colors.text,
-    marginBottom: "0.5rem",
-  },
-  required: {
-    color: theme.colors.error,
-  },
-  input: {
-    width: "100%",
-    padding: "0.875rem",
-    fontSize: "1rem",
-    border: `2px solid ${theme.colors.border}`,
-    borderRadius: theme.borderRadius.md,
-    fontFamily: theme.typography.fontFamily,
-    transition: "all 0.3s ease",
-    outline: "none",
-  },
-  select: {
-    width: "100%",
-    padding: "0.875rem",
-    fontSize: "1rem",
-    border: `2px solid ${theme.colors.border}`,
-    borderRadius: theme.borderRadius.md,
-    fontFamily: theme.typography.fontFamily,
-    backgroundColor: theme.colors.white,
-    transition: "all 0.3s ease",
-    outline: "none",
-    cursor: "pointer",
-  },
-  textarea: {
-    width: "100%",
-    padding: "0.875rem",
-    fontSize: "1rem",
-    border: `2px solid ${theme.colors.border}`,
-    borderRadius: theme.borderRadius.md,
-    fontFamily: theme.typography.fontFamily,
-    resize: "vertical",
-    transition: "all 0.3s ease",
-    outline: "none",
-    lineHeight: "1.6",
-  },
-  submitButton: {
-    backgroundColor: theme.colors.primary,
-    color: theme.colors.white,
-    padding: "1rem",
-    fontSize: "1.125rem",
-    fontWeight: "600",
-    border: "none",
-    borderRadius: theme.borderRadius.md,
-    cursor: "pointer",
-    transition: "all 0.3s ease",
-    boxShadow: theme.shadows.md,
-  },
-  infoContainer: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "1.5rem",
-  },
-  infoCardPrimary: {
-    backgroundColor: theme.colors.primary,
-    color: theme.colors.white,
-    padding: "clamp(1.5rem, 3vw, 2rem)",
-    borderRadius: theme.borderRadius.lg,
-    boxShadow: theme.shadows.lg,
-  },
-  infoTitle: {
-    fontSize: "1.375rem",
-    fontWeight: "700",
-    marginBottom: "1rem",
-  },
-  infoText: {
-    fontSize: "1rem",
-    lineHeight: "1.6",
-    marginBottom: "1rem",
-    opacity: 0.95,
-  },
-  emailLink: {
-    display: "block",
-    fontSize: "1.25rem",
-    color: theme.colors.white,
-    textDecoration: "none",
-    fontWeight: "700",
-    marginBottom: "1rem",
-    padding: "0.75rem",
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    borderRadius: theme.borderRadius.md,
-    textAlign: "center",
-    transition: "all 0.3s ease",
-  },
-  responseTime: {
-    fontSize: "0.9375rem",
-    fontStyle: "italic",
-    opacity: 0.9,
-  },
-  infoCard: {
-    backgroundColor: theme.colors.white,
-    padding: "1.5rem",
-    borderRadius: theme.borderRadius.lg,
-    boxShadow: theme.shadows.sm,
-    border: `1px solid ${theme.colors.border}`,
-    transition: "all 0.3s ease",
-  },
-  infoCardTitle: {
-    fontSize: "1.125rem",
-    fontWeight: "600",
-    color: theme.colors.text,
-    marginBottom: "0.75rem",
-  },
-  infoCardText: {
-    fontSize: "0.9375rem",
-    color: theme.colors.textLight,
-    lineHeight: "1.6",
-  },
-  noteBox: {
-    backgroundColor: theme.colors.white,
-    padding: "clamp(1.5rem, 4vw, 2rem)",
-    borderRadius: theme.borderRadius.lg,
-    boxShadow: theme.shadows.sm,
-    maxWidth: "800px",
-    margin: "0 auto",
-    textAlign: "center",
-    border: `1px solid ${theme.colors.border}`,
-  },
-  noteIcon: {
-    fontSize: "2.5rem",
-    marginBottom: "1rem",
-  },
-  noteTitle: {
-    fontSize: "1.375rem",
-    fontWeight: "600",
-    color: theme.colors.text,
-    marginBottom: "1rem",
-  },
-  noteText: {
-    fontSize: "1rem",
-    color: theme.colors.textLight,
-    lineHeight: "1.7",
-  },
 }

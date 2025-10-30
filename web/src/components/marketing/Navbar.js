@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { theme } from '../../theme';
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -22,213 +21,55 @@ const Navbar = () => {
   };
 
   return (
-    <nav style={styles.navbar}>
-      <style>{mediaQueries}</style>
-      <div style={styles.container}>
-        <Link to="/" style={styles.brand}>Managrr</Link>
+    <nav className="bg-white shadow-sm sticky top-0 z-[1000]">
+      <div className="max-w-[1200px] mx-auto px-component py-element flex justify-between items-center relative">
+        <Link to="/" className="text-2xl font-bold text-primary no-underline">Managrr</Link>
 
-        <button 
-          className="hamburger"
-          style={styles.hamburger}
+        <button
+          className="hidden max-[768px]:flex flex-col gap-1 bg-none border-none cursor-pointer p-2"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           aria-label="Toggle menu"
         >
-          <span style={styles.hamburgerLine}></span>
-          <span style={styles.hamburgerLine}></span>
-          <span style={styles.hamburgerLine}></span>
+          <span className="w-6 h-0.5 bg-text rounded-sm"></span>
+          <span className="w-6 h-0.5 bg-text rounded-sm"></span>
+          <span className="w-6 h-0.5 bg-text rounded-sm"></span>
         </button>
 
-        <div 
-          className={`nav-links ${isMobileMenuOpen ? 'mobile-open' : ''}`}
-          style={styles.navLinks}
+        <div
+          className={`flex gap-component items-center max-[768px]:${isMobileMenuOpen ? 'flex' : 'hidden'} max-[768px]:flex-col max-[768px]:absolute max-[768px]:top-full max-[768px]:left-0 max-[768px]:right-0 max-[768px]:bg-white max-[768px]:shadow-md max-[768px]:p-4 max-[768px]:gap-0 max-[768px]:z-[1000]`}
         >
           {navLinks.map(link => (
             <Link
               key={link.path}
               to={link.path}
               onClick={handleLinkClick}
-              style={{
-                ...styles.navLink,
-                ...(isActive(link.path) ? styles.navLinkActive : {}),
-              }}
+              className={`text-text no-underline text-base transition-colors duration-200 hover:text-primary max-[768px]:py-3 max-[768px]:border-b max-[768px]:border-[#f0f0f0] max-[768px]:w-full ${isActive(link.path) ? 'text-primary font-semibold' : ''}`}
             >
               {link.label}
             </Link>
           ))}
-          
-          <div className="mobile-cta-buttons" style={styles.mobileCtaButtons}>
-            <Link to="/login" style={styles.mobileSignInButton} onClick={handleLinkClick}>
+
+          <div className="hidden max-[768px]:flex flex-col gap-3 pt-4 border-t border-[#f0f0f0] mt-4 w-full">
+            <Link to="/login" className="text-primary no-underline text-base py-3 text-center font-medium" onClick={handleLinkClick}>
               Sign In
             </Link>
-            <Link to="/register" style={styles.mobileGetStartedButton} onClick={handleLinkClick}>
+            <Link to="/register" className="bg-primary text-white no-underline text-base py-3 px-6 rounded-md font-medium text-center" onClick={handleLinkClick}>
               Get Started
             </Link>
           </div>
         </div>
 
-        <div className="cta-buttons" style={styles.ctaButtons}>
-          <Link to="/login" style={styles.signInButton}>
+        <div className="flex gap-element items-center max-[768px]:hidden">
+          <Link to="/login" className="text-primary no-underline text-base py-2 px-4">
             Sign In
           </Link>
-          <Link to="/register" style={styles.getStartedButton}>
+          <Link to="/register" className="bg-primary text-white no-underline text-base py-3 px-6 rounded-md font-medium">
             Get Started
           </Link>
         </div>
       </div>
     </nav>
   );
-};
-
-const mediaQueries = `
-  @media (max-width: 768px) {
-    .hamburger {
-      display: flex !important;
-    }
-    
-    .nav-links {
-      display: none !important;
-    }
-    
-    .nav-links.mobile-open {
-      display: flex !important;
-      flex-direction: column;
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      background-color: white;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      padding: 1rem;
-      gap: 0;
-      z-index: 1000;
-    }
-    
-    .cta-buttons {
-      display: none !important;
-    }
-    
-    .mobile-cta-buttons {
-      display: flex !important;
-      flex-direction: column;
-      gap: 0.75rem;
-      padding-top: 1rem;
-      border-top: 1px solid #f0f0f0;
-      margin-top: 1rem;
-    }
-    
-    .nav-links.mobile-open a {
-      padding: 0.75rem 0;
-      border-bottom: 1px solid #f0f0f0;
-    }
-  }
-  
-  @media (min-width: 769px) {
-    .hamburger {
-      display: none !important;
-    }
-    
-    .mobile-cta-buttons {
-      display: none !important;
-    }
-  }
-`;
-
-const styles = {
-  navbar: {
-    backgroundColor: theme.colors.white,
-    boxShadow: theme.shadows.sm,
-    position: 'sticky',
-    top: 0,
-    zIndex: 1000,
-  },
-  container: {
-    maxWidth: '1200px',
-    margin: '0 auto',
-    padding: `${theme.spacing.element} ${theme.spacing.component}`,
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  brand: {
-    fontSize: '1.5rem',
-    fontWeight: 'bold',
-    color: theme.colors.primary,
-    textDecoration: 'none',
-  },
-  hamburger: {
-    display: 'none',
-    flexDirection: 'column',
-    gap: '4px',
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-    padding: '0.5rem',
-  },
-  hamburgerLine: {
-    width: '24px',
-    height: '2px',
-    backgroundColor: theme.colors.text,
-    borderRadius: '2px',
-  },
-  navLinks: {
-    display: 'flex',
-    gap: theme.spacing.component,
-    alignItems: 'center',
-  },
-  navLink: {
-    color: theme.colors.text,
-    textDecoration: 'none',
-    fontSize: theme.typography.body.fontSize,
-    transition: 'color 0.2s',
-  },
-  navLinkActive: {
-    color: theme.colors.primary,
-    fontWeight: '600',
-  },
-  ctaButtons: {
-    display: 'flex',
-    gap: theme.spacing.element,
-    alignItems: 'center',
-  },
-  signInButton: {
-    color: theme.colors.primary,
-    textDecoration: 'none',
-    fontSize: theme.typography.body.fontSize,
-    padding: `0.5rem ${theme.spacing.element}`,
-  },
-  getStartedButton: {
-    backgroundColor: theme.colors.primary,
-    color: theme.colors.white,
-    textDecoration: 'none',
-    fontSize: theme.typography.body.fontSize,
-    padding: `0.75rem 1.5rem`,
-    borderRadius: theme.borderRadius.md,
-    fontWeight: '500',
-  },
-  mobileCtaButtons: {
-    display: 'none',
-    flexDirection: 'column',
-    gap: '0.75rem',
-  },
-  mobileSignInButton: {
-    color: theme.colors.primary,
-    textDecoration: 'none',
-    fontSize: theme.typography.body.fontSize,
-    padding: '0.75rem 0',
-    textAlign: 'center',
-    fontWeight: '500',
-  },
-  mobileGetStartedButton: {
-    backgroundColor: theme.colors.primary,
-    color: theme.colors.white,
-    textDecoration: 'none',
-    fontSize: theme.typography.body.fontSize,
-    padding: '0.75rem 1.5rem',
-    borderRadius: theme.borderRadius.md,
-    fontWeight: '500',
-    textAlign: 'center',
-  },
 };
 
 export default Navbar;

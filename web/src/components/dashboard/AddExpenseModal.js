@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { theme } from '../../theme';
 
 const AddExpenseModal = ({ projectId, onClose, onSubmit }) => {
   const [formData, setFormData] = useState({
@@ -67,30 +66,30 @@ const AddExpenseModal = ({ projectId, onClose, onSubmit }) => {
   };
 
   return (
-    <div style={styles.overlay} onClick={onClose}>
-      <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-        <div style={styles.header}>
-          <h2 style={styles.title}>Add Expense</h2>
-          <button style={styles.closeButton} onClick={onClose} type="button">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000] p-4" onClick={onClose}>
+      <div className="bg-white rounded-lg w-[90%] max-w-[540px] max-h-[90vh] flex flex-col shadow-[0_10px_40px_rgba(0,0,0,0.15)]" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-between items-center p-5 px-6 border-b border-background-light shrink-0">
+          <h2 className="text-lg font-semibold text-text m-0">Add Expense</h2>
+          <button className="bg-transparent border-none text-[28px] text-text-light cursor-pointer p-0 w-8 h-8 flex items-center justify-center leading-none" onClick={onClose} type="button">
             ×
           </button>
         </div>
 
-        {error && <div style={styles.error}>{error}</div>}
+        {error && <div className="bg-error-light text-error p-3 px-4 mx-6 mb-4 rounded-md text-sm shrink-0">{error}</div>}
 
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <div style={styles.formBody}>
-            <div style={styles.formRow}>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>
-                  Amount <span style={styles.required}>*</span>
+        <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1">
+          <div className="p-6 overflow-y-auto flex-1 min-h-0">
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="mb-4">
+                <label className="block mb-2 text-sm font-semibold text-text">
+                  Amount <span className="text-error">*</span>
                 </label>
                 <input
                   type="number"
                   name="amount"
                   value={formData.amount}
                   onChange={handleChange}
-                  style={styles.input}
+                  className="w-full py-2.5 px-3 border border-border rounded-md text-[15px] box-border"
                   placeholder="0.00"
                   step="0.01"
                   min="0.01"
@@ -98,46 +97,46 @@ const AddExpenseModal = ({ projectId, onClose, onSubmit }) => {
                 />
               </div>
 
-              <div style={styles.formGroup}>
-                <label style={styles.label}>
-                  Date <span style={styles.required}>*</span>
+              <div className="mb-4">
+                <label className="block mb-2 text-sm font-semibold text-text">
+                  Date <span className="text-error">*</span>
                 </label>
                 <input
                   type="date"
                   name="date"
                   value={formData.date}
                   onChange={handleChange}
-                  style={styles.input}
+                  className="w-full py-2.5 px-3 border border-border rounded-md text-[15px] box-border"
                   required
                 />
               </div>
             </div>
 
-            <div style={styles.formGroup}>
-              <label style={styles.label}>
-                Vendor/Store <span style={styles.required}>*</span>
+            <div className="mb-4">
+              <label className="block mb-2 text-sm font-semibold text-text">
+                Vendor/Store <span className="text-error">*</span>
               </label>
               <input
                 type="text"
                 name="vendor"
                 value={formData.vendor}
                 onChange={handleChange}
-                style={styles.input}
+                className="w-full py-2.5 px-3 border border-border rounded-md text-[15px] box-border"
                 placeholder="e.g., Home Depot, Contractor Name..."
                 required
               />
             </div>
 
-            <div style={styles.formRow}>
-              <div style={styles.formGroup}>
-                <label style={styles.label}>
-                  Category <span style={styles.required}>*</span>
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="mb-4">
+                <label className="block mb-2 text-sm font-semibold text-text">
+                  Category <span className="text-error">*</span>
                 </label>
                 <select
                   name="category"
                   value={formData.category}
                   onChange={handleChange}
-                  style={styles.select}
+                  className="w-full py-2.5 px-3 border border-border rounded-md text-[15px] bg-white box-border"
                   required
                 >
                   <option value="materials">🔨 Materials</option>
@@ -147,15 +146,15 @@ const AddExpenseModal = ({ projectId, onClose, onSubmit }) => {
                 </select>
               </div>
 
-              <div style={styles.formGroup}>
-                <label style={styles.label}>
-                  Paid By <span style={styles.required}>*</span>
+              <div className="mb-4">
+                <label className="block mb-2 text-sm font-semibold text-text">
+                  Paid By <span className="text-error">*</span>
                 </label>
                 <select
                   name="paid_by"
                   value={formData.paid_by}
                   onChange={handleChange}
-                  style={styles.select}
+                  className="w-full py-2.5 px-3 border border-border rounded-md text-[15px] bg-white box-border"
                   required
                 >
                   <option value="owner">Owner</option>
@@ -164,39 +163,39 @@ const AddExpenseModal = ({ projectId, onClose, onSubmit }) => {
               </div>
             </div>
 
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Description</label>
+            <div className="mb-4">
+              <label className="block mb-2 text-sm font-semibold text-text">Description</label>
               <textarea
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
-                style={styles.textarea}
+                className="w-full py-2.5 px-3 border border-border rounded-md text-[15px] resize-y box-border"
                 placeholder="Add notes about this expense..."
                 rows="3"
               />
             </div>
 
-            <div style={styles.formGroup}>
-              <label style={styles.label}>Receipt Photo (Optional)</label>
+            <div className="mb-4">
+              <label className="block mb-2 text-sm font-semibold text-text">Receipt Photo (Optional)</label>
               {!receiptPreview ? (
                 <div>
                   <input
                     type="file"
                     accept="image/*"
                     onChange={handleFileChange}
-                    style={styles.fileInput}
+                    className="hidden"
                     id="receipt-upload"
                   />
-                  <label htmlFor="receipt-upload" style={styles.fileLabel}>
-                    <span style={styles.fileLabelIcon}>📷</span>
-                    <span style={styles.fileLabelText}>Choose File</span>
+                  <label htmlFor="receipt-upload" className="inline-flex items-center gap-2 py-2.5 px-4 bg-background-light border-2 border-dashed border-border rounded-md cursor-pointer text-sm font-medium text-text">
+                    <span className="text-xl">📷</span>
+                    <span className="text-sm">Choose File</span>
                   </label>
-                  <div style={styles.fileHint}>Max size: 5MB</div>
+                  <div className="mt-2 text-xs text-text-light">Max size: 5MB</div>
                 </div>
               ) : (
-                <div style={styles.previewContainer}>
-                  <img src={receiptPreview} alt="Receipt preview" style={styles.preview} />
-                  <button type="button" style={styles.removeButton} onClick={handleRemoveFile}>
+                <div className="mt-2">
+                  <img src={receiptPreview} alt="Receipt preview" className="w-full max-h-[200px] object-cover rounded-md mb-2" />
+                  <button type="button" className="py-2 px-4 bg-error-light text-error border-none rounded-md text-sm font-medium cursor-pointer" onClick={handleRemoveFile}>
                     Remove Photo
                   </button>
                 </div>
@@ -204,11 +203,11 @@ const AddExpenseModal = ({ projectId, onClose, onSubmit }) => {
             </div>
           </div>
 
-          <div style={styles.footer}>
-            <button type="button" style={styles.cancelButton} onClick={onClose} disabled={loading}>
+          <div className="flex gap-3 p-4 px-6 border-t border-background-light shrink-0">
+            <button type="button" className="flex-1 py-3 bg-white text-text border-2 border-border rounded-lg text-[15px] font-semibold cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed" onClick={onClose} disabled={loading}>
               Cancel
             </button>
-            <button type="submit" style={styles.submitButton} disabled={loading}>
+            <button type="submit" className="flex-1 py-3 bg-primary text-white border-none rounded-lg text-[15px] font-semibold cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed" disabled={loading}>
               {loading ? 'Adding...' : 'Add Expense'}
             </button>
           </div>
@@ -216,206 +215,6 @@ const AddExpenseModal = ({ projectId, onClose, onSubmit }) => {
       </div>
     </div>
   );
-};
-
-const styles = {
-  overlay: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1000,
-    padding: '1rem',
-  },
-  modal: {
-    backgroundColor: theme.colors.white,
-    borderRadius: theme.borderRadius.lg,
-    width: '90%',
-    maxWidth: '540px',
-    maxHeight: '90vh',
-    display: 'flex',
-    flexDirection: 'column',
-    boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)',
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '20px 24px',
-    borderBottom: `1px solid ${theme.colors.backgroundLight}`,
-    flexShrink: 0,
-  },
-  title: {
-    fontSize: '18px',
-    fontWeight: '600',
-    color: theme.colors.text,
-    margin: 0,
-  },
-  closeButton: {
-    backgroundColor: 'transparent',
-    border: 'none',
-    fontSize: '28px',
-    color: theme.colors.textLight,
-    cursor: 'pointer',
-    padding: 0,
-    width: '32px',
-    height: '32px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    lineHeight: 1,
-  },
-  error: {
-    backgroundColor: '#FEE2E2',
-    color: '#991B1B',
-    padding: '12px 16px',
-    margin: '0 24px 16px',
-    borderRadius: '6px',
-    fontSize: '14px',
-    flexShrink: 0,
-  },
-  form: {
-    display: 'flex',
-    flexDirection: 'column',
-    minHeight: 0,
-    flex: 1,
-  },
-  formBody: {
-    padding: '24px',
-    overflowY: 'auto',
-    WebkitOverflowScrolling: 'touch',
-    flex: 1,
-    minHeight: 0,
-  },
-  formRow: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '16px',
-    marginBottom: '16px',
-  },
-  formGroup: {
-    marginBottom: '16px',
-  },
-  label: {
-    display: 'block',
-    marginBottom: '8px',
-    fontSize: '14px',
-    fontWeight: '600',
-    color: theme.colors.text,
-  },
-  required: {
-    color: theme.colors.error,
-  },
-  input: {
-    width: '100%',
-    padding: '10px 12px',
-    border: `1px solid ${theme.colors.border}`,
-    borderRadius: '6px',
-    fontSize: '15px',
-    fontFamily: theme.typography.fontFamily,
-    boxSizing: 'border-box',
-  },
-  select: {
-    width: '100%',
-    padding: '10px 12px',
-    border: `1px solid ${theme.colors.border}`,
-    borderRadius: '6px',
-    fontSize: '15px',
-    fontFamily: theme.typography.fontFamily,
-    backgroundColor: theme.colors.white,
-    boxSizing: 'border-box',
-  },
-  textarea: {
-    width: '100%',
-    padding: '10px 12px',
-    border: `1px solid ${theme.colors.border}`,
-    borderRadius: '6px',
-    fontSize: '15px',
-    fontFamily: theme.typography.fontFamily,
-    resize: 'vertical',
-    boxSizing: 'border-box',
-  },
-  fileInput: {
-    display: 'none',
-  },
-  fileLabel: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '10px 16px',
-    backgroundColor: theme.colors.backgroundLight,
-    border: `2px dashed ${theme.colors.border}`,
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontSize: '14px',
-    fontWeight: '500',
-    color: theme.colors.text,
-  },
-  fileLabelIcon: {
-    fontSize: '20px',
-  },
-  fileLabelText: {
-    fontSize: '14px',
-  },
-  fileHint: {
-    marginTop: '8px',
-    fontSize: '12px',
-    color: theme.colors.textLight,
-  },
-  previewContainer: {
-    marginTop: '8px',
-  },
-  preview: {
-    width: '100%',
-    maxHeight: '200px',
-    objectFit: 'cover',
-    borderRadius: '6px',
-    marginBottom: '8px',
-  },
-  removeButton: {
-    padding: '8px 16px',
-    backgroundColor: theme.colors.errorLight,
-    color: theme.colors.error,
-    border: 'none',
-    borderRadius: '6px',
-    fontSize: '14px',
-    fontWeight: '500',
-    cursor: 'pointer',
-  },
-  footer: {
-    display: 'flex',
-    gap: '12px',
-    padding: '16px 24px',
-    borderTop: `1px solid ${theme.colors.backgroundLight}`,
-    flexShrink: 0,
-  },
-  cancelButton: {
-    flex: 1,
-    padding: '12px',
-    backgroundColor: theme.colors.white,
-    color: theme.colors.text,
-    border: `2px solid ${theme.colors.border}`,
-    borderRadius: '8px',
-    fontSize: '15px',
-    fontWeight: '600',
-    cursor: 'pointer',
-  },
-  submitButton: {
-    flex: 1,
-    padding: '12px',
-    backgroundColor: theme.colors.primary,
-    color: theme.colors.white,
-    border: 'none',
-    borderRadius: '8px',
-    fontSize: '15px',
-    fontWeight: '600',
-    cursor: 'pointer',
-  },
 };
 
 export default AddExpenseModal;

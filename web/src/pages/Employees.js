@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import employeeService from '../services/employeeService';
-import { theme } from '../theme';
 
 const Employees = () => {
   const navigate = useNavigate(); 
@@ -34,57 +33,57 @@ const Employees = () => {
 
   if (loading) {
     return (
-      <div style={styles.container}>
-        <p style={styles.message}>Loading employees...</p>
+      <div className="max-w-[1200px] mx-auto p-8">
+        <p className="text-center text-text-light text-lg py-12 px-4">Loading employees...</p>
       </div>
     );
   }
 
   return (
-    <div style={styles.container}>
-      <button onClick={() => navigate('/contractor/dashboard')} style={styles.backButton}>
+    <div className="max-w-[1200px] mx-auto p-8">
+      <button onClick={() => navigate('/contractor/dashboard')} className="py-2.5 px-5 bg-transparent text-text border-2 border-border rounded-md cursor-pointer text-base font-semibold mb-4 transition-all duration-200">
       ← Back to Dashboard
     </button>
-      <div style={styles.header}>
-        <h1 style={styles.title}>Employees</h1>
-        <button 
-          onClick={() => setShowAddModal(true)} 
-          style={styles.addButton}
+      <div className="flex justify-between items-center mb-8 gap-4 flex-wrap">
+        <h1 className="text-[2rem] font-bold text-text m-0 tracking-tight">Employees</h1>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="py-3.5 px-7 bg-primary text-white border-none rounded-md text-base font-semibold cursor-pointer transition-all duration-200 shadow-sm"
         >
           + Add Employee
         </button>
       </div>
 
-      {error && <div style={styles.error}>{error}</div>}
+      {error && <div className="bg-error-light text-error p-4 rounded-md mb-8 border border-error text-base">{error}</div>}
 
       {employees.length === 0 ? (
-        <div style={styles.emptyState}>
-          <p style={styles.emptyText}>No employees yet. Add your first employee to get started.</p>
+        <div className="text-center py-16 px-5 bg-white rounded-lg border border-border-light">
+          <p className="text-text-light text-lg leading-relaxed">No employees yet. Add your first employee to get started.</p>
         </div>
       ) : (
-        <div style={styles.employeeList}>
+        <div className="flex flex-col gap-4">
           {employees.map((employee) => (
-            <Link 
-              key={employee.id} 
+            <Link
+              key={employee.id}
               to={`/contractor/employees/${employee.id}`}
-              style={styles.employeeCard}
+              className="bg-white border border-border-light rounded-lg p-8 no-underline transition-all duration-200 shadow-sm"
             >
-              <div style={styles.employeeHeader}>
-                <div style={styles.employeeInfo}>
-                  <h3 style={styles.employeeName}>{employee.name}</h3>
-                  <p style={styles.employeeEmail}>{employee.email}</p>
+              <div className="flex justify-between items-start gap-5 flex-wrap">
+                <div className="flex-1 min-w-[200px]">
+                  <h3 className="text-xl font-semibold text-text m-0 mb-2">{employee.name}</h3>
+                  <p className="text-base text-text-light m-0 mb-1">{employee.email}</p>
                   {employee.phone && (
-                    <p style={styles.employeePhone}>📞 {employee.phone}</p>
+                    <p className="text-sm text-text-light m-0">📞 {employee.phone}</p>
                   )}
                 </div>
-                <div style={styles.employeeMeta}>
-                  <div style={styles.hourlyRate}>
+                <div className="flex flex-col items-end gap-2.5">
+                  <div className="text-xl font-bold text-primary">
                     ${employee.hourly_rate}/hr
                   </div>
                   {employee.is_active ? (
-                    <span style={styles.activeBadge}>Active</span>
+                    <span className="py-1.5 px-3.5 bg-success text-white rounded-full text-sm font-semibold">Active</span>
                   ) : (
-                    <span style={styles.inactiveBadge}>Inactive</span>
+                    <span className="py-1.5 px-3.5 bg-text-light text-white rounded-full text-sm font-semibold">Inactive</span>
                   )}
                 </div>
               </div>
@@ -135,73 +134,73 @@ const AddEmployeeModal = ({ onClose, onSuccess }) => {
   };
 
   return (
-    <div style={styles.modalOverlay} onClick={onClose}>
-      <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
-        <div style={styles.modalHeader}>
-          <h2 style={styles.modalTitle}>Add New Employee</h2>
-          <button onClick={onClose} style={styles.closeButton}>×</button>
+    <div className="fixed top-0 left-0 right-0 bottom-0 bg-[rgba(0,0,0,0.6)] flex justify-center items-center z-[1000] p-4" onClick={onClose}>
+      <div className="bg-white rounded-lg w-full max-w-[500px] max-h-[90vh] overflow-auto shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-between items-center p-8 border-b border-border-light">
+          <h2 className="text-[1.5rem] font-bold text-text m-0 tracking-tight">Add New Employee</h2>
+          <button onClick={onClose} className="bg-none border-none text-[2rem] text-text-light cursor-pointer p-0 w-8 h-8 flex items-center justify-center leading-none transition-colors duration-200">×</button>
         </div>
 
-        {error && <div style={styles.modalError}>{error}</div>}
+        {error && <div className="bg-error-light text-error py-3.5 px-4 border border-error my-4 mx-8 rounded-md text-base">{error}</div>}
 
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Name *</label>
+        <form onSubmit={handleSubmit} className="p-8">
+          <div className="mb-5">
+            <label className="block text-base font-semibold text-text mb-2">Name *</label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({...formData, name: e.target.value})}
-              style={styles.input}
+              className="w-full py-3.5 px-4 border-2 border-border rounded-md text-base font-sans box-border transition-all duration-200"
               required
             />
           </div>
 
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Email *</label>
+          <div className="mb-5">
+            <label className="block text-base font-semibold text-text mb-2">Email *</label>
             <input
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({...formData, email: e.target.value})}
-              style={styles.input}
+              className="w-full py-3.5 px-4 border-2 border-border rounded-md text-base font-sans box-border transition-all duration-200"
               required
             />
           </div>
 
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Phone</label>
+          <div className="mb-5">
+            <label className="block text-base font-semibold text-text mb-2">Phone</label>
             <input
               type="tel"
               value={formData.phone}
               onChange={(e) => setFormData({...formData, phone: e.target.value})}
-              style={styles.input}
+              className="w-full py-3.5 px-4 border-2 border-border rounded-md text-base font-sans box-border transition-all duration-200"
             />
           </div>
 
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Hourly Rate ($) *</label>
+          <div className="mb-5">
+            <label className="block text-base font-semibold text-text mb-2">Hourly Rate ($) *</label>
             <input
               type="number"
               step="0.01"
               min="0"
               value={formData.hourly_rate}
               onChange={(e) => setFormData({...formData, hourly_rate: e.target.value})}
-              style={styles.input}
+              className="w-full py-3.5 px-4 border-2 border-border rounded-md text-base font-sans box-border transition-all duration-200"
               required
             />
           </div>
 
-          <div style={styles.modalActions}>
-            <button 
-              type="button" 
-              onClick={onClose} 
-              style={styles.cancelButton}
+          <div className="flex justify-end gap-3 mt-8 flex-wrap">
+            <button
+              type="button"
+              onClick={onClose}
+              className="py-3.5 px-7 bg-white text-text border-2 border-border rounded-md text-base font-semibold cursor-pointer transition-all duration-200"
               disabled={submitting}
             >
               Cancel
             </button>
-            <button 
-              type="submit" 
-              style={styles.submitButton}
+            <button
+              type="submit"
+              className="py-3.5 px-7 bg-primary text-white border-none rounded-md text-base font-semibold cursor-pointer transition-all duration-200 shadow-sm"
               disabled={submitting}
             >
               {submitting ? 'Adding...' : 'Add Employee'}
@@ -212,260 +211,5 @@ const AddEmployeeModal = ({ onClose, onSuccess }) => {
     </div>
   );
 };
-
-const styles = {
-  container: {
-    maxWidth: "1200px",
-    margin: "0 auto",
-    padding: theme.spacing.component,
-  },
-  backButton: {
-    padding: "0.625rem 1.25rem",
-    backgroundColor: "transparent",
-    color: theme.colors.text,
-    border: `2px solid ${theme.colors.border}`,
-    borderRadius: theme.borderRadius.md,
-    cursor: "pointer",
-    fontSize: theme.typography.body.fontSize,
-    fontWeight: "600",
-    marginBottom: theme.spacing.element,
-    transition: "all 0.2s ease",
-  },
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: theme.spacing.section,
-    gap: theme.spacing.element,
-    flexWrap: "wrap",
-  },
-  title: {
-    fontSize: theme.typography.h2.fontSize,
-    fontWeight: theme.typography.h2.fontWeight,
-    color: theme.colors.text,
-    margin: "0",
-    letterSpacing: "-0.02em",
-  },
-  addButton: {
-    padding: "0.875rem 1.75rem",
-    backgroundColor: theme.colors.primary,
-    color: theme.colors.white,
-    border: "none",
-    borderRadius: theme.borderRadius.md,
-    fontSize: theme.typography.body.fontSize,
-    fontWeight: "600",
-    cursor: "pointer",
-    transition: "all 0.2s ease",
-    boxShadow: theme.shadows.sm,
-  },
-  message: {
-    textAlign: "center",
-    color: theme.colors.textLight,
-    fontSize: theme.typography.bodyLarge.fontSize,
-    padding: "3rem 1rem",
-  },
-  error: {
-    backgroundColor: theme.colors.errorLight,
-    color: theme.colors.error,
-    padding: theme.spacing.element,
-    borderRadius: theme.borderRadius.md,
-    marginBottom: theme.spacing.component,
-    border: `1px solid ${theme.colors.error}`,
-    fontSize: theme.typography.body.fontSize,
-  },
-  emptyState: {
-    textAlign: "center",
-    padding: "4rem 1.25rem",
-    backgroundColor: theme.colors.white,
-    borderRadius: theme.borderRadius.lg,
-    border: `1px solid ${theme.colors.borderLight}`,
-  },
-  emptyText: {
-    color: theme.colors.textLight,
-    fontSize: theme.typography.bodyLarge.fontSize,
-    lineHeight: "1.6",
-  },
-  employeeList: {
-    display: "flex",
-    flexDirection: "column",
-    gap: theme.spacing.element,
-  },
-  employeeCard: {
-    backgroundColor: theme.colors.white,
-    border: `1px solid ${theme.colors.borderLight}`,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.component,
-    textDecoration: "none",
-    transition: "all 0.2s ease",
-    boxShadow: theme.shadows.sm,
-  },
-  employeeHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    gap: "1.25rem",
-    flexWrap: "wrap",
-  },
-  employeeInfo: {
-    flex: 1,
-    minWidth: "200px",
-  },
-  employeeName: {
-    fontSize: theme.typography.h4.fontSize,
-    fontWeight: "600",
-    color: theme.colors.text,
-    margin: "0 0 0.5rem 0",
-  },
-  employeeEmail: {
-    fontSize: theme.typography.body.fontSize,
-    color: theme.colors.textLight,
-    margin: "0 0 0.25rem 0",
-  },
-  employeePhone: {
-    fontSize: theme.typography.small.fontSize,
-    color: theme.colors.textLight,
-    margin: "0",
-  },
-  employeeMeta: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "flex-end",
-    gap: "0.625rem",
-  },
-  hourlyRate: {
-    fontSize: theme.typography.h4.fontSize,
-    fontWeight: "700",
-    color: theme.colors.primary,
-  },
-  activeBadge: {
-    padding: "0.375rem 0.875rem",
-    backgroundColor: theme.colors.success,
-    color: theme.colors.white,
-    borderRadius: theme.borderRadius.full,
-    fontSize: theme.typography.small.fontSize,
-    fontWeight: "600",
-  },
-  inactiveBadge: {
-    padding: "0.375rem 0.875rem",
-    backgroundColor: theme.colors.textLight,
-    color: theme.colors.white,
-    borderRadius: theme.borderRadius.full,
-    fontSize: theme.typography.small.fontSize,
-    fontWeight: "600",
-  },
-  modalOverlay: {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.6)",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 1000,
-    padding: "1rem",
-  },
-  modal: {
-    backgroundColor: theme.colors.white,
-    borderRadius: theme.borderRadius.lg,
-    width: "100%",
-    maxWidth: "500px",
-    maxHeight: "90vh",
-    overflow: "auto",
-    boxShadow: theme.shadows.xl,
-  },
-  modalHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: theme.spacing.component,
-    borderBottom: `1px solid ${theme.colors.borderLight}`,
-  },
-  modalTitle: {
-    fontSize: theme.typography.h3.fontSize,
-    fontWeight: "700",
-    color: theme.colors.text,
-    margin: "0",
-    letterSpacing: "-0.01em",
-  },
-  closeButton: {
-    background: "none",
-    border: "none",
-    fontSize: "2rem",
-    color: theme.colors.textLight,
-    cursor: "pointer",
-    padding: "0",
-    width: "2rem",
-    height: "2rem",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    lineHeight: "1",
-    transition: "color 0.2s ease",
-  },
-  modalError: {
-    backgroundColor: theme.colors.errorLight,
-    color: theme.colors.error,
-    padding: "0.875rem",
-    border: `1px solid ${theme.colors.error}`,
-    margin: `${theme.spacing.element} ${theme.spacing.component} 0`,
-    borderRadius: theme.borderRadius.md,
-    fontSize: theme.typography.body.fontSize,
-  },
-  form: {
-    padding: theme.spacing.component,
-  },
-  formGroup: {
-    marginBottom: "1.25rem",
-  },
-  label: {
-    display: "block",
-    fontSize: theme.typography.body.fontSize,
-    fontWeight: "600",
-    color: theme.colors.text,
-    marginBottom: "0.5rem",
-  },
-  input: {
-    width: "100%",
-    padding: "0.875rem",
-    border: `2px solid ${theme.colors.border}`,
-    borderRadius: theme.borderRadius.md,
-    fontSize: theme.typography.body.fontSize,
-    fontFamily: theme.typography.fontFamily,
-    boxSizing: "border-box",
-    transition: "all 0.2s ease",
-  },
-  modalActions: {
-    display: "flex",
-    justifyContent: "flex-end",
-    gap: "0.75rem",
-    marginTop: theme.spacing.component,
-    flexWrap: "wrap",
-  },
-  cancelButton: {
-    padding: "0.875rem 1.75rem",
-    backgroundColor: theme.colors.white,
-    color: theme.colors.text,
-    border: `2px solid ${theme.colors.border}`,
-    borderRadius: theme.borderRadius.md,
-    fontSize: theme.typography.body.fontSize,
-    fontWeight: "600",
-    cursor: "pointer",
-    transition: "all 0.2s ease",
-  },
-  submitButton: {
-    padding: "0.875rem 1.75rem",
-    backgroundColor: theme.colors.primary,
-    color: theme.colors.white,
-    border: "none",
-    borderRadius: theme.borderRadius.md,
-    fontSize: theme.typography.body.fontSize,
-    fontWeight: "600",
-    cursor: "pointer",
-    transition: "all 0.2s ease",
-    boxShadow: theme.shadows.sm,
-  },
-}
 
 export default Employees;

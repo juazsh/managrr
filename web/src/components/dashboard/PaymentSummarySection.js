@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { theme } from '../../theme';
 import paymentService from '../../services/paymentService';
 import AddPaymentModal from './AddPaymentModal';
 import EditPaymentModal from './EditPaymentModal';
@@ -71,7 +70,7 @@ export const PaymentSummarySection = ({ projectId, isOwner, isContractor, onPaym
 
   const handleConfirmPayment = async (paymentId) => {
     if (!window.confirm('Confirm that you have received this payment?')) return;
-    
+
     try {
       await paymentService.confirmPayment(paymentId);
       fetchPayments();
@@ -84,7 +83,7 @@ export const PaymentSummarySection = ({ projectId, isOwner, isContractor, onPaym
   const handleDisputePayment = async (paymentId) => {
     const reason = window.prompt('Please provide a reason for disputing this payment:');
     if (!reason || !reason.trim()) return;
-    
+
     try {
       await paymentService.disputePayment(paymentId, reason);
       fetchPayments();
@@ -96,7 +95,7 @@ export const PaymentSummarySection = ({ projectId, isOwner, isContractor, onPaym
 
   const handleDeletePayment = async (paymentId) => {
     if (!window.confirm('Are you sure you want to delete this payment?')) return;
-    
+
     try {
       await paymentService.deletePayment(paymentId);
       fetchPayments();
@@ -108,7 +107,7 @@ export const PaymentSummarySection = ({ projectId, isOwner, isContractor, onPaym
 
   const openImageViewer = (payment) => {
     if (!payment.screenshot_url) return;
-    
+
     setImageViewerState({
       isOpen: true,
       images: [{
@@ -156,61 +155,65 @@ export const PaymentSummarySection = ({ projectId, isOwner, isContractor, onPaym
   const getStatusBadge = (status) => {
     const badges = {
       pending: { text: '⏳ Pending', color: '#F59E0B' },
-      confirmed: { text: '✅ Confirmed', color: theme.colors.success },
-      disputed: { text: '⚠️ Disputed', color: theme.colors.error },
+      confirmed: { text: '✅ Confirmed', color: '#10B981' },
+      disputed: { text: '⚠️ Disputed', color: '#EF4444' },
     };
     return badges[status] || { text: status, color: '#6B7280' };
   };
 
   if (loading) {
-    return <div style={styles.loading}>Loading payments...</div>;
+    return <div className="text-center py-12 px-4 text-lg text-text-light">Loading payments...</div>;
   }
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-  <div>
-    <h2 style={styles.title}>💳 Payment Summary</h2>
-    <p style={styles.subtitle}>Track all payments made for this project</p>
-  </div>
-  <div style={styles.headerButtons}>
-    <button 
-      onClick={handleDownloadExcel} 
-      style={downloading ? styles.downloadButtonDisabled : styles.downloadButton}
-      disabled={downloading}
-    >
-      {downloading ? '⏳ Downloading...' : '📥 Download Excel'}
-    </button>
-    {isOwner && (
-      <button onClick={() => setShowAddModal(true)} style={styles.addButton}>
-        + Add Payment
-      </button>
-    )}
-  </div>
-</div>
+    <div className="p-8">
+      <div className="flex justify-between items-start mb-8 flex-wrap gap-4">
+        <div>
+          <h2 className="text-2xl font-semibold text-text m-0 mb-1">💳 Payment Summary</h2>
+          <p className="text-base text-text-light m-0">Track all payments made for this project</p>
+        </div>
+        <div className="flex gap-3 flex-wrap">
+          <button
+            onClick={handleDownloadExcel}
+            className={`px-6 py-3.5 border-2 rounded-md text-base font-semibold cursor-pointer transition-all duration-200 shadow-sm ${
+              downloading
+                ? 'bg-background-light text-text-light border-border cursor-not-allowed opacity-60'
+                : 'bg-white text-primary border-primary'
+            }`}
+            disabled={downloading}
+          >
+            {downloading ? '⏳ Downloading...' : '📥 Download Excel'}
+          </button>
+          {isOwner && (
+            <button onClick={() => setShowAddModal(true)} className="px-6 py-3.5 bg-primary text-white border-0 rounded-md text-base font-semibold cursor-pointer transition-all duration-200 shadow-sm">
+              + Add Payment
+            </button>
+          )}
+        </div>
+      </div>
 
-      {error && <div style={styles.error}>{error}</div>}
+      {error && <div className="bg-error-light text-error p-4 rounded-md mb-8 border border-error">{error}</div>}
 
-      <div style={styles.summaryCards}>
-        <div style={styles.summaryCard}>
-          <div style={styles.summaryLabel}>Total Confirmed</div>
-          <div style={styles.summaryAmount}>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 mb-8">
+        <div className="bg-white p-8 rounded-lg border border-border-light shadow-sm">
+          <div className="text-sm text-text-light mb-2 font-semibold">Total Confirmed</div>
+          <div className="text-[1.75rem] font-bold text-success">
             ${getTotalPaid().toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
         </div>
-        <div style={styles.summaryCard}>
-          <div style={styles.summaryLabel}>Total Pending</div>
-          <div style={{ ...styles.summaryAmount, color: '#F59E0B' }}>
+        <div className="bg-white p-8 rounded-lg border border-border-light shadow-sm">
+          <div className="text-sm text-text-light mb-2 font-semibold">Total Pending</div>
+          <div className="text-[1.75rem] font-bold text-amber-500">
             ${getTotalPending().toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
         </div>
       </div>
 
-      <div style={styles.paymentsGrid}>
+      <div className="grid gap-4">
         {payments.length === 0 ? (
-          <div style={styles.emptyState}>
-            <p style={styles.emptyText}>No payments recorded yet</p>
-            <p style={styles.emptySubtext}>
+          <div className="text-center py-12 px-4 bg-background-light rounded-lg border-2 border-dashed border-border">
+            <p className="text-lg text-text-light m-0 mb-2">No payments recorded yet</p>
+            <p className="text-base text-text-light m-0">
               {isOwner ? 'Add your first payment to start tracking.' : 'Waiting for payment records.'}
             </p>
           </div>
@@ -218,24 +221,24 @@ export const PaymentSummarySection = ({ projectId, isOwner, isContractor, onPaym
           payments.map((payment) => {
             const badge = getStatusBadge(payment.status);
             return (
-              <div key={payment.id} style={styles.paymentCard}>
-                <div style={styles.paymentHeader}>
-                  <div style={styles.paymentAmount}>
+              <div key={payment.id} className="bg-white p-8 rounded-lg border border-border-light shadow-sm transition-all duration-200">
+                <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+                  <div className="text-2xl font-bold text-text">
                     ${parseFloat(payment.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </div>
-                  <div style={{ ...styles.statusBadge, backgroundColor: badge.color }}>
+                  <div className="px-3.5 py-1.5 text-white rounded-full text-sm font-semibold" style={{ backgroundColor: badge.color }}>
                     {badge.text}
                   </div>
                 </div>
 
-                <div style={styles.paymentDetails}>
-                  <div style={styles.detailRow}>
-                    <span style={styles.detailLabel}>Method</span>
-                    <span style={styles.detailValue}>{getPaymentMethodLabel(payment.payment_method)}</span>
+                <div className="mb-4">
+                  <div className="flex justify-between py-2 border-b border-border-light">
+                    <span className="text-base text-text-light font-semibold">Method</span>
+                    <span className="text-base text-text">{getPaymentMethodLabel(payment.payment_method)}</span>
                   </div>
-                  <div style={styles.detailRow}>
-                    <span style={styles.detailLabel}>Date</span>
-                    <span style={styles.detailValue}>
+                  <div className="flex justify-between py-2 border-b border-border-light">
+                    <span className="text-base text-text-light font-semibold">Date</span>
+                    <span className="text-base text-text">
                       {new Date(payment.payment_date).toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'short',
@@ -246,27 +249,27 @@ export const PaymentSummarySection = ({ projectId, isOwner, isContractor, onPaym
                 </div>
 
                 {payment.notes && (
-                  <div style={styles.notes}>
+                  <div className="mt-4 p-4 bg-background-light rounded-md text-base text-text">
                     <strong>Notes:</strong> {payment.notes}
                   </div>
                 )}
 
                 {payment.screenshot_url && (
-                  <div style={styles.screenshotContainer}>
-                    <div style={styles.screenshotWrapper}>
+                  <div className="mt-4 mb-4">
+                    <div className="relative inline-block">
                       <img
                         src={payment.screenshot_url}
                         alt="Payment proof"
-                        style={styles.screenshotThumbnail}
+                        className="w-[120px] h-[120px] object-cover rounded-md border-2 border-border-light cursor-pointer transition-all duration-200 block"
                         onClick={() => openImageViewer(payment)}
                       />
-                      <div style={styles.overlayButtons}>
+                      <div className="absolute top-2 right-2 flex gap-2 opacity-0 transition-opacity duration-200 hover:opacity-100">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             openImageViewer(payment);
                           }}
-                          style={styles.overlayButton}
+                          className="p-2 bg-black/70 text-white border-0 rounded-md cursor-pointer flex items-center justify-center transition-colors duration-200"
                           title="View image"
                         >
                           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -282,25 +285,25 @@ export const PaymentSummarySection = ({ projectId, isOwner, isContractor, onPaym
                 )}
 
                 {payment.status === 'disputed' && payment.dispute_reason && (
-                  <div style={styles.disputeReason}>
+                  <div className="mt-4 p-4 bg-error-light rounded-md text-sm text-error border border-error">
                     <strong>Dispute Reason:</strong> {payment.dispute_reason}
                   </div>
                 )}
 
-                <div style={styles.paymentFooter}>
-                  <span style={styles.addedBy}>Added by {payment.added_by_name}</span>
-                  
-                  <div style={styles.actions}>
+                <div className="flex justify-between items-center mt-4 pt-4 border-t border-border-light flex-wrap gap-3">
+                  <span className="text-sm text-text-light">Added by {payment.added_by_name}</span>
+
+                  <div className="flex gap-2 flex-wrap">
                     {isContractor && payment.status === 'pending' && (
                       <>
                         <button
-                          style={styles.confirmButton}
+                          className="px-4 py-2 bg-success text-white border-0 rounded-md text-sm font-semibold cursor-pointer transition-all duration-200"
                           onClick={() => handleConfirmPayment(payment.id)}
                         >
                           ✓ Received
                         </button>
                         <button
-                          style={styles.disputeButton}
+                          className="px-4 py-2 bg-error text-white border-0 rounded-md text-sm font-semibold cursor-pointer transition-all duration-200"
                           onClick={() => handleDisputePayment(payment.id)}
                         >
                           ⚠ Dispute
@@ -310,13 +313,13 @@ export const PaymentSummarySection = ({ projectId, isOwner, isContractor, onPaym
                     {isOwner && payment.status === 'pending' && (
                       <>
                         <button
-                          style={styles.editButton}
+                          className="px-4 py-2 bg-transparent text-primary border-2 border-primary rounded-md text-sm font-semibold cursor-pointer transition-all duration-200"
                           onClick={() => setEditingPayment(payment)}
                         >
                           Edit
                         </button>
                         <button
-                          style={styles.deleteButton}
+                          className="px-4 py-2 bg-transparent text-error border-2 border-error rounded-md text-sm font-semibold cursor-pointer transition-all duration-200"
                           onClick={() => handleDeletePayment(payment.id)}
                         >
                           Delete
@@ -356,295 +359,6 @@ export const PaymentSummarySection = ({ projectId, isOwner, isContractor, onPaym
       )}
     </div>
   );
-};
-
-const styles = {
-  container: {
-    padding: theme.spacing.component,
-  },
-  loading: {
-    textAlign: 'center',
-    padding: '3rem 1rem',
-    fontSize: theme.typography.bodyLarge.fontSize,
-    color: theme.colors.textLight,
-  },
-  error: {
-    backgroundColor: theme.colors.errorLight,
-    color: theme.colors.error,
-    padding: theme.spacing.element,
-    borderRadius: theme.borderRadius.md,
-    marginBottom: theme.spacing.component,
-    border: `1px solid ${theme.colors.error}`,
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: theme.spacing.component,
-    flexWrap: 'wrap',
-    gap: '1rem',
-  },
-  title: {
-    fontSize: theme.typography.h3.fontSize,
-    fontWeight: theme.typography.h3.fontWeight,
-    color: theme.colors.text,
-    margin: '0 0 0.25rem 0',
-  },
-  subtitle: {
-    fontSize: theme.typography.body.fontSize,
-    color: theme.colors.textLight,
-    margin: 0,
-  },
-  addButton: {
-    padding: '0.875rem 1.5rem',
-    backgroundColor: theme.colors.primary,
-    color: theme.colors.white,
-    border: 'none',
-    borderRadius: theme.borderRadius.md,
-    fontSize: theme.typography.body.fontSize,
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-    boxShadow: theme.shadows.sm,
-  },
-  summaryCards: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-    gap: theme.spacing.element,
-    marginBottom: theme.spacing.component,
-  },
-  summaryCard: {
-    backgroundColor: theme.colors.white,
-    padding: theme.spacing.component,
-    borderRadius: theme.borderRadius.lg,
-    border: `1px solid ${theme.colors.borderLight}`,
-    boxShadow: theme.shadows.sm,
-  },
-  summaryLabel: {
-    fontSize: theme.typography.small.fontSize,
-    color: theme.colors.textLight,
-    marginBottom: '0.5rem',
-    fontWeight: '600',
-  },
-  summaryAmount: {
-    fontSize: '1.75rem',
-    fontWeight: '700',
-    color: theme.colors.success,
-  },
-  paymentsGrid: {
-    display: 'grid',
-    gap: theme.spacing.element,
-  },
-  emptyState: {
-    textAlign: 'center',
-    padding: '3rem 1rem',
-    backgroundColor: theme.colors.backgroundLight,
-    borderRadius: theme.borderRadius.lg,
-    border: `2px dashed ${theme.colors.border}`,
-  },
-  emptyText: {
-    fontSize: theme.typography.bodyLarge.fontSize,
-    color: theme.colors.textLight,
-    margin: '0 0 0.5rem 0',
-  },
-  emptySubtext: {
-    fontSize: theme.typography.body.fontSize,
-    color: theme.colors.textLight,
-    margin: 0,
-  },
-  paymentCard: {
-    backgroundColor: theme.colors.white,
-    padding: theme.spacing.component,
-    borderRadius: theme.borderRadius.lg,
-    border: `1px solid ${theme.colors.borderLight}`,
-    boxShadow: theme.shadows.sm,
-    transition: 'all 0.2s ease',
-  },
-  paymentHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: theme.spacing.element,
-    flexWrap: 'wrap',
-    gap: '0.5rem',
-  },
-  paymentAmount: {
-    fontSize: '1.5rem',
-    fontWeight: '700',
-    color: theme.colors.text,
-  },
-  statusBadge: {
-    padding: '0.375rem 0.875rem',
-    color: theme.colors.white,
-    borderRadius: theme.borderRadius.full,
-    fontSize: theme.typography.small.fontSize,
-    fontWeight: '600',
-  },
-  paymentDetails: {
-    marginBottom: theme.spacing.element,
-  },
-  detailRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    padding: '0.5rem 0',
-    borderBottom: `1px solid ${theme.colors.borderLight}`,
-  },
-  detailLabel: {
-    fontSize: theme.typography.body.fontSize,
-    color: theme.colors.textLight,
-    fontWeight: '600',
-  },
-  detailValue: {
-    fontSize: theme.typography.body.fontSize,
-    color: theme.colors.text,
-  },
-  notes: {
-    marginTop: theme.spacing.element,
-    padding: theme.spacing.element,
-    backgroundColor: theme.colors.backgroundLight,
-    borderRadius: theme.borderRadius.md,
-    fontSize: theme.typography.body.fontSize,
-    color: theme.colors.text,
-  },
-  screenshotContainer: {
-    marginTop: theme.spacing.element,
-    marginBottom: theme.spacing.element,
-  },
-  screenshotWrapper: {
-    position: 'relative',
-    display: 'inline-block',
-  },
-  screenshotThumbnail: {
-    width: '120px',
-    height: '120px',
-    objectFit: 'cover',
-    borderRadius: theme.borderRadius.md,
-    border: `2px solid ${theme.colors.borderLight}`,
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-    display: 'block',
-  },
-  overlayButtons: {
-    position: 'absolute',
-    top: '0.5rem',
-    right: '0.5rem',
-    display: 'flex',
-    gap: '0.5rem',
-    opacity: 0,
-    transition: 'opacity 0.2s ease',
-  },
-  overlayButton: {
-    padding: '0.5rem',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    color: theme.colors.white,
-    border: 'none',
-    borderRadius: theme.borderRadius.md,
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    transition: 'background-color 0.2s ease',
-  },
-  disputeReason: {
-    marginTop: theme.spacing.element,
-    padding: theme.spacing.element,
-    backgroundColor: theme.colors.errorLight,
-    borderRadius: theme.borderRadius.md,
-    fontSize: theme.typography.small.fontSize,
-    color: theme.colors.error,
-    border: `1px solid ${theme.colors.error}`,
-  },
-  paymentFooter: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: theme.spacing.element,
-    paddingTop: theme.spacing.element,
-    borderTop: `1px solid ${theme.colors.borderLight}`,
-    flexWrap: 'wrap',
-    gap: '0.75rem',
-  },
-  addedBy: {
-    fontSize: theme.typography.small.fontSize,
-    color: theme.colors.textLight,
-  },
-  actions: {
-    display: 'flex',
-    gap: '0.5rem',
-    flexWrap: 'wrap',
-  },
-  confirmButton: {
-    padding: '0.5rem 1rem',
-    backgroundColor: theme.colors.success,
-    color: theme.colors.white,
-    border: 'none',
-    borderRadius: theme.borderRadius.md,
-    fontSize: theme.typography.small.fontSize,
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-  },
-  disputeButton: {
-    padding: '0.5rem 1rem',
-    backgroundColor: theme.colors.error,
-    color: theme.colors.white,
-    border: 'none',
-    borderRadius: theme.borderRadius.md,
-    fontSize: theme.typography.small.fontSize,
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-  },
-  editButton: {
-    padding: '0.5rem 1rem',
-    backgroundColor: 'transparent',
-    color: theme.colors.primary,
-    border: `2px solid ${theme.colors.primary}`,
-    borderRadius: theme.borderRadius.md,
-    fontSize: theme.typography.small.fontSize,
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-  },
-  deleteButton: {
-    padding: '0.5rem 1rem',
-    backgroundColor: 'transparent',
-    color: theme.colors.error,
-    border: `2px solid ${theme.colors.error}`,
-    borderRadius: theme.borderRadius.md,
-    fontSize: theme.typography.small.fontSize,
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-  },
-  headerButtons: {
-    display: 'flex',
-    gap: '0.75rem',
-    flexWrap: 'wrap',
-  },
-  downloadButton: {
-    padding: '0.875rem 1.5rem',
-    backgroundColor: theme.colors.white,
-    color: theme.colors.primary,
-    border: `2px solid ${theme.colors.primary}`,
-    borderRadius: theme.borderRadius.md,
-    fontSize: theme.typography.body.fontSize,
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-    boxShadow: theme.shadows.sm,
-  },
-  downloadButtonDisabled: {
-    padding: '0.875rem 1.5rem',
-    backgroundColor: theme.colors.backgroundLight,
-    color: theme.colors.textLight,
-    border: `2px solid ${theme.colors.border}`,
-    borderRadius: theme.borderRadius.md,
-    fontSize: theme.typography.body.fontSize,
-    fontWeight: '600',
-    cursor: 'not-allowed',
-    opacity: 0.6,
-  },
 };
 
 export default PaymentSummarySection;

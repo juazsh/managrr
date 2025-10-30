@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import projectService from "../services/projectService"
-import { theme } from "../theme"
 
 const CreateProject = () => {
   const navigate = useNavigate()
@@ -71,16 +70,16 @@ const CreateProject = () => {
   }
 
   return (
-    <div style={styles.container}>
-      <div style={styles.formCard}>
-        <h1 style={styles.title}>Create New Project</h1>
+    <div className="max-w-[800px] mx-auto p-8 md:p-8 px-4 min-h-[calc(100vh-100px)]">
+      <div className="bg-white p-8 rounded-lg shadow-md border border-border-light">
+        <h1 className="text-[2rem] font-bold text-text mb-6 tracking-tight">Create New Project</h1>
 
-        {error && <div style={styles.error}>{error}</div>}
+        {error && <div className="bg-error-light text-error p-4 rounded-md mb-6 text-sm border border-error">{error}</div>}
 
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <div style={styles.formGroup}>
-            <label style={styles.label}>
-              Project Title <span style={styles.required}>*</span>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-text mb-2">
+              Project Title <span className="text-error">*</span>
             </label>
             <input
               type="text"
@@ -88,32 +87,32 @@ const CreateProject = () => {
               value={formData.title}
               onChange={handleInputChange}
               placeholder="e.g., Kitchen Renovation"
-              style={styles.input}
+              className="py-3.5 px-4 text-base border border-border rounded-md outline-none transition-all duration-200 font-sans bg-[#F9FAFB] focus:border-primary focus:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]"
               required
             />
           </div>
 
-          <div style={styles.formGroup}>
-            <label style={styles.label}>
-              Description <span style={styles.required}>*</span>
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-text mb-2">
+              Description <span className="text-error">*</span>
             </label>
             <textarea
               name="description"
               value={formData.description}
               onChange={handleInputChange}
               placeholder="Describe the project scope and requirements..."
-              style={styles.textarea}
+              className="py-3.5 px-4 text-base border border-border rounded-md outline-none transition-all duration-200 font-sans resize-y bg-[#F9FAFB] leading-relaxed focus:border-primary focus:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]"
               rows="5"
               required
             />
           </div>
 
-          <div style={styles.formGroup}>
-            <label style={styles.label}>
-              Estimated Cost <span style={styles.required}>*</span>
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-text mb-2">
+              Estimated Cost <span className="text-error">*</span>
             </label>
-            <div style={styles.inputWithPrefix}>
-              <span style={styles.prefix}>$</span>
+            <div className="flex items-center border border-border rounded-md overflow-hidden bg-white transition-all duration-200 focus-within:border-primary focus-within:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]">
+              <span className="py-3.5 px-4 bg-background-light text-text font-semibold text-base">$</span>
               <input
                 type="number"
                 name="estimated_cost"
@@ -122,15 +121,15 @@ const CreateProject = () => {
                 placeholder="0.00"
                 step="0.01"
                 min="0"
-                style={styles.inputWithPrefixField}
+                className="flex-1 py-3.5 px-4 text-base border-none outline-none font-sans bg-[#F9FAFB]"
                 required
               />
             </div>
           </div>
 
-          <div style={styles.formGroup}>
-            <label style={styles.label}>
-              Address <span style={styles.required}>*</span>
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-text mb-2">
+              Address <span className="text-error">*</span>
             </label>
             <input
               type="text"
@@ -138,22 +137,22 @@ const CreateProject = () => {
               value={formData.address}
               onChange={handleInputChange}
               placeholder="123 Main St, City, State ZIP"
-              style={styles.input}
+              className="py-3.5 px-4 text-base border border-border rounded-md outline-none transition-all duration-200 font-sans bg-[#F9FAFB] focus:border-primary focus:shadow-[0_0_0_3px_rgba(37,99,235,0.1)]"
               required
             />
           </div>
 
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Project Photos</label>
-            <input type="file" multiple accept="image/*" onChange={handlePhotoChange} style={styles.fileInput} />
-            {photos.length > 0 && <p style={styles.fileCount}>{photos.length} file(s) selected</p>}
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold text-text mb-2">Project Photos</label>
+            <input type="file" multiple accept="image/*" onChange={handlePhotoChange} className="p-3 text-sm border border-border rounded-md cursor-pointer bg-[#F9FAFB]" />
+            {photos.length > 0 && <p className="mt-2 text-sm text-text-light">{photos.length} file(s) selected</p>}
           </div>
 
-          <div style={styles.buttonGroup}>
-            <button type="button" onClick={() => navigate("/dashboard")} style={styles.cancelButton} disabled={loading}>
+          <div className="flex gap-4 justify-end mt-4 flex-wrap">
+            <button type="button" onClick={() => navigate("/dashboard")} className="py-3.5 px-6 text-base font-semibold bg-white text-text border border-border rounded-md cursor-pointer transition-all duration-200 flex-1 min-w-[120px] hover:bg-background-light disabled:opacity-60 disabled:cursor-not-allowed" disabled={loading}>
               Cancel
             </button>
-            <button type="submit" style={styles.submitButton} disabled={loading}>
+            <button type="submit" className="py-3.5 px-6 text-base font-semibold bg-black text-white border-none rounded-md cursor-pointer transition-all duration-200 flex-1 min-w-[120px] hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed" disabled={loading}>
               {loading ? "Creating..." : "Create Project"}
             </button>
           </div>
@@ -161,149 +160,6 @@ const CreateProject = () => {
       </div>
     </div>
   )
-}
-
-const styles = {
-  container: {
-    maxWidth: "800px",
-    margin: "0 auto",
-    padding: "2rem 1rem",
-    minHeight: "calc(100vh - 100px)",
-  },
-  formCard: {
-    backgroundColor: theme.colors.white,
-    padding: "2rem",
-    borderRadius: theme.borderRadius.lg,
-    boxShadow: theme.shadows.md,
-    border: `1px solid ${theme.colors.borderLight}`,
-  },
-  title: {
-    fontSize: "2rem",
-    fontWeight: "700",
-    color: theme.colors.text,
-    marginBottom: "1.5rem",
-    letterSpacing: "-0.02em",
-  },
-  error: {
-    backgroundColor: theme.colors.errorLight,
-    color: theme.colors.error,
-    padding: "1rem",
-    borderRadius: theme.borderRadius.md,
-    marginBottom: "1.5rem",
-    fontSize: theme.typography.small.fontSize,
-    border: `1px solid ${theme.colors.error}`,
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "1.5rem",
-  },
-  formGroup: {
-    display: "flex",
-    flexDirection: "column",
-  },
-  label: {
-    fontSize: "0.875rem",
-    fontWeight: "600",
-    color: theme.colors.text,
-    marginBottom: "0.5rem",
-  },
-  required: {
-    color: theme.colors.error,
-  },
-  input: {
-    padding: "0.875rem 1rem",
-    fontSize: theme.typography.body.fontSize,
-    border: `1px solid ${theme.colors.border}`,
-    borderRadius: theme.borderRadius.md,
-    outline: "none",
-    transition: "all 0.2s ease",
-    fontFamily: theme.typography.fontFamily,
-    backgroundColor: theme.colors.inputBg,
-  },
-  textarea: {
-    padding: "0.875rem 1rem",
-    fontSize: theme.typography.body.fontSize,
-    border: `1px solid ${theme.colors.border}`,
-    borderRadius: theme.borderRadius.md,
-    outline: "none",
-    transition: "all 0.2s ease",
-    fontFamily: theme.typography.fontFamily,
-    resize: "vertical",
-    backgroundColor: theme.colors.inputBg,
-    lineHeight: "1.6",
-  },
-  inputWithPrefix: {
-    display: "flex",
-    alignItems: "center",
-    border: `1px solid ${theme.colors.border}`,
-    borderRadius: theme.borderRadius.md,
-    overflow: "hidden",
-    backgroundColor: theme.colors.white,
-    transition: "all 0.2s ease",
-  },
-  prefix: {
-    padding: "0.875rem 1rem",
-    backgroundColor: theme.colors.backgroundLight,
-    color: theme.colors.text,
-    fontWeight: "600",
-    fontSize: theme.typography.body.fontSize,
-  },
-  inputWithPrefixField: {
-    flex: 1,
-    padding: "0.875rem 1rem",
-    fontSize: theme.typography.body.fontSize,
-    border: "none",
-    outline: "none",
-    fontFamily: theme.typography.fontFamily,
-    backgroundColor: theme.colors.inputBg,
-  },
-  fileInput: {
-    padding: "0.75rem",
-    fontSize: "0.875rem",
-    border: `1px solid ${theme.colors.border}`,
-    borderRadius: theme.borderRadius.md,
-    cursor: "pointer",
-    backgroundColor: theme.colors.inputBg,
-  },
-  fileCount: {
-    marginTop: "0.5rem",
-    fontSize: theme.typography.small.fontSize,
-    color: theme.colors.textLight,
-  },
-  buttonGroup: {
-    display: "flex",
-    gap: "1rem",
-    justifyContent: "flex-end",
-    marginTop: "1rem",
-    flexWrap: "wrap",
-  },
-  cancelButton: {
-    padding: "0.875rem 1.5rem",
-    fontSize: theme.typography.body.fontSize,
-    fontWeight: "600",
-    backgroundColor: theme.colors.white,
-    color: theme.colors.text,
-    border: `1px solid ${theme.colors.border}`,
-    borderRadius: theme.borderRadius.md,
-    cursor: "pointer",
-    transition: "all 0.2s ease",
-    flex: "1 1 auto",
-    minWidth: "120px",
-  },
-  submitButton: {
-    padding: "0.875rem 1.5rem",
-    fontSize: theme.typography.body.fontSize,
-    fontWeight: "600",
-    backgroundColor: theme.colors.black,
-    color: theme.colors.white,
-    border: "none",
-    borderRadius: theme.borderRadius.md,
-    cursor: "pointer",
-    transition: "all 0.2s ease",
-    flex: "1 1 auto",
-    minWidth: "120px",
-  },
 }
 
 export default CreateProject
