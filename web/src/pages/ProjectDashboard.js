@@ -37,6 +37,9 @@ const ProjectDashboard = () => {
       const params = selectedContractor !== 'all' ? { contractor_id: selectedContractor } : {}
       const data = await projectService.getProjectDashboard(id, params)
       setDashboard(data)
+      if (user?.user_type === "contractor" && user?.id) {
+        setSelectedContractor(user.id)
+      }
     } catch (err) {
       if (err.response?.status === 403) {
         setError("You do not have permission to view this project dashboard.")
@@ -143,7 +146,7 @@ const ProjectDashboard = () => {
         </div>
       </div>
 
-      {contractors.length > 1 && (
+      {isOwner && contractors.length > 1 && (
         <div style={styles.filterContainer}>
           <label style={styles.filterLabel}>Filter by Contractor:</label>
           <select 
@@ -154,7 +157,7 @@ const ProjectDashboard = () => {
             <option value="all">All Contractors</option>
             {contractors.map(contractor => (
               <option key={contractor.contractor_id} value={contractor.contractor_id}>
-                {contractor.name}
+                {contractor.name} ({contractor.email})
               </option>
             ))}
           </select>

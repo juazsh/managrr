@@ -163,12 +163,15 @@ func GetProjectDashboard(w http.ResponseWriter, r *http.Request) {
 	dashboard.OwnerInfo = ownerInfo
 
 	photoQuery := `
-		SELECT id, photo_url, caption, created_at 
-		FROM project_photos 
-		WHERE project_id = $1`
+    SELECT id, photo_url, caption, created_at 
+    FROM project_photos 
+    WHERE project_id = $1`
 	photoArgs := []interface{}{projectID}
 
-	if contractorFilter != "" {
+	if contractorFilter != "" && models.UserType(userCtx.UserType) == models.UserTypeContractor {
+		photoQuery += ` AND (uploaded_by = $2 OR uploaded_by = $3)`
+		photoArgs = append(photoArgs, contractorFilter, project.OwnerID)
+	} else if contractorFilter != "" {
 		photoQuery += ` AND uploaded_by = $2`
 		photoArgs = append(photoArgs, contractorFilter)
 	}
@@ -185,14 +188,24 @@ func GetProjectDashboard(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	updateRows, err := db.Query(`
-		SELECT pu.id, pu.update_type, pu.content, u.name, pu.created_at
-		FROM project_updates pu
-		JOIN users u ON pu.created_by = u.id
-		WHERE pu.project_id = $1
-		ORDER BY pu.created_at DESC
-		LIMIT 5
-	`, projectID)
+	updateQuery := `
+    SELECT pu.id, pu.update_type, pu.content, u.name, pu.created_at
+    FROM project_updates pu
+    JOIN users u ON pu.created_by = u.id
+    WHERE pu.project_id = $1`
+	updateArgs := []interface{}{projectID}
+
+	if contractorFilter != "" && models.UserType(userCtx.UserType) == models.UserTypeContractor {
+		// For contractor: show their updates + owner's updates
+		updateQuery += ` AND (pu.created_by = $2 OR pu.created_by = $3)`
+		updateArgs = append(updateArgs, contractorFilter, project.OwnerID)
+	} else if contractorFilter != "" {
+		updateQuery += ` AND pu.created_by = $2`
+		updateArgs = append(updateArgs, contractorFilter)
+	}
+	updateQuery += ` ORDER BY pu.created_at DESC LIMIT 5`
+
+	updateRows, err := db.Query(updateQuery, updateArgs...)
 	if err == nil {
 		defer updateRows.Close()
 		for updateRows.Next() {
@@ -200,11 +213,11 @@ func GetProjectDashboard(w http.ResponseWriter, r *http.Request) {
 			updateRows.Scan(&update.ID, &update.UpdateType, &update.Content, &update.CreatorName, &update.CreatedAt)
 
 			photoRows, _ := db.Query(`
-				SELECT id, photo_url, caption, display_order, created_at
-				FROM project_update_photos
-				WHERE project_update_id = $1
-				ORDER BY display_order
-			`, update.ID)
+            SELECT id, photo_url, caption, display_order, created_at
+            FROM project_update_photos
+            WHERE project_update_id = $1
+            ORDER BY display_order
+        `, update.ID)
 			if photoRows != nil {
 				defer photoRows.Close()
 				for photoRows.Next() {
