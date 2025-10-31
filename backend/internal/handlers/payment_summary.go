@@ -717,20 +717,32 @@ func DownloadPaymentSummaryExcel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	contractorFilter := r.URL.Query().Get("contractor_id")
+
 	query := `
-		SELECT ps.id, ps.amount, ps.payment_method, ps.payment_date, 
-		       ps.notes, ps.added_by, ps.status, 
-		       ps.confirmed_by, ps.confirmed_at, ps.created_at, 
+		SELECT ps.id, ps.amount, ps.payment_method, ps.payment_date,
+		       ps.notes, ps.added_by, ps.status,
+		       ps.confirmed_by, ps.confirmed_at, ps.created_at,
 		       u.name as added_by_name,
 		       COALESCE(u2.name, '') as confirmed_by_name
 		FROM payment_summaries ps
 		JOIN users u ON ps.added_by = u.id
 		LEFT JOIN users u2 ON ps.confirmed_by = u2.id
 		WHERE ps.project_id = $1
-		ORDER BY ps.payment_date DESC, ps.created_at DESC
 	`
 
-	rows, err := db.Query(query, projectID)
+	args := []interface{}{projectID}
+	argIndex := 2
+
+	if contractorFilter != "" {
+		query += " AND ps.added_by = $" + strconv.Itoa(argIndex)
+		args = append(args, contractorFilter)
+		argIndex++
+	}
+
+	query += " ORDER BY ps.payment_date DESC, ps.created_at DESC"
+
+	rows, err := db.Query(query, args...)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to fetch payment summaries")
 		return

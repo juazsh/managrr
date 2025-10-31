@@ -8,6 +8,7 @@ type WorkLog struct {
 	ID                string     `json:"id"`
 	EmployeeID        string     `json:"employee_id"`
 	ProjectID         string     `json:"project_id"`
+	ContractID        *string    `json:"contract_id,omitempty"`
 	CheckInTime       time.Time  `json:"check_in_time"`
 	CheckOutTime      *time.Time `json:"check_out_time,omitempty"`
 	CheckInPhotoURL   string     `json:"check_in_photo_url"`

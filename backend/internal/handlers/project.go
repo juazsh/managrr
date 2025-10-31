@@ -615,22 +615,46 @@ func AssignContractor(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		query := `
+		tx, err := db.Begin()
+		if err != nil {
+			failedContractors = append(failedContractors, contractorID)
+			continue
+		}
+
+		pcQuery := `
 			INSERT INTO project_contractors (project_id, contractor_id)
 			VALUES ($1, $2)
 			ON CONFLICT (project_id, contractor_id) DO NOTHING
 		`
-
-		result, err := db.Exec(query, projectID, contractorID)
+		result, err := tx.Exec(pcQuery, projectID, contractorID)
 		if err != nil {
+			tx.Rollback()
 			failedContractors = append(failedContractors, contractorID)
 			continue
 		}
 
 		rowsAffected, _ := result.RowsAffected()
 		if rowsAffected > 0 {
+			contractID := uuid.New().String()
+			contractQuery := `
+				INSERT INTO contracts (id, project_id, contractor_id, owner_id, status, start_date)
+				VALUES ($1, $2, $3, $4, $5, $6)
+				ON CONFLICT (project_id, contractor_id) DO NOTHING
+			`
+			_, err = tx.Exec(contractQuery, contractID, projectID, contractorID, ownerID, "active", time.Now())
+			if err != nil {
+				tx.Rollback()
+				failedContractors = append(failedContractors, contractorID)
+				continue
+			}
+
+			if err = tx.Commit(); err != nil {
+				failedContractors = append(failedContractors, contractorID)
+				continue
+			}
 			successCount++
 		} else {
+			tx.Rollback()
 			duplicateCount++
 		}
 	}
@@ -681,8 +705,15 @@ func RemoveContractor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	tx, err := db.Begin()
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to start transaction")
+		return
+	}
+	defer tx.Rollback()
+
 	query := `DELETE FROM project_contractors WHERE project_id = $1 AND contractor_id = $2`
-	result, err := db.Exec(query, projectID, contractorID)
+	result, err := tx.Exec(query, projectID, contractorID)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to remove contractor")
 		return
@@ -696,6 +727,22 @@ func RemoveContractor(w http.ResponseWriter, r *http.Request) {
 
 	if rowsAffected == 0 {
 		respondWithError(w, http.StatusNotFound, "Contractor assignment not found")
+		return
+	}
+
+	contractQuery := `
+		UPDATE contracts
+		SET status = $1, end_date = $2, updated_at = $3
+		WHERE project_id = $4 AND contractor_id = $5
+	`
+	_, err = tx.Exec(contractQuery, "terminated", time.Now(), time.Now(), projectID, contractorID)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to terminate contract")
+		return
+	}
+
+	if err = tx.Commit(); err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to commit transaction")
 		return
 	}
 

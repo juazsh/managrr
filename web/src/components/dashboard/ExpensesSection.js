@@ -4,7 +4,7 @@ import AddExpenseModal from './AddExpenseModal';
 import EditExpenseModal from './EditExpenseModal';
 import ImageViewer from '../common/ImageViewer';
 
-export const ExpensesSection = ({ projectId, expenses: initialExpenses, summary: initialSummary, canAdd, onExpenseAdded }) => {
+export const ExpensesSection = ({ projectId, expenses: initialExpenses, summary: initialSummary, canAdd, onExpenseAdded, contractorFilter }) => {
   const [expenses, setExpenses] = useState(initialExpenses || []);
   const [summary, setSummary] = useState(initialSummary || {});
   const [loading, setLoading] = useState(false);
@@ -29,6 +29,7 @@ export const ExpensesSection = ({ projectId, expenses: initialExpenses, summary:
       const filters = {};
       if (paidByFilter !== 'all') filters.paidBy = paidByFilter;
       if (categoryFilter !== 'all') filters.category = categoryFilter;
+      if (contractorFilter && contractorFilter !== 'all') filters.contractorId = contractorFilter;
 
       const data = await expenseService.getProjectExpenses(projectId, filters);
       setExpenses(data.expenses || []);
@@ -52,6 +53,7 @@ export const ExpensesSection = ({ projectId, expenses: initialExpenses, summary:
       const filters = {};
       if (paidByFilter !== 'all') filters.paidBy = paidByFilter;
       if (categoryFilter !== 'all') filters.category = categoryFilter;
+      if (contractorFilter && contractorFilter !== 'all') filters.contractorId = contractorFilter;
 
       await expenseService.downloadExpensesExcel(projectId, filters);
     } catch (err) {

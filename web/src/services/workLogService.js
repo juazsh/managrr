@@ -4,7 +4,7 @@ const workLogService = {
   getWorkLogs: async (filters = {}) => {
     try {
       const params = new URLSearchParams();
-      
+
       if (filters.projectId) {
         params.append('project_id', filters.projectId);
       }
@@ -19,6 +19,21 @@ const workLogService = {
       }
 
       const response = await api.get(`/work-logs?${params.toString()}`);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  getProjectWorkLogs: async (projectId, contractorId = null) => {
+    try {
+      const params = new URLSearchParams();
+      if (contractorId) params.append('contractor_id', contractorId);
+
+      const queryString = params.toString();
+      const url = `/projects/${projectId}/work-logs${queryString ? `?${queryString}` : ''}`;
+
+      const response = await api.get(url);
       return response.data;
     } catch (error) {
       throw error;

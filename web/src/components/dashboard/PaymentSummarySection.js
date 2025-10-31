@@ -4,7 +4,7 @@ import AddPaymentModal from './AddPaymentModal';
 import EditPaymentModal from './EditPaymentModal';
 import ImageViewer from '../common/ImageViewer';
 
-export const PaymentSummarySection = ({ projectId, isOwner, isContractor, onPaymentAdded }) => {
+export const PaymentSummarySection = ({ projectId, isOwner, isContractor, onPaymentAdded, contractorFilter }) => {
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
@@ -19,13 +19,14 @@ export const PaymentSummarySection = ({ projectId, isOwner, isContractor, onPaym
 
   useEffect(() => {
     fetchPayments();
-  }, [projectId]);
+  }, [projectId, contractorFilter]);
 
   const fetchPayments = async () => {
     try {
       setLoading(true);
       setError('');
-      const data = await paymentService.getProjectPayments(projectId);
+      const contractorId = contractorFilter && contractorFilter !== 'all' ? contractorFilter : null;
+      const data = await paymentService.getProjectPayments(projectId, contractorId);
       setPayments(data || []);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to load payments');
@@ -38,7 +39,8 @@ export const PaymentSummarySection = ({ projectId, isOwner, isContractor, onPaym
     try {
       setDownloading(true);
       setError('');
-      await paymentService.downloadPaymentSummaryExcel(projectId);
+      const contractorId = contractorFilter && contractorFilter !== 'all' ? contractorFilter : null;
+      await paymentService.downloadPaymentSummaryExcel(projectId, contractorId);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to download payment summary');
     } finally {
@@ -191,6 +193,7 @@ export const PaymentSummarySection = ({ projectId, isOwner, isContractor, onPaym
           )}
         </div>
       </div>
+      
 
       {error && <div className="bg-error-light text-error p-4 rounded-md mb-8 border border-error">{error}</div>}
 

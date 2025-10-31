@@ -1,14 +1,24 @@
 import api from './api';
 
 const paymentService = {
-  getProjectPayments: async (projectId) => {
-    const response = await api.get(`/projects/${projectId}/payments`);
+  getProjectPayments: async (projectId, contractorId = null) => {
+    const params = new URLSearchParams();
+    if (contractorId) params.append('contractor_id', contractorId);
+
+    const queryString = params.toString();
+    const url = `/projects/${projectId}/payments${queryString ? `?${queryString}` : ''}`;
+
+    const response = await api.get(url);
     return response.data;
   },
 
-  downloadPaymentSummaryExcel: async (projectId) => {
-    const url = `/projects/${projectId}/payment-summaries/download`;
-    
+  downloadPaymentSummaryExcel: async (projectId, contractorId = null) => {
+    const params = new URLSearchParams();
+    if (contractorId) params.append('contractor_id', contractorId);
+
+    const queryString = params.toString();
+    const url = `/projects/${projectId}/payment-summaries/download${queryString ? `?${queryString}` : ''}`;
+
     const response = await api.get(url, {
       responseType: 'blob',
     });

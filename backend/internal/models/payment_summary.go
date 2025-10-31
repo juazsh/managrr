@@ -27,6 +27,7 @@ const (
 type PaymentSummary struct {
 	ID            string        `json:"id"`
 	ProjectID     string        `json:"project_id"`
+	ContractID    *string       `json:"contract_id,omitempty"`
 	Amount        float64       `json:"amount"`
 	PaymentMethod PaymentMethod `json:"payment_method"`
 	PaymentDate   string        `json:"payment_date"`

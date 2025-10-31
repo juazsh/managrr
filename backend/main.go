@@ -86,6 +86,15 @@ func main() {
 	protected.HandleFunc("/expenses/{id}", handlers.UpdateExpense).Methods("PUT", "OPTIONS")
 	protected.HandleFunc("/expenses/{id}", handlers.DeleteExpense).Methods("DELETE", "OPTIONS")
 
+	protected.HandleFunc("/contracts/project/{id}", handlers.GetContractsByProject).Methods("GET", "OPTIONS")
+	protected.HandleFunc("/contracts/{id}", handlers.GetContract).Methods("GET", "OPTIONS")
+	protected.HandleFunc("/contracts/{id}/status", handlers.UpdateContractStatus).Methods("PUT", "OPTIONS")
+
+	protected.HandleFunc("/estimates", handlers.CreateEstimate).Methods("POST", "OPTIONS")
+	protected.HandleFunc("/estimates/contract/{contractId}", handlers.GetEstimatesByContract).Methods("GET", "OPTIONS")
+	protected.HandleFunc("/estimates/{id}/approve", handlers.ApproveEstimate).Methods("POST", "OPTIONS")
+	protected.HandleFunc("/estimates/{id}/reject", handlers.RejectEstimate).Methods("POST", "OPTIONS")
+
 	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)

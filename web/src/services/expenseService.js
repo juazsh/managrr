@@ -7,10 +7,11 @@ const expenseService = {
     if (filters.category) params.append('category', filters.category);
     if (filters.startDate) params.append('start_date', filters.startDate);
     if (filters.endDate) params.append('end_date', filters.endDate);
+    if (filters.contractorId) params.append('contractor_id', filters.contractorId);
 
     const queryString = params.toString();
     const url = `/projects/${projectId}/expenses${queryString ? `?${queryString}` : ''}`;
-    
+
     const response = await api.get(url);
     return response.data;
   },
@@ -21,10 +22,11 @@ const expenseService = {
     if (filters.category && filters.category !== 'all') params.append('category', filters.category);
     if (filters.startDate) params.append('start_date', filters.startDate);
     if (filters.endDate) params.append('end_date', filters.endDate);
+    if (filters.contractorId) params.append('contractor_id', filters.contractorId);
 
     const queryString = params.toString();
     const url = `/projects/${projectId}/expenses/download${queryString ? `?${queryString}` : ''}`;
-    
+
     const response = await api.get(url, {
       responseType: 'blob',
     });

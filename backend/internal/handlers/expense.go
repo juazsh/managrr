@@ -176,17 +176,35 @@ func AddExpense(w http.ResponseWriter, r *http.Request) {
 	description := r.FormValue("description")
 	log.Printf("Vendor: %s, Description: %s", vendor, description)
 
+	var contractID *string
+	contractQuery := `
+		SELECT c.id
+		FROM contracts c
+		WHERE c.project_id = $1
+		  AND (c.contractor_id = $2
+		       OR c.contractor_id IN (
+		           SELECT contractor_id FROM employees WHERE user_id = $2
+		       ))
+		LIMIT 1
+	`
+	var cid string
+	err = db.QueryRow(contractQuery, projectID, userCtx.UserID).Scan(&cid)
+	if err == nil {
+		contractID = &cid
+	}
+
 	log.Println("Inserting expense into database...")
 	query := `
-		INSERT INTO expenses (project_id, amount, vendor, date, category, description, paid_by, receipt_photo_url, added_by)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-		RETURNING id, project_id, amount, vendor, date, category, description, paid_by, receipt_photo_url, added_by, created_at
+		INSERT INTO expenses (project_id, contract_id, amount, vendor, date, category, description, paid_by, receipt_photo_url, added_by)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+		RETURNING id, project_id, contract_id, amount, vendor, date, category, description, paid_by, receipt_photo_url, added_by, created_at
 	`
 
 	var expense models.Expense
 	err = db.QueryRow(
 		query,
 		projectID,
+		contractID,
 		amountFloat,
 		nilIfEmpty(vendor),
 		date,
@@ -198,6 +216,7 @@ func AddExpense(w http.ResponseWriter, r *http.Request) {
 	).Scan(
 		&expense.ID,
 		&expense.ProjectID,
+		&expense.ContractID,
 		&expense.Amount,
 		&expense.Vendor,
 		&expense.Date,
@@ -761,6 +780,7 @@ func DownloadExpensesExcel(w http.ResponseWriter, r *http.Request) {
 	category := r.URL.Query().Get("category")
 	startDate := r.URL.Query().Get("start_date")
 	endDate := r.URL.Query().Get("end_date")
+	contractorFilter := r.URL.Query().Get("contractor_id")
 
 	if paidBy == "" {
 		paidBy = "all"
@@ -797,6 +817,13 @@ func DownloadExpensesExcel(w http.ResponseWriter, r *http.Request) {
 	if endDate != "" {
 		query += " AND e.date <= $" + strconv.Itoa(argIndex)
 		args = append(args, endDate)
+		argIndex++
+	}
+
+	if contractorFilter != "" {
+		query += " AND (e.added_by = $" + strconv.Itoa(argIndex) +
+			" OR e.added_by IN (SELECT user_id FROM employees WHERE contractor_id = $" + strconv.Itoa(argIndex) + "))"
+		args = append(args, contractorFilter)
 		argIndex++
 	}
 

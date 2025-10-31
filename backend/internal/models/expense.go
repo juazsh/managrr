@@ -23,6 +23,7 @@ const (
 type Expense struct {
 	ID              string          `json:"id"`
 	ProjectID       string          `json:"project_id"`
+	ContractID      *string         `json:"contract_id,omitempty"`
 	Amount          float64         `json:"amount"`
 	Vendor          *string         `json:"vendor,omitempty"`
 	Date            string          `json:"date"`
