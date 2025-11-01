@@ -29,7 +29,7 @@ export const ExpensesSection = ({ projectId, expenses: initialExpenses, summary:
       const filters = {};
       if (paidByFilter !== 'all') filters.paidBy = paidByFilter;
       if (categoryFilter !== 'all') filters.category = categoryFilter;
-      if (contractorFilter && contractorFilter !== 'all') filters.contractorId = contractorFilter;
+      if (contractorFilter && contractorFilter !== 'all') filters.contractId = contractorFilter;
 
       const data = await expenseService.getProjectExpenses(projectId, filters);
       setExpenses(data.expenses || []);
@@ -53,7 +53,7 @@ export const ExpensesSection = ({ projectId, expenses: initialExpenses, summary:
       const filters = {};
       if (paidByFilter !== 'all') filters.paidBy = paidByFilter;
       if (categoryFilter !== 'all') filters.category = categoryFilter;
-      if (contractorFilter && contractorFilter !== 'all') filters.contractorId = contractorFilter;
+      if (contractorFilter && contractorFilter !== 'all') filters.contractId = contractorFilter;
 
       await expenseService.downloadExpensesExcel(projectId, filters);
     } catch (err) {

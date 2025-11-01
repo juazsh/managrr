@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import contractService  from '../../services/contractService';
 
 const AddPaymentModal = ({ projectId, onClose, onSubmit }) => {
   const [formData, setFormData] = useState({
@@ -7,10 +8,13 @@ const AddPaymentModal = ({ projectId, onClose, onSubmit }) => {
     payment_method: 'bank_transfer',
     payment_date: new Date().toISOString().split('T')[0],
     notes: '',
+    contract_id: '',
   });
+  const [contracts, setContracts] = useState([]);
   const [screenshotFile, setScreenshotFile] = useState(null);
   const [screenshotPreview, setScreenshotPreview] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [loadingContracts, setLoadingContracts] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -19,6 +23,26 @@ const AddPaymentModal = ({ projectId, onClose, onSubmit }) => {
       document.body.style.overflow = 'unset';
     };
   }, []);
+
+  useEffect(() => {
+    const fetchContracts = async () => {
+      if (projectId) {
+        setLoadingContracts(true);
+        try {
+          const data = await contractService.getContractsByProject(projectId);
+          setContracts(data);
+          if (data.length === 1) {
+            setFormData(prev => ({ ...prev, contract_id: data[0].id }));
+          }
+        } catch (err) {
+          setError('Failed to load contracts');
+        } finally {
+          setLoadingContracts(false);
+        }
+      }
+    };
+    fetchContracts();
+  }, [projectId]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -51,6 +75,12 @@ const AddPaymentModal = ({ projectId, onClose, onSubmit }) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    if (!formData.contract_id) {
+      setError('Please select a contractor');
+      setLoading(false);
+      return;
+    }
 
     try {
       await onSubmit(formData, screenshotFile);
@@ -105,6 +135,29 @@ const AddPaymentModal = ({ projectId, onClose, onSubmit }) => {
                   required
                 />
               </div>
+            </div>
+
+            <div className="mb-4">
+              <label className="block mb-2 text-base font-semibold text-text">
+                Contractor <span className="text-error">*</span>
+              </label>
+              <select
+                name="contract_id"
+                value={formData.contract_id}
+                onChange={handleChange}
+                className="w-full p-3 border-2 border-border rounded-md text-base bg-white box-border"
+                required
+                disabled={loadingContracts}
+              >
+                <option value="">
+                  {loadingContracts ? 'Loading contractors...' : 'Select contractor'}
+                </option>
+                {contracts.map((contract) => (
+                  <option key={contract.id} value={contract.id}>
+                    {contract.contractor_name} ({contract.contractor_email})
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="mb-4">

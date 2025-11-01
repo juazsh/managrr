@@ -7,7 +7,7 @@ const expenseService = {
     if (filters.category) params.append('category', filters.category);
     if (filters.startDate) params.append('start_date', filters.startDate);
     if (filters.endDate) params.append('end_date', filters.endDate);
-    if (filters.contractorId) params.append('contractor_id', filters.contractorId);
+    if (filters.contractId) params.append('contract_id', filters.contractId);
 
     const queryString = params.toString();
     const url = `/projects/${projectId}/expenses${queryString ? `?${queryString}` : ''}`;
@@ -22,7 +22,7 @@ const expenseService = {
     if (filters.category && filters.category !== 'all') params.append('category', filters.category);
     if (filters.startDate) params.append('start_date', filters.startDate);
     if (filters.endDate) params.append('end_date', filters.endDate);
-    if (filters.contractorId) params.append('contractor_id', filters.contractorId);
+    if (filters.contractId) params.append('contract_id', filters.contractId);
 
     const queryString = params.toString();
     const url = `/projects/${projectId}/expenses/download${queryString ? `?${queryString}` : ''}`;
@@ -60,8 +60,8 @@ const expenseService = {
     formData.append('amount', expenseData.amount);
     formData.append('date', expenseData.date);
     formData.append('category', expenseData.category);
-    formData.append('paid_by', expenseData.paid_by);
-    
+
+    if (expenseData.contract_id) formData.append('contract_id', expenseData.contract_id);
     if (expenseData.vendor) formData.append('vendor', expenseData.vendor);
     if (expenseData.description) formData.append('description', expenseData.description);
     if (receiptFile) formData.append('receipt_photo', receiptFile);
@@ -84,8 +84,7 @@ const expenseService = {
     formData.append('amount', expenseData.amount);
     formData.append('date', expenseData.date);
     formData.append('category', expenseData.category);
-    formData.append('paid_by', expenseData.paid_by);
-    
+
     if (expenseData.vendor) formData.append('vendor', expenseData.vendor);
     if (expenseData.description) formData.append('description', expenseData.description);
     if (receiptFile) formData.append('receipt_photo', receiptFile);

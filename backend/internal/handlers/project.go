@@ -779,7 +779,7 @@ func ListProjectContractors(w http.ResponseWriter, r *http.Request) {
 		var isContractor bool
 		db.QueryRow(`
 			SELECT EXISTS(
-				SELECT 1 FROM project_contractors 
+				SELECT 1 FROM contracts
 				WHERE project_id = $1 AND contractor_id = $2
 			)
 		`, projectID, userCtx.UserID).Scan(&isContractor)
@@ -792,11 +792,11 @@ func ListProjectContractors(w http.ResponseWriter, r *http.Request) {
 	}
 
 	query := `
-		SELECT pc.contractor_id, u.name, u.email, pc.assigned_at
-		FROM project_contractors pc
-		JOIN users u ON pc.contractor_id = u.id
-		WHERE pc.project_id = $1
-		ORDER BY pc.assigned_at DESC
+		SELECT c.id, c.contractor_id, u.name, u.email, c.created_at
+		FROM contracts c
+		JOIN users u ON c.contractor_id = u.id
+		WHERE c.project_id = $1
+		ORDER BY c.created_at DESC
 	`
 
 	rows, err := db.Query(query, projectID)
@@ -807,6 +807,7 @@ func ListProjectContractors(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	type ContractorResponse struct {
+		ContractID   string    `json:"contract_id"`
 		ContractorID string    `json:"contractor_id"`
 		Name         string    `json:"name"`
 		Email        string    `json:"email"`
@@ -818,6 +819,7 @@ func ListProjectContractors(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var contractor ContractorResponse
 		err := rows.Scan(
+			&contractor.ContractID,
 			&contractor.ContractorID,
 			&contractor.Name,
 			&contractor.Email,

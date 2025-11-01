@@ -1,9 +1,9 @@
 import api from './api';
 
 const paymentService = {
-  getProjectPayments: async (projectId, contractorId = null) => {
+  getProjectPayments: async (projectId, contractId = null) => {
     const params = new URLSearchParams();
-    if (contractorId) params.append('contractor_id', contractorId);
+    if (contractId) params.append('contract_id', contractId);
 
     const queryString = params.toString();
     const url = `/projects/${projectId}/payments${queryString ? `?${queryString}` : ''}`;
@@ -12,9 +12,9 @@ const paymentService = {
     return response.data;
   },
 
-  downloadPaymentSummaryExcel: async (projectId, contractorId = null) => {
+  downloadPaymentSummaryExcel: async (projectId, contractId = null) => {
     const params = new URLSearchParams();
-    if (contractorId) params.append('contractor_id', contractorId);
+    if (contractId) params.append('contract_id', contractId);
 
     const queryString = params.toString();
     const url = `/projects/${projectId}/payment-summaries/download${queryString ? `?${queryString}` : ''}`;
@@ -52,11 +52,15 @@ const paymentService = {
     formData.append('amount', paymentData.amount);
     formData.append('payment_method', paymentData.payment_method);
     formData.append('payment_date', paymentData.payment_date);
-    
+
+    if (paymentData.contract_id) {
+      formData.append('contract_id', paymentData.contract_id);
+    }
+
     if (paymentData.notes) {
       formData.append('notes', paymentData.notes);
     }
-    
+
     if (screenshotFile) {
       formData.append('screenshot', screenshotFile);
     }

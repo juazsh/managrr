@@ -84,6 +84,21 @@ func CheckIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var contractID string
+	err = db.QueryRow(`
+		SELECT c.id
+		FROM contracts c
+		JOIN employees e ON c.contractor_id = e.contractor_id
+		WHERE e.user_id = $1 AND c.project_id = $2
+		LIMIT 1
+	`, userCtx.UserID, projectID).Scan(&contractID)
+
+	if err != nil {
+		log.Printf("ERROR: Failed to determine contract_id for employee: %v", err)
+		respondWithError(w, http.StatusInternalServerError, "Failed to determine contract")
+		return
+	}
+
 	var hasActiveCheckIn bool
 	err = db.QueryRow(`
 		SELECT EXISTS(
@@ -125,9 +140,9 @@ func CheckIn(w http.ResponseWriter, r *http.Request) {
 	query := `
 		INSERT INTO work_logs (
 			employee_id, project_id, check_in_time, check_in_photo_url,
-			check_in_latitude, check_in_longitude, created_at
+			check_in_latitude, check_in_longitude, contract_id, created_at
 		)
-		VALUES ($1, $2, NOW(), $3, $4, $5, NOW())
+		VALUES ($1, $2, NOW(), $3, $4, $5, $6, NOW())
 		RETURNING id, employee_id, project_id, check_in_time, check_out_time,
 		          check_in_photo_url, check_out_photo_url,
 		          check_in_latitude, check_in_longitude,
@@ -142,6 +157,7 @@ func CheckIn(w http.ResponseWriter, r *http.Request) {
 		photoURL,
 		latitude,
 		longitude,
+		contractID,
 	).Scan(
 		&workLog.ID,
 		&workLog.EmployeeID,
@@ -457,36 +473,39 @@ func GetProjectWorkLogs(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	projectID := vars["id"]
-	contractorFilter := r.URL.Query().Get("contractor_id")
+	contractFilter := r.URL.Query().Get("contract_id")
 
 	db := database.GetDB()
 
-	var hasAccess bool
-	if userCtx.UserType == string(models.UserTypeHouseOwner) {
-		err := db.QueryRow(`
-			SELECT EXISTS(SELECT 1 FROM projects WHERE id = $1 AND owner_id = $2)
-		`, projectID, userCtx.UserID).Scan(&hasAccess)
-		if err != nil || !hasAccess {
-			respondWithError(w, http.StatusForbidden, "Access denied")
-			return
+	var ownerID string
+	err := db.QueryRow("SELECT owner_id FROM projects WHERE id = $1", projectID).Scan(&ownerID)
+	if err == sql.ErrNoRows {
+		respondWithError(w, http.StatusNotFound, "Project not found")
+		return
+	}
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to verify project")
+		return
+	}
+
+	isOwner := ownerID == userCtx.UserID
+
+	var isContractor bool
+	var contractorContractID string
+	if !isOwner {
+		err = db.QueryRow(`
+			SELECT c.id
+			FROM contracts c
+			WHERE c.project_id = $1 AND c.contractor_id = $2
+			LIMIT 1
+		`, projectID, userCtx.UserID).Scan(&contractorContractID)
+
+		if err == nil {
+			isContractor = true
 		}
-	} else if userCtx.UserType == string(models.UserTypeContractor) {
-		err := db.QueryRow(`
-			SELECT EXISTS(SELECT 1 FROM project_contractors WHERE project_id = $1 AND contractor_id = $2)
-		`, projectID, userCtx.UserID).Scan(&hasAccess)
-		if err != nil || !hasAccess {
-			respondWithError(w, http.StatusForbidden, "Access denied")
-			return
-		}
-	} else if userCtx.UserType == string(models.UserTypeEmployee) {
-		err := db.QueryRow(`
-			SELECT EXISTS(SELECT 1 FROM employee_projects WHERE project_id = $1 AND employee_id = $2)
-		`, projectID, userCtx.UserID).Scan(&hasAccess)
-		if err != nil || !hasAccess {
-			respondWithError(w, http.StatusForbidden, "Access denied")
-			return
-		}
-	} else {
+	}
+
+	if !isOwner && !isContractor {
 		respondWithError(w, http.StatusForbidden, "Access denied")
 		return
 	}
@@ -506,12 +525,16 @@ func GetProjectWorkLogs(w http.ResponseWriter, r *http.Request) {
 	args := []interface{}{projectID}
 	argIndex := 2
 
-	if contractorFilter != "" {
-		query += ` JOIN employees e ON wl.employee_id = e.user_id
-		WHERE wl.project_id = $1 AND e.contractor_id = $` + strconv.Itoa(argIndex)
-		args = append(args, contractorFilter)
-	} else {
-		query += ` WHERE wl.project_id = $1`
+	query += ` WHERE wl.project_id = $1`
+
+	if isContractor {
+		query += " AND wl.contract_id = $" + strconv.Itoa(argIndex)
+		args = append(args, contractorContractID)
+		argIndex++
+	} else if contractFilter != "" {
+		query += " AND wl.contract_id = $" + strconv.Itoa(argIndex)
+		args = append(args, contractFilter)
+		argIndex++
 	}
 
 	query += ` ORDER BY wl.check_in_time DESC`

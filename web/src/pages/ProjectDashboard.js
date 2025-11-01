@@ -51,7 +51,7 @@ const ProjectDashboard = () => {
     try {
       setLoading(true)
       setError("")
-      const params = selectedContractor !== 'all' ? { contractor_id: selectedContractor } : {}
+      const params = selectedContractor !== 'all' ? { contract_id: selectedContractor } : {}
       const data = await projectService.getProjectDashboard(id, params)
       setDashboard(data)
       if (user?.user_type === "contractor" && user?.id) {
@@ -156,7 +156,7 @@ const ProjectDashboard = () => {
           <h3 className="text-xl font-bold text-text mb-4">Assigned Contractors</h3>
           <div className="grid gap-4">
             {contractors.map(contractor => (
-              <div key={contractor.contractor_id} className="p-5 bg-background-light rounded-xl border border-border-light transition-all duration-200">
+              <div key={contractor.contract_id} className="p-5 bg-background-light rounded-xl border border-border-light transition-all duration-200">
                 <div>
                   <div className="font-bold text-text mb-2 text-lg">{contractor.name}</div>
                   <div className="text-base text-text-light">{contractor.email}</div>
@@ -185,7 +185,7 @@ const ProjectDashboard = () => {
                 <span className="flex-1">
                   {selectedContractor === 'all'
                     ? 'All Contractors'
-                    : contractors.find(c => c.contractor_id === selectedContractor)?.name || 'All Contractors'}
+                    : contractors.find(c => c.contract_id === selectedContractor)?.name || 'All Contractors'}
                 </span>
                 <svg
                   className="transition-transform duration-200 text-primary"
@@ -206,7 +206,7 @@ const ProjectDashboard = () => {
               {contractorDropdownOpen && (
                 <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl border border-border shadow-[0_4px_16px_rgba(0,0,0,0.12)] z-[1000] overflow-hidden max-h-[300px] overflow-y-auto">
                   <button
-                    className={`w-full py-3.5 px-4 text-base font-medium text-text bg-transparent border-none border-b border-border-light cursor-pointer text-left transition-all duration-200 ${selectedContractor === 'all' ? 'bg-primary-dark text-white font-bold hover:bg-[#163a7e]' : 'hover:bg-[rgba(37,99,235,0.08)]'}`}
+                    className={`w-full py-3.5 px-4 text-base font-medium bg-transparent border-none border-b border-border-light cursor-pointer text-left transition-all duration-200 ${selectedContractor === 'all' ? '!bg-primary-dark !text-white font-bold hover:!bg-[#163a7e]' : '!text-text hover:bg-[rgba(37,99,235,0.08)]'}`}
                     onClick={() => {
                       setSelectedContractor('all')
                       setContractorDropdownOpen(false)
@@ -216,10 +216,10 @@ const ProjectDashboard = () => {
                   </button>
                   {contractors.map(contractor => (
                     <button
-                      key={contractor.contractor_id}
-                      className={`w-full py-3.5 px-4 text-base font-medium text-text bg-transparent border-none border-b border-border-light cursor-pointer text-left transition-all duration-200 last:border-b-0 ${selectedContractor === contractor.contractor_id ? 'bg-primary-dark text-white font-bold hover:bg-[#163a7e]' : 'hover:bg-[rgba(37,99,235,0.08)]'}`}
+                      key={contractor.contract_id}
+                      className={`w-full py-3.5 px-4 text-base font-medium bg-transparent border-none border-b border-border-light cursor-pointer text-left transition-all duration-200 last:border-b-0 ${selectedContractor === contractor.contract_id ? '!bg-primary-dark !text-white font-bold hover:!bg-[#163a7e]' : '!text-text hover:bg-[rgba(37,99,235,0.08)]'}`}
                       onClick={() => {
-                        setSelectedContractor(contractor.contractor_id)
+                        setSelectedContractor(contractor.contract_id)
                         setContractorDropdownOpen(false)
                       }}
                     >
@@ -234,9 +234,9 @@ const ProjectDashboard = () => {
 
         <div className="bg-white rounded-xl p-8 border border-border-light shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
           {activeSection === "overview" && renderOverviewSection()}
-          {activeSection === "photos" && <PhotosSection projectId={id} photos={dashboard.recent_photos} canUpload={isContractor || isOwner} onPhotoUploaded={loadDashboard} />}
-          {activeSection === "updates" && <UpdatesSection projectId={id} updates={dashboard.latest_updates} isContractor={isContractor} onUpdateCreated={loadDashboard} />}
-          {activeSection === "expenses" && <ExpensesSection projectId={id} expenses={dashboard.expenses} summary={dashboard.expense_summary} canAdd={isOwner || isContractor} onExpenseAdded={loadDashboard} contractorFilter={selectedContractor} />}
+          {activeSection === "photos" && <PhotosSection projectId={id} photos={dashboard.recent_photos} canUpload={isContractor || isOwner} onPhotoUploaded={loadDashboard} contractorFilter={selectedContractor} />}
+          {activeSection === "updates" && <UpdatesSection projectId={id} updates={dashboard.latest_updates} isContractor={isContractor} onUpdateCreated={loadDashboard} contractorFilter={selectedContractor} />}
+          {activeSection === "expenses" && <ExpensesSection projectId={id} expenses={dashboard.recent_expenses} summary={dashboard.expense_summary} canAdd={isOwner || isContractor} onExpenseAdded={loadDashboard} contractorFilter={selectedContractor} />}
           {activeSection === "payments" && <PaymentSummarySection projectId={id} isOwner={isOwner} isContractor={isContractor} onPaymentAdded={loadDashboard} contractorFilter={selectedContractor} />}
           {activeSection === "worklogs" && <WorkLogsSection projectId={id} contractorFilter={selectedContractor} />}
         </div>
@@ -292,7 +292,7 @@ const ProjectDashboard = () => {
             {dropdownOpen && (
               <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg border border-border shadow-[0_4px_16px_rgba(0,0,0,0.12)] z-[1000] overflow-hidden">
                 <button
-                  className={`w-full py-4 px-5 text-lg font-medium text-text bg-transparent border-none border-b border-border-light cursor-pointer text-left transition-all duration-200 ${activeSection === "overview" ? 'bg-primary-dark text-white font-bold hover:bg-[#163a7e]' : 'hover:bg-[rgba(37,99,235,0.08)]'}`}
+                  className={`w-full py-4 px-5 text-lg font-medium bg-transparent border-none border-b border-border-light cursor-pointer text-left transition-all duration-200 ${activeSection === "overview" ? '!bg-primary-dark !text-white font-bold hover:!bg-[#163a7e]' : '!text-text hover:bg-[rgba(37,99,235,0.08)]'}`}
                   onClick={() => {
                     setActiveSection("overview")
                     setDropdownOpen(false)
@@ -301,7 +301,7 @@ const ProjectDashboard = () => {
                   Overview
                 </button>
                 <button
-                  className={`w-full py-4 px-5 text-lg font-medium text-text bg-transparent border-none border-b border-border-light cursor-pointer text-left transition-all duration-200 ${activeSection === "photos" ? 'bg-primary-dark text-white font-bold hover:bg-[#163a7e]' : 'hover:bg-[rgba(37,99,235,0.08)]'}`}
+                  className={`w-full py-4 px-5 text-lg font-medium bg-transparent border-none border-b border-border-light cursor-pointer text-left transition-all duration-200 ${activeSection === "photos" ? '!bg-primary-dark !text-white font-bold hover:!bg-[#163a7e]' : '!text-text hover:bg-[rgba(37,99,235,0.08)]'}`}
                   onClick={() => {
                     setActiveSection("photos")
                     setDropdownOpen(false)
@@ -310,7 +310,7 @@ const ProjectDashboard = () => {
                   Project Photos
                 </button>
                 <button
-                  className={`w-full py-4 px-5 text-lg font-medium text-text bg-transparent border-none border-b border-border-light cursor-pointer text-left transition-all duration-200 ${activeSection === "updates" ? 'bg-primary-dark text-white font-bold hover:bg-[#163a7e]' : 'hover:bg-[rgba(37,99,235,0.08)]'}`}
+                  className={`w-full py-4 px-5 text-lg font-medium bg-transparent border-none border-b border-border-light cursor-pointer text-left transition-all duration-200 ${activeSection === "updates" ? '!bg-primary-dark !text-white font-bold hover:!bg-[#163a7e]' : '!text-text hover:bg-[rgba(37,99,235,0.08)]'}`}
                   onClick={() => {
                     setActiveSection("updates")
                     setDropdownOpen(false)
@@ -319,7 +319,7 @@ const ProjectDashboard = () => {
                   Project Updates
                 </button>
                 <button
-                  className={`w-full py-4 px-5 text-lg font-medium text-text bg-transparent border-none border-b border-border-light cursor-pointer text-left transition-all duration-200 ${activeSection === "expenses" ? 'bg-primary-dark text-white font-bold hover:bg-[#163a7e]' : 'hover:bg-[rgba(37,99,235,0.08)]'}`}
+                  className={`w-full py-4 px-5 text-lg font-medium bg-transparent border-none border-b border-border-light cursor-pointer text-left transition-all duration-200 ${activeSection === "expenses" ? '!bg-primary-dark !text-white font-bold hover:!bg-[#163a7e]' : '!text-text hover:bg-[rgba(37,99,235,0.08)]'}`}
                   onClick={() => {
                     setActiveSection("expenses")
                     setDropdownOpen(false)
@@ -328,7 +328,7 @@ const ProjectDashboard = () => {
                   Expenses
                 </button>
                 <button
-                  className={`w-full py-4 px-5 text-lg font-medium text-text bg-transparent border-none border-b border-border-light cursor-pointer text-left transition-all duration-200 ${activeSection === "payments" ? 'bg-primary-dark text-white font-bold hover:bg-[#163a7e]' : 'hover:bg-[rgba(37,99,235,0.08)]'}`}
+                  className={`w-full py-4 px-5 text-lg font-medium bg-transparent border-none border-b border-border-light cursor-pointer text-left transition-all duration-200 ${activeSection === "payments" ? '!bg-primary-dark !text-white font-bold hover:!bg-[#163a7e]' : '!text-text hover:bg-[rgba(37,99,235,0.08)]'}`}
                   onClick={() => {
                     setActiveSection("payments")
                     setDropdownOpen(false)
@@ -337,7 +337,7 @@ const ProjectDashboard = () => {
                   Payment Summary
                 </button>
                 <button
-                  className={`w-full py-4 px-5 text-lg font-medium text-text bg-transparent border-none border-b-0 cursor-pointer text-left transition-all duration-200 ${activeSection === "worklogs" ? 'bg-primary-dark text-white font-bold hover:bg-[#163a7e]' : 'hover:bg-[rgba(37,99,235,0.08)]'}`}
+                  className={`w-full py-4 px-5 text-lg font-medium bg-transparent border-none border-b-0 cursor-pointer text-left transition-all duration-200 ${activeSection === "worklogs" ? '!bg-primary-dark !text-white font-bold hover:!bg-[#163a7e]' : '!text-text hover:bg-[rgba(37,99,235,0.08)]'}`}
                   onClick={() => {
                     setActiveSection("worklogs")
                     setDropdownOpen(false)
@@ -352,37 +352,37 @@ const ProjectDashboard = () => {
           <div className="flex gap-8 items-start max-[768px]:block">
             <div className="w-[280px] bg-white rounded-xl p-4 border border-border-light shadow-[0_2px_8px_rgba(0,0,0,0.08)] flex flex-col gap-2 sticky top-8 max-[768px]:hidden project-dashboard-sidebar">
               <button
-                className={`py-5 px-6 text-lg font-semibold text-text-muted bg-transparent border-none rounded-lg cursor-pointer transition-all duration-200 text-left min-h-[60px] flex items-center ${activeSection === "overview" ? 'bg-primary-dark text-white font-bold shadow-[0_2px_8px_rgba(37,99,235,0.3)] hover:bg-[#163a7e] hover:translate-x-1' : 'hover:bg-[rgba(37,99,235,0.08)] hover:translate-x-1'}`}
+                className={`py-5 px-6 text-lg font-semibold bg-transparent border-none rounded-lg cursor-pointer transition-all duration-200 text-left min-h-[60px] flex items-center ${activeSection === "overview" ? '!bg-primary-dark !text-white font-bold shadow-[0_2px_8px_rgba(37,99,235,0.3)] hover:!bg-[#163a7e] hover:translate-x-1' : '!text-text-muted hover:bg-[rgba(37,99,235,0.08)] hover:translate-x-1'}`}
                 onClick={() => setActiveSection("overview")}
               >
                 Overview
               </button>
               <button
-                className={`py-5 px-6 text-lg font-semibold text-text-muted bg-transparent border-none rounded-lg cursor-pointer transition-all duration-200 text-left min-h-[60px] flex items-center ${activeSection === "photos" ? 'bg-primary-dark text-white font-bold shadow-[0_2px_8px_rgba(37,99,235,0.3)] hover:bg-[#163a7e] hover:translate-x-1' : 'hover:bg-[rgba(37,99,235,0.08)] hover:translate-x-1'}`}
+                className={`py-5 px-6 text-lg font-semibold bg-transparent border-none rounded-lg cursor-pointer transition-all duration-200 text-left min-h-[60px] flex items-center ${activeSection === "photos" ? '!bg-primary-dark !text-white font-bold shadow-[0_2px_8px_rgba(37,99,235,0.3)] hover:!bg-[#163a7e] hover:translate-x-1' : '!text-text-muted hover:bg-[rgba(37,99,235,0.08)] hover:translate-x-1'}`}
                 onClick={() => setActiveSection("photos")}
               >
                 Project Photos
               </button>
               <button
-                className={`py-5 px-6 text-lg font-semibold text-text-muted bg-transparent border-none rounded-lg cursor-pointer transition-all duration-200 text-left min-h-[60px] flex items-center ${activeSection === "updates" ? 'bg-primary-dark text-white font-bold shadow-[0_2px_8px_rgba(37,99,235,0.3)] hover:bg-[#163a7e] hover:translate-x-1' : 'hover:bg-[rgba(37,99,235,0.08)] hover:translate-x-1'}`}
+                className={`py-5 px-6 text-lg font-semibold bg-transparent border-none rounded-lg cursor-pointer transition-all duration-200 text-left min-h-[60px] flex items-center ${activeSection === "updates" ? '!bg-primary-dark !text-white font-bold shadow-[0_2px_8px_rgba(37,99,235,0.3)] hover:!bg-[#163a7e] hover:translate-x-1' : '!text-text-muted hover:bg-[rgba(37,99,235,0.08)] hover:translate-x-1'}`}
                 onClick={() => setActiveSection("updates")}
               >
                 Project Updates
               </button>
               <button
-                className={`py-5 px-6 text-lg font-semibold text-text-muted bg-transparent border-none rounded-lg cursor-pointer transition-all duration-200 text-left min-h-[60px] flex items-center ${activeSection === "expenses" ? 'bg-primary-dark text-white font-bold shadow-[0_2px_8px_rgba(37,99,235,0.3)] hover:bg-[#163a7e] hover:translate-x-1' : 'hover:bg-[rgba(37,99,235,0.08)] hover:translate-x-1'}`}
+                className={`py-5 px-6 text-lg font-semibold bg-transparent border-none rounded-lg cursor-pointer transition-all duration-200 text-left min-h-[60px] flex items-center ${activeSection === "expenses" ? '!bg-primary-dark !text-white font-bold shadow-[0_2px_8px_rgba(37,99,235,0.3)] hover:!bg-[#163a7e] hover:translate-x-1' : '!text-text-muted hover:bg-[rgba(37,99,235,0.08)] hover:translate-x-1'}`}
                 onClick={() => setActiveSection("expenses")}
               >
                 Expenses
               </button>
               <button
-                className={`py-5 px-6 text-lg font-semibold text-text-muted bg-transparent border-none rounded-lg cursor-pointer transition-all duration-200 text-left min-h-[60px] flex items-center ${activeSection === "payments" ? 'bg-primary-dark text-white font-bold shadow-[0_2px_8px_rgba(37,99,235,0.3)] hover:bg-[#163a7e] hover:translate-x-1' : 'hover:bg-[rgba(37,99,235,0.08)] hover:translate-x-1'}`}
+                className={`py-5 px-6 text-lg font-semibold bg-transparent border-none rounded-lg cursor-pointer transition-all duration-200 text-left min-h-[60px] flex items-center ${activeSection === "payments" ? '!bg-primary-dark !text-white font-bold shadow-[0_2px_8px_rgba(37,99,235,0.3)] hover:!bg-[#163a7e] hover:translate-x-1' : '!text-text-muted hover:bg-[rgba(37,99,235,0.08)] hover:translate-x-1'}`}
                 onClick={() => setActiveSection("payments")}
               >
                 Payment Summary
               </button>
               <button
-                className={`py-5 px-6 text-lg font-semibold text-text-muted bg-transparent border-none rounded-lg cursor-pointer transition-all duration-200 text-left min-h-[60px] flex items-center ${activeSection === "worklogs" ? 'bg-primary-dark text-white font-bold shadow-[0_2px_8px_rgba(37,99,235,0.3)] hover:bg-[#163a7e] hover:translate-x-1' : 'hover:bg-[rgba(37,99,235,0.08)] hover:translate-x-1'}`}
+                className={`py-5 px-6 text-lg font-semibold bg-transparent border-none rounded-lg cursor-pointer transition-all duration-200 text-left min-h-[60px] flex items-center ${activeSection === "worklogs" ? '!bg-primary-dark !text-white font-bold shadow-[0_2px_8px_rgba(37,99,235,0.3)] hover:!bg-[#163a7e] hover:translate-x-1' : '!text-text-muted hover:bg-[rgba(37,99,235,0.08)] hover:translate-x-1'}`}
                 onClick={() => setActiveSection("worklogs")}
               >
                 Work Logs

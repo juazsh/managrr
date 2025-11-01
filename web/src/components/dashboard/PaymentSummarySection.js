@@ -25,8 +25,8 @@ export const PaymentSummarySection = ({ projectId, isOwner, isContractor, onPaym
     try {
       setLoading(true);
       setError('');
-      const contractorId = contractorFilter && contractorFilter !== 'all' ? contractorFilter : null;
-      const data = await paymentService.getProjectPayments(projectId, contractorId);
+      const contractId = contractorFilter && contractorFilter !== 'all' ? contractorFilter : null;
+      const data = await paymentService.getProjectPayments(projectId, contractId);
       setPayments(data || []);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to load payments');
@@ -39,8 +39,8 @@ export const PaymentSummarySection = ({ projectId, isOwner, isContractor, onPaym
     try {
       setDownloading(true);
       setError('');
-      const contractorId = contractorFilter && contractorFilter !== 'all' ? contractorFilter : null;
-      await paymentService.downloadPaymentSummaryExcel(projectId, contractorId);
+      const contractId = contractorFilter && contractorFilter !== 'all' ? contractorFilter : null;
+      await paymentService.downloadPaymentSummaryExcel(projectId, contractId);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to download payment summary');
     } finally {

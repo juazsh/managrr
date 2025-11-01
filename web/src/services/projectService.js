@@ -79,16 +79,25 @@ const projectService = {
     return response.data;
   },
 
-  getProjectPhotos: async (id) => {
-    const response = await api.get(`/projects/${id}/photos`);
+  getProjectPhotos: async (id, contractId = null) => {
+    const queryParams = new URLSearchParams();
+    if (contractId) {
+      queryParams.append('contract_id', contractId);
+    }
+    const queryString = queryParams.toString();
+    const url = `/projects/${id}/photos${queryString ? `?${queryString}` : ''}`;
+    const response = await api.get(url);
     return { photos: response.data };
   },
 
-  uploadProjectPhoto: async (id, photoFile, caption) => {
+  uploadProjectPhoto: async (id, photoFile, caption, contractId) => {
     const formData = new FormData();
     formData.append('photo', photoFile);
     if (caption) {
       formData.append('caption', caption);
+    }
+    if (contractId) {
+      formData.append('contract_id', contractId);
     }
 
     const response = await api.post(`/projects/${id}/photos`, formData, {
@@ -99,8 +108,14 @@ const projectService = {
     return response.data;
   },
 
-  getProjectUpdates: async (id) => {
-    const response = await api.get(`/projects/${id}/updates`);
+  getProjectUpdates: async (id, contractId = null) => {
+    const queryParams = new URLSearchParams();
+    if (contractId) {
+      queryParams.append('contract_id', contractId);
+    }
+    const queryString = queryParams.toString();
+    const url = `/projects/${id}/updates${queryString ? `?${queryString}` : ''}`;
+    const response = await api.get(url);
     return response.data;
   },
 

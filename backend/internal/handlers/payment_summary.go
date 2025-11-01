@@ -102,6 +102,25 @@ func AddPaymentSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	contractID := r.FormValue("contract_id")
+	if contractID == "" {
+		respondWithError(w, http.StatusBadRequest, "contract_id is required")
+		return
+	}
+
+	var exists bool
+	err = db.QueryRow(`
+		SELECT EXISTS(
+			SELECT 1 FROM contracts
+			WHERE id = $1 AND project_id = $2 AND owner_id = $3
+		)
+	`, contractID, projectID, userCtx.UserID).Scan(&exists)
+
+	if err != nil || !exists {
+		respondWithError(w, http.StatusBadRequest, "Invalid contract_id for this project")
+		return
+	}
+
 	var screenshotURL *string
 	file, header, err := r.FormFile("screenshot")
 	if err == nil {
@@ -125,15 +144,16 @@ func AddPaymentSummary(w http.ResponseWriter, r *http.Request) {
 	notes := r.FormValue("notes")
 
 	query := `
-		INSERT INTO payment_summaries (project_id, amount, payment_method, payment_date, screenshot_url, notes, added_by)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
-		RETURNING id, project_id, amount, payment_method, payment_date, screenshot_url, notes, added_by, status, created_at, updated_at
+		INSERT INTO payment_summaries (project_id, contract_id, amount, payment_method, payment_date, screenshot_url, notes, added_by)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		RETURNING id, project_id, contract_id, amount, payment_method, payment_date, screenshot_url, notes, added_by, status, created_at, updated_at
 	`
 
 	var payment models.PaymentSummary
 	err = db.QueryRow(
 		query,
 		projectID,
+		contractID,
 		amountFloat,
 		paymentMethod,
 		paymentDate,
@@ -143,6 +163,7 @@ func AddPaymentSummary(w http.ResponseWriter, r *http.Request) {
 	).Scan(
 		&payment.ID,
 		&payment.ProjectID,
+		&payment.ContractID,
 		&payment.Amount,
 		&payment.PaymentMethod,
 		&payment.PaymentDate,
@@ -189,7 +210,7 @@ func ListPaymentSummaries(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	projectID := vars["project_id"]
-	contractorFilter := r.URL.Query().Get("contractor_id")
+	contractFilter := r.URL.Query().Get("contract_id")
 
 	db := database.GetDB()
 
@@ -207,13 +228,18 @@ func ListPaymentSummaries(w http.ResponseWriter, r *http.Request) {
 	isOwner := ownerID == userCtx.UserID
 
 	var isContractor bool
+	var contractorContractID string
 	if !isOwner {
-		db.QueryRow(`
-        SELECT EXISTS(
-            SELECT 1 FROM project_contractors 
-            WHERE project_id = $1 AND contractor_id = $2
-        )
-    `, projectID, userCtx.UserID).Scan(&isContractor)
+		err = db.QueryRow(`
+			SELECT c.id
+			FROM contracts c
+			WHERE c.project_id = $1 AND c.contractor_id = $2
+			LIMIT 1
+		`, projectID, userCtx.UserID).Scan(&contractorContractID)
+
+		if err == nil {
+			isContractor = true
+		}
 	}
 
 	if !isOwner && !isContractor {
@@ -222,8 +248,8 @@ func ListPaymentSummaries(w http.ResponseWriter, r *http.Request) {
 	}
 
 	query := `
-		SELECT ps.id, ps.project_id, ps.amount, ps.payment_method, ps.payment_date, 
-		       ps.screenshot_url, ps.notes, ps.added_by, ps.status, 
+		SELECT ps.id, ps.project_id, ps.amount, ps.payment_method, ps.payment_date,
+		       ps.screenshot_url, ps.notes, ps.added_by, ps.status,
 		       ps.confirmed_by, ps.confirmed_at, ps.disputed_at, ps.dispute_reason,
 		       ps.created_at, ps.updated_at, u.name as added_by_name
 		FROM payment_summaries ps
@@ -234,9 +260,13 @@ func ListPaymentSummaries(w http.ResponseWriter, r *http.Request) {
 	args := []interface{}{projectID}
 	argIndex := 2
 
-	if contractorFilter != "" {
-		query += " AND ps.added_by = $" + strconv.Itoa(argIndex)
-		args = append(args, contractorFilter)
+	if isContractor {
+		query += " AND ps.contract_id = $" + strconv.Itoa(argIndex)
+		args = append(args, contractorContractID)
+		argIndex++
+	} else if contractFilter != "" {
+		query += " AND ps.contract_id = $" + strconv.Itoa(argIndex)
+		args = append(args, contractFilter)
 		argIndex++
 	}
 
@@ -703,13 +733,18 @@ func DownloadPaymentSummaryExcel(w http.ResponseWriter, r *http.Request) {
 	isOwner := ownerID == userCtx.UserID
 
 	var isContractor bool
+	var contractorContractID string
 	if !isOwner {
-		db.QueryRow(`
-        SELECT EXISTS(
-            SELECT 1 FROM project_contractors 
-            WHERE project_id = $1 AND contractor_id = $2
-        )
-    `, projectID, userCtx.UserID).Scan(&isContractor)
+		err = db.QueryRow(`
+			SELECT c.id
+			FROM contracts c
+			WHERE c.project_id = $1 AND c.contractor_id = $2
+			LIMIT 1
+		`, projectID, userCtx.UserID).Scan(&contractorContractID)
+
+		if err == nil {
+			isContractor = true
+		}
 	}
 
 	if !isOwner && !isContractor {
@@ -717,7 +752,7 @@ func DownloadPaymentSummaryExcel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	contractorFilter := r.URL.Query().Get("contractor_id")
+	contractFilter := r.URL.Query().Get("contract_id")
 
 	query := `
 		SELECT ps.id, ps.amount, ps.payment_method, ps.payment_date,
@@ -734,9 +769,13 @@ func DownloadPaymentSummaryExcel(w http.ResponseWriter, r *http.Request) {
 	args := []interface{}{projectID}
 	argIndex := 2
 
-	if contractorFilter != "" {
-		query += " AND ps.added_by = $" + strconv.Itoa(argIndex)
-		args = append(args, contractorFilter)
+	if isContractor {
+		query += " AND ps.contract_id = $" + strconv.Itoa(argIndex)
+		args = append(args, contractorContractID)
+		argIndex++
+	} else if contractFilter != "" {
+		query += " AND ps.contract_id = $" + strconv.Itoa(argIndex)
+		args = append(args, contractFilter)
 		argIndex++
 	}
 

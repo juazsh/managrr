@@ -25,10 +25,10 @@ const workLogService = {
     }
   },
 
-  getProjectWorkLogs: async (projectId, contractorId = null) => {
+  getProjectWorkLogs: async (projectId, contractId = null) => {
     try {
       const params = new URLSearchParams();
-      if (contractorId) params.append('contractor_id', contractorId);
+      if (contractId) params.append('contract_id', contractId);
 
       const queryString = params.toString();
       const url = `/projects/${projectId}/work-logs${queryString ? `?${queryString}` : ''}`;

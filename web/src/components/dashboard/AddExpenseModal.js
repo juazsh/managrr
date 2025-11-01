@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import  contractService  from '../../services/contractService';
 
 const AddExpenseModal = ({ projectId, onClose, onSubmit }) => {
+  const { user } = useAuth();
+  const isOwner = user?.user_type === 'house_owner';
+
   const [formData, setFormData] = useState({
     project_id: projectId,
     amount: '',
@@ -8,11 +13,13 @@ const AddExpenseModal = ({ projectId, onClose, onSubmit }) => {
     date: new Date().toISOString().split('T')[0],
     category: 'materials',
     description: '',
-    paid_by: 'owner',
+    contract_id: '',
   });
+  const [contracts, setContracts] = useState([]);
   const [receiptFile, setReceiptFile] = useState(null);
   const [receiptPreview, setReceiptPreview] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [loadingContracts, setLoadingContracts] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -21,6 +28,26 @@ const AddExpenseModal = ({ projectId, onClose, onSubmit }) => {
       document.body.style.overflow = 'unset';
     };
   }, []);
+
+  useEffect(() => {
+    const fetchContracts = async () => {
+      if (isOwner && projectId) {
+        setLoadingContracts(true);
+        try {
+          const data = await contractService.getContractsByProject(projectId);
+          setContracts(data);
+          if (data.length === 1) {
+            setFormData(prev => ({ ...prev, contract_id: data[0].id }));
+          }
+        } catch (err) {
+          setError('Failed to load contracts');
+        } finally {
+          setLoadingContracts(false);
+        }
+      }
+    };
+    fetchContracts();
+  }, [projectId, isOwner]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -53,6 +80,11 @@ const AddExpenseModal = ({ projectId, onClose, onSubmit }) => {
 
     if (!formData.amount || parseFloat(formData.amount) <= 0) {
       setError('Please enter a valid amount');
+      return;
+    }
+
+    if (isOwner && !formData.contract_id) {
+      setError('Please select a contractor');
       return;
     }
 
@@ -127,41 +159,48 @@ const AddExpenseModal = ({ projectId, onClose, onSubmit }) => {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div className="mb-4">
-                <label className="block mb-2 text-sm font-semibold text-text">
-                  Category <span className="text-error">*</span>
-                </label>
-                <select
-                  name="category"
-                  value={formData.category}
-                  onChange={handleChange}
-                  className="w-full py-2.5 px-3 border border-border rounded-md text-[15px] bg-white box-border"
-                  required
-                >
-                  <option value="materials">🔨 Materials</option>
-                  <option value="labor">👷 Labor</option>
-                  <option value="equipment">🛠️ Equipment</option>
-                  <option value="other">📦 Other</option>
-                </select>
-              </div>
-
-              <div className="mb-4">
-                <label className="block mb-2 text-sm font-semibold text-text">
-                  Paid By <span className="text-error">*</span>
-                </label>
-                <select
-                  name="paid_by"
-                  value={formData.paid_by}
-                  onChange={handleChange}
-                  className="w-full py-2.5 px-3 border border-border rounded-md text-[15px] bg-white box-border"
-                  required
-                >
-                  <option value="owner">Owner</option>
-                  <option value="contractor">Contractor</option>
-                </select>
-              </div>
+            <div className="mb-4">
+              <label className="block mb-2 text-sm font-semibold text-text">
+                Category <span className="text-error">*</span>
+              </label>
+              <select
+                name="category"
+                value={formData.category}
+                onChange={handleChange}
+                className="w-full py-2.5 px-3 border border-border rounded-md text-[15px] bg-white box-border"
+                required
+              >
+                <option value="materials">🔨 Materials</option>
+                <option value="labor">👷 Labor</option>
+                <option value="equipment">🛠️ Equipment</option>
+                <option value="other">📦 Other</option>
+              </select>
             </div>
+
+            {isOwner && (
+              <div className="mb-4">
+                <label className="block mb-2 text-sm font-semibold text-text">
+                  Contractor <span className="text-error">*</span>
+                </label>
+                <select
+                  name="contract_id"
+                  value={formData.contract_id}
+                  onChange={handleChange}
+                  className="w-full py-2.5 px-3 border border-border rounded-md text-[15px] bg-white box-border"
+                  required
+                  disabled={loadingContracts}
+                >
+                  <option value="">
+                    {loadingContracts ? 'Loading contractors...' : 'Select contractor'}
+                  </option>
+                  {contracts.map((contract) => (
+                    <option key={contract.id} value={contract.id}>
+                      {contract.contractor_name} ({contract.contractor_email})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <div className="mb-4">
               <label className="block mb-2 text-sm font-semibold text-text">Description</label>

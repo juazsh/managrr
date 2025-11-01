@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import projectService from '../../services/projectService';
 import ImageViewer from '../common/ImageViewer';
 
-const UpdatesSection = ({ projectId, updates, isContractor, onUpdateCreated }) => {
+const UpdatesSection = ({ projectId, updates: initialUpdates, isContractor, onUpdateCreated, contractorFilter }) => {
+  const [updates, setUpdates] = useState(initialUpdates || []);
+  const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [updateType, setUpdateType] = useState('daily_summary');
   const [content, setContent] = useState('');
@@ -14,6 +16,23 @@ const UpdatesSection = ({ projectId, updates, isContractor, onUpdateCreated }) =
     images: [],
     initialIndex: 0,
   });
+
+  useEffect(() => {
+    loadUpdates();
+  }, [contractorFilter]);
+
+  const loadUpdates = async () => {
+    try {
+      setLoading(true);
+      const contractId = contractorFilter && contractorFilter !== 'all' ? contractorFilter : null;
+      const data = await projectService.getProjectUpdates(projectId, contractId);
+      setUpdates(data || []);
+    } catch (err) {
+      console.error('Failed to load updates:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handlePhotoSelect = (e) => {
     const files = Array.from(e.target.files);
@@ -63,6 +82,7 @@ const UpdatesSection = ({ projectId, updates, isContractor, onUpdateCreated }) =
       setContent('');
       setPhotos([]);
       setShowForm(false);
+      loadUpdates();
       onUpdateCreated();
     } catch (err) {
       setError(err.message || 'Failed to create update');

@@ -7,7 +7,6 @@ const EditExpenseModal = ({ expense, onClose, onSubmit }) => {
     date: expense.date,
     category: expense.category,
     description: expense.description || '',
-    paid_by: expense.paid_by,
   });
   const [receiptFile, setReceiptFile] = useState(null);
   const [receiptPreview, setReceiptPreview] = useState(expense.receipt_photo_url || null);
@@ -122,40 +121,22 @@ const EditExpenseModal = ({ expense, onClose, onSubmit }) => {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="mb-5">
-                <label className="block text-sm font-semibold text-text mb-2">
-                  Category <span className="text-error">*</span>
-                </label>
-                <select
-                  name="category"
-                  value={formData.category}
-                  onChange={handleChange}
-                  className="w-full py-2.5 px-3 border border-border rounded-md text-sm bg-white text-text cursor-pointer box-border"
-                  required
-                >
-                  <option value="materials">🔨 Materials</option>
-                  <option value="labor">👷 Labor</option>
-                  <option value="equipment">🛠️ Equipment</option>
-                  <option value="other">📦 Other</option>
-                </select>
-              </div>
-
-              <div className="mb-5">
-                <label className="block text-sm font-semibold text-text mb-2">
-                  Paid By <span className="text-error">*</span>
-                </label>
-                <select
-                  name="paid_by"
-                  value={formData.paid_by}
-                  onChange={handleChange}
-                  className="w-full py-2.5 px-3 border border-border rounded-md text-sm bg-white text-text cursor-pointer box-border"
-                  required
-                >
-                  <option value="owner">Owner</option>
-                  <option value="contractor">Contractor</option>
-                </select>
-              </div>
+            <div className="mb-5">
+              <label className="block text-sm font-semibold text-text mb-2">
+                Category <span className="text-error">*</span>
+              </label>
+              <select
+                name="category"
+                value={formData.category}
+                onChange={handleChange}
+                className="w-full py-2.5 px-3 border border-border rounded-md text-sm bg-white text-text cursor-pointer box-border"
+                required
+              >
+                <option value="materials">🔨 Materials</option>
+                <option value="labor">👷 Labor</option>
+                <option value="equipment">🛠️ Equipment</option>
+                <option value="other">📦 Other</option>
+              </select>
             </div>
 
             <div className="mb-5">

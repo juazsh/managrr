@@ -78,21 +78,6 @@ func AddExpense(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	paidBy := r.FormValue("paid_by")
-	log.Printf("Paid By: %s", paidBy)
-	if paidBy == "" {
-		log.Println("ERROR: paid_by is missing")
-		respondWithError(w, http.StatusBadRequest, "paid_by is required")
-		return
-	}
-
-	if paidBy != string(models.ExpensePaidByContractor) &&
-		paidBy != string(models.ExpensePaidByOwner) {
-		log.Printf("ERROR: Invalid paid_by: %s", paidBy)
-		respondWithError(w, http.StatusBadRequest, "Invalid paid_by. Must be 'owner' or 'contractor'")
-		return
-	}
-
 	db := database.GetDB()
 	var ownerID string
 	err := db.QueryRow("SELECT owner_id FROM projects WHERE id = $1", projectID).Scan(&ownerID)
@@ -109,7 +94,7 @@ func AddExpense(w http.ResponseWriter, r *http.Request) {
 	if !isOwner {
 		db.QueryRow(`
 			SELECT EXISTS(
-				SELECT 1 FROM project_contractors 
+				SELECT 1 FROM contracts
 				WHERE project_id = $1 AND contractor_id = $2
 			)
 		`, projectID, userCtx.UserID).Scan(&isContractor)
@@ -121,6 +106,55 @@ func AddExpense(w http.ResponseWriter, r *http.Request) {
 		log.Println("ERROR: User doesn't have access to this project")
 		respondWithError(w, http.StatusForbidden, "Access denied")
 		return
+	}
+
+	var paidBy string
+	var contractID string
+
+	if isOwner {
+		paidBy = string(models.ExpensePaidByOwner)
+		contractIDParam := r.FormValue("contract_id")
+		if contractIDParam == "" {
+			log.Println("ERROR: contract_id is required for owner")
+			respondWithError(w, http.StatusBadRequest, "contract_id is required")
+			return
+		}
+
+		var exists bool
+		err = db.QueryRow(`
+			SELECT EXISTS(
+				SELECT 1 FROM contracts
+				WHERE id = $1 AND project_id = $2 AND owner_id = $3
+			)
+		`, contractIDParam, projectID, userCtx.UserID).Scan(&exists)
+
+		if err != nil || !exists {
+			log.Printf("ERROR: Invalid contract_id: %v", err)
+			respondWithError(w, http.StatusBadRequest, "Invalid contract_id for this project")
+			return
+		}
+		contractID = contractIDParam
+		log.Printf("Owner adding expense - Contract ID: %s, Paid By: owner", contractID)
+	} else {
+		paidBy = string(models.ExpensePaidByContractor)
+
+		contractQuery := `
+			SELECT c.id
+			FROM contracts c
+			WHERE c.project_id = $1
+			  AND (c.contractor_id = $2
+			       OR c.contractor_id IN (
+			           SELECT contractor_id FROM employees WHERE user_id = $2
+			       ))
+			LIMIT 1
+		`
+		err = db.QueryRow(contractQuery, projectID, userCtx.UserID).Scan(&contractID)
+		if err != nil {
+			log.Printf("ERROR: Failed to determine contract_id for contractor: %v", err)
+			respondWithError(w, http.StatusInternalServerError, "Failed to determine contract")
+			return
+		}
+		log.Printf("Contractor adding expense - Contract ID: %s, Paid By: contractor", contractID)
 	}
 
 	amountFloat, err := parseFloat(amount)
@@ -175,23 +209,6 @@ func AddExpense(w http.ResponseWriter, r *http.Request) {
 	vendor := r.FormValue("vendor")
 	description := r.FormValue("description")
 	log.Printf("Vendor: %s, Description: %s", vendor, description)
-
-	var contractID *string
-	contractQuery := `
-		SELECT c.id
-		FROM contracts c
-		WHERE c.project_id = $1
-		  AND (c.contractor_id = $2
-		       OR c.contractor_id IN (
-		           SELECT contractor_id FROM employees WHERE user_id = $2
-		       ))
-		LIMIT 1
-	`
-	var cid string
-	err = db.QueryRow(contractQuery, projectID, userCtx.UserID).Scan(&cid)
-	if err == nil {
-		contractID = &cid
-	}
 
 	log.Println("Inserting expense into database...")
 	query := `
@@ -327,13 +344,18 @@ func GetProjectExpenses(w http.ResponseWriter, r *http.Request) {
 	isOwner := ownerID == userCtx.UserID
 
 	var isContractor bool
+	var contractorContractID string
 	if !isOwner {
-		db.QueryRow(`
-			SELECT EXISTS(
-				SELECT 1 FROM project_contractors 
-				WHERE project_id = $1 AND contractor_id = $2
-			)
-		`, projectID, userCtx.UserID).Scan(&isContractor)
+		err = db.QueryRow(`
+			SELECT c.id
+			FROM contracts c
+			WHERE c.project_id = $1 AND c.contractor_id = $2
+			LIMIT 1
+		`, projectID, userCtx.UserID).Scan(&contractorContractID)
+
+		if err == nil {
+			isContractor = true
+		}
 	}
 
 	if !isOwner && !isContractor {
@@ -345,10 +367,10 @@ func GetProjectExpenses(w http.ResponseWriter, r *http.Request) {
 	categoryFilter := r.URL.Query().Get("category")
 	startDate := r.URL.Query().Get("start_date")
 	endDate := r.URL.Query().Get("end_date")
-	contractorFilter := r.URL.Query().Get("contractor_id")
+	contractFilter := r.URL.Query().Get("contract_id")
 
 	query := `
-		SELECT e.id, e.project_id, e.amount, e.vendor, e.date, e.category, e.description, 
+		SELECT e.id, e.project_id, e.amount, e.vendor, e.date, e.category, e.description,
 		       e.paid_by, e.receipt_photo_url, e.added_by, e.created_at, u.name
 		FROM expenses e
 		JOIN users u ON e.added_by = u.id
@@ -356,6 +378,16 @@ func GetProjectExpenses(w http.ResponseWriter, r *http.Request) {
 	`
 	args := []interface{}{projectID}
 	argIndex := 2
+
+	if isContractor {
+		query += " AND e.contract_id = $" + strconv.Itoa(argIndex)
+		args = append(args, contractorContractID)
+		argIndex++
+	} else if contractFilter != "" {
+		query += " AND e.contract_id = $" + strconv.Itoa(argIndex)
+		args = append(args, contractFilter)
+		argIndex++
+	}
 
 	if paidByFilter != "" {
 		query += " AND e.paid_by = $" + strconv.Itoa(argIndex)
@@ -378,13 +410,6 @@ func GetProjectExpenses(w http.ResponseWriter, r *http.Request) {
 	if endDate != "" {
 		query += " AND e.date <= $" + strconv.Itoa(argIndex)
 		args = append(args, endDate)
-		argIndex++
-	}
-
-	if contractorFilter != "" {
-		query += " AND (e.added_by = $" + strconv.Itoa(argIndex) +
-			" OR e.added_by IN (SELECT user_id FROM employees WHERE contractor_id = $" + strconv.Itoa(argIndex) + "))"
-		args = append(args, contractorFilter)
 		argIndex++
 	}
 
@@ -593,18 +618,6 @@ func UpdateExpense(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	paidBy := r.FormValue("paid_by")
-	if paidBy == "" {
-		respondWithError(w, http.StatusBadRequest, "paid_by is required")
-		return
-	}
-
-	if paidBy != string(models.ExpensePaidByContractor) &&
-		paidBy != string(models.ExpensePaidByOwner) {
-		respondWithError(w, http.StatusBadRequest, "Invalid paid_by. Must be either: contractor or owner")
-		return
-	}
-
 	var amountFloat float64
 	if _, err := strconv.ParseFloat(amount, 64); err != nil {
 		respondWithError(w, http.StatusBadRequest, "Invalid amount format")
@@ -641,11 +654,11 @@ func UpdateExpense(w http.ResponseWriter, r *http.Request) {
 	description := r.FormValue("description")
 
 	_, err = db.Exec(`
-		UPDATE expenses 
-		SET amount = $1, vendor = $2, date = $3, category = $4, 
-		    description = $5, paid_by = $6, receipt_photo_url = $7
-		WHERE id = $8
-	`, amountFloat, nilIfEmpty(vendor), date, category, nilIfEmpty(description), paidBy, receiptPhotoURL, expenseID)
+		UPDATE expenses
+		SET amount = $1, vendor = $2, date = $3, category = $4,
+		    description = $5, receipt_photo_url = $6
+		WHERE id = $7
+	`, amountFloat, nilIfEmpty(vendor), date, category, nilIfEmpty(description), receiptPhotoURL, expenseID)
 
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to update expense")
@@ -760,16 +773,30 @@ func DownloadExpensesExcel(w http.ResponseWriter, r *http.Request) {
 
 	db := database.GetDB()
 
-	var ownerID, contractorID sql.NullString
+	var ownerID string
 	var projectName string
-	err := db.QueryRow("SELECT owner_id, contractor_id, title FROM projects WHERE id = $1", projectID).Scan(&ownerID, &projectName)
+	err := db.QueryRow("SELECT owner_id, title FROM projects WHERE id = $1", projectID).Scan(&ownerID, &projectName)
 	if err != nil {
 		respondWithError(w, http.StatusNotFound, "Project not found")
 		return
 	}
 
-	isOwner := ownerID.Valid && ownerID.String == userCtx.UserID
-	isContractor := contractorID.Valid && contractorID.String == userCtx.UserID
+	isOwner := ownerID == userCtx.UserID
+
+	var isContractor bool
+	var contractorContractID string
+	if !isOwner {
+		err = db.QueryRow(`
+			SELECT c.id
+			FROM contracts c
+			WHERE c.project_id = $1 AND c.contractor_id = $2
+			LIMIT 1
+		`, projectID, userCtx.UserID).Scan(&contractorContractID)
+
+		if err == nil {
+			isContractor = true
+		}
+	}
 
 	if !isOwner && !isContractor {
 		respondWithError(w, http.StatusForbidden, "Only project owner or assigned contractor can download expenses")
@@ -780,14 +807,14 @@ func DownloadExpensesExcel(w http.ResponseWriter, r *http.Request) {
 	category := r.URL.Query().Get("category")
 	startDate := r.URL.Query().Get("start_date")
 	endDate := r.URL.Query().Get("end_date")
-	contractorFilter := r.URL.Query().Get("contractor_id")
+	contractFilter := r.URL.Query().Get("contract_id")
 
 	if paidBy == "" {
 		paidBy = "all"
 	}
 
 	query := `
-		SELECT e.id, e.project_id, e.amount, e.vendor, e.date, e.category, e.description, 
+		SELECT e.id, e.project_id, e.amount, e.vendor, e.date, e.category, e.description,
 		       e.paid_by, e.added_by, e.created_at, u.name
 		FROM expenses e
 		JOIN users u ON e.added_by = u.id
@@ -795,6 +822,16 @@ func DownloadExpensesExcel(w http.ResponseWriter, r *http.Request) {
 	`
 	args := []interface{}{projectID}
 	argIndex := 2
+
+	if isContractor {
+		query += " AND e.contract_id = $" + strconv.Itoa(argIndex)
+		args = append(args, contractorContractID)
+		argIndex++
+	} else if contractFilter != "" {
+		query += " AND e.contract_id = $" + strconv.Itoa(argIndex)
+		args = append(args, contractFilter)
+		argIndex++
+	}
 
 	if paidBy != "all" {
 		query += " AND e.paid_by = $" + strconv.Itoa(argIndex)
@@ -817,13 +854,6 @@ func DownloadExpensesExcel(w http.ResponseWriter, r *http.Request) {
 	if endDate != "" {
 		query += " AND e.date <= $" + strconv.Itoa(argIndex)
 		args = append(args, endDate)
-		argIndex++
-	}
-
-	if contractorFilter != "" {
-		query += " AND (e.added_by = $" + strconv.Itoa(argIndex) +
-			" OR e.added_by IN (SELECT user_id FROM employees WHERE contractor_id = $" + strconv.Itoa(argIndex) + "))"
-		args = append(args, contractorFilter)
 		argIndex++
 	}
 

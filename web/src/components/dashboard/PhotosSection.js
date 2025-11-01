@@ -1,12 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import projectService from '../../services/projectService';
 import ImageViewer from '../common/ImageViewer';
 
-const PhotosSection = ({ projectId, photos, canUpload, onPhotoUploaded }) => {
+const PhotosSection = ({ projectId, photos: initialPhotos, canUpload, onPhotoUploaded, contractorFilter }) => {
+  const [photos, setPhotos] = useState(initialPhotos || []);
+  const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [caption, setCaption] = useState('');
+  const [selectedContract, setSelectedContract] = useState('');
+  const [contracts, setContracts] = useState([]);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [error, setError] = useState('');
   const [imageViewerState, setImageViewerState] = useState({
@@ -14,6 +18,39 @@ const PhotosSection = ({ projectId, photos, canUpload, onPhotoUploaded }) => {
     images: [],
     initialIndex: 0,
   });
+
+  useEffect(() => {
+    loadPhotos();
+  }, [contractorFilter]);
+
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (user?.user_type === 'house_owner') {
+      loadContracts();
+    }
+  }, [projectId]);
+
+  const loadPhotos = async () => {
+    try {
+      setLoading(true);
+      const contractId = contractorFilter && contractorFilter !== 'all' ? contractorFilter : null;
+      const data = await projectService.getProjectPhotos(projectId, contractId);
+      setPhotos(data.photos || []);
+    } catch (err) {
+      console.error('Failed to load photos:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadContracts = async () => {
+    try {
+      const data = await projectService.getProjectContractors(projectId);
+      setContracts(data || []);
+    } catch (err) {
+      console.error('Failed to load contracts:', err);
+    }
+  };
 
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
@@ -34,14 +71,22 @@ const PhotosSection = ({ projectId, photos, canUpload, onPhotoUploaded }) => {
       return;
     }
 
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (user?.user_type === 'house_owner' && !selectedContract) {
+      setError('Please select a contractor');
+      return;
+    }
+
     try {
       setUploading(true);
       setError('');
-      await projectService.uploadProjectPhoto(projectId, selectedFile, caption);
+      await projectService.uploadProjectPhoto(projectId, selectedFile, caption, selectedContract || null);
       setSelectedFile(null);
       setCaption('');
+      setSelectedContract('');
       setPreviewUrl(null);
       setShowUploadForm(false);
+      loadPhotos();
       onPhotoUploaded();
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to upload photo');
@@ -106,6 +151,26 @@ const PhotosSection = ({ projectId, photos, canUpload, onPhotoUploaded }) => {
               <input type="file" accept="image/*" onChange={handleFileSelect} className="block w-full p-3 border-2 border-border rounded-md text-base cursor-pointer transition-colors duration-200" />
             </label>
           </div>
+
+          {contracts.length > 0 && (
+            <div className="mb-6">
+              <label className="block text-base font-semibold text-text mb-2">
+                Select Contractor
+                <select
+                  value={selectedContract}
+                  onChange={(e) => setSelectedContract(e.target.value)}
+                  className="w-full p-3 border-2 border-border rounded-md text-base bg-white"
+                >
+                  <option value="">-- Select Contractor --</option>
+                  {contracts.map((contract) => (
+                    <option key={contract.contract_id} value={contract.contract_id}>
+                      {contract.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          )}
 
           {previewUrl && (
             <div className="mb-6">

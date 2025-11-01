@@ -48,17 +48,45 @@ func UploadProjectPhoto(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	canUpload := ownerID == userCtx.UserID
+	isOwner := ownerID == userCtx.UserID
+	var contractID string
 
-	if !canUpload && userCtx.UserType == string(models.UserTypeContractor) {
-		var isContractor bool
-		db.QueryRow(`
-        SELECT EXISTS(
-            SELECT 1 FROM project_contractors 
-            WHERE project_id = $1 AND contractor_id = $2
-        )
-    `, projectID, userCtx.UserID).Scan(&isContractor)
-		canUpload = isContractor
+	if isOwner {
+		contractIDParam := r.FormValue("contract_id")
+		if contractIDParam == "" {
+			respondWithError(w, http.StatusBadRequest, "contract_id is required")
+			return
+		}
+
+		var exists bool
+		err = db.QueryRow(`
+			SELECT EXISTS(
+				SELECT 1 FROM contracts
+				WHERE id = $1 AND project_id = $2 AND owner_id = $3
+			)
+		`, contractIDParam, projectID, userCtx.UserID).Scan(&exists)
+
+		if err != nil || !exists {
+			respondWithError(w, http.StatusBadRequest, "Invalid contract_id for this project")
+			return
+		}
+		contractID = contractIDParam
+	} else {
+		contractQuery := `
+			SELECT c.id
+			FROM contracts c
+			WHERE c.project_id = $1
+			  AND (c.contractor_id = $2
+			       OR c.contractor_id IN (
+			           SELECT contractor_id FROM employees WHERE user_id = $2
+			       ))
+			LIMIT 1
+		`
+		err = db.QueryRow(contractQuery, projectID, userCtx.UserID).Scan(&contractID)
+		if err != nil {
+			respondWithError(w, http.StatusForbidden, "No contract found for this project")
+			return
+		}
 	}
 
 	if err := r.ParseMultipartForm(maxFileSize); err != nil {
@@ -99,12 +127,12 @@ func UploadProjectPhoto(w http.ResponseWriter, r *http.Request) {
 
 	var photo models.ProjectPhoto
 	query := `
-		INSERT INTO project_photos (project_id, photo_url, uploaded_by, caption)
-		VALUES ($1, $2, $3, $4)
+		INSERT INTO project_photos (project_id, photo_url, uploaded_by, caption, contract_id)
+		VALUES ($1, $2, $3, $4, $5)
 		RETURNING id, project_id, photo_url, uploaded_by, caption, created_at
 	`
 
-	err = db.QueryRow(query, projectID, photoURL, userCtx.UserID, captionPtr).Scan(
+	err = db.QueryRow(query, projectID, photoURL, userCtx.UserID, captionPtr, contractID).Scan(
 		&photo.ID,
 		&photo.ProjectID,
 		&photo.PhotoURL,
@@ -178,45 +206,49 @@ func GetProjectPhotos(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hasAccess := false
-	switch userCtx.UserType {
-	case string(models.UserTypeHouseOwner):
-		hasAccess = ownerID == userCtx.UserID
+	isOwner := ownerID == userCtx.UserID
 
-	case string(models.UserTypeContractor):
-		var isContractor bool
-		db.QueryRow(`
-			SELECT EXISTS(
-				SELECT 1 FROM project_contractors 
-				WHERE project_id = $1 AND contractor_id = $2
-			)
-		`, projectID, userCtx.UserID).Scan(&isContractor)
-		hasAccess = isContractor
+	var isContractor bool
+	var contractorContractID string
+	if !isOwner {
+		err = db.QueryRow(`
+			SELECT c.id
+			FROM contracts c
+			WHERE c.project_id = $1 AND c.contractor_id = $2
+			LIMIT 1
+		`, projectID, userCtx.UserID).Scan(&contractorContractID)
 
-	case string(models.UserTypeEmployee):
-		var count int
-		err := db.QueryRow(`
-			SELECT COUNT(*) FROM employee_projects
-			WHERE employee_id = $1 AND project_id = $2
-		`, userCtx.UserID, projectID).Scan(&count)
-		if err == nil && count > 0 {
-			hasAccess = true
+		if err == nil {
+			isContractor = true
 		}
 	}
 
-	if !hasAccess {
+	if !isOwner && !isContractor {
 		respondWithError(w, http.StatusForbidden, "Access denied")
 		return
 	}
+
+	contractFilter := r.URL.Query().Get("contract_id")
 
 	query := `
 		SELECT id, project_id, photo_url, uploaded_by, caption, created_at
 		FROM project_photos
 		WHERE project_id = $1
-		ORDER BY created_at DESC
 	`
 
-	rows, err := db.Query(query, projectID)
+	args := []interface{}{projectID}
+
+	if isContractor {
+		query += " AND contract_id = $2"
+		args = append(args, contractorContractID)
+	} else if contractFilter != "" {
+		query += " AND contract_id = $2"
+		args = append(args, contractFilter)
+	}
+
+	query += " ORDER BY created_at DESC"
+
+	rows, err := db.Query(query, args...)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to fetch photos")
 		return

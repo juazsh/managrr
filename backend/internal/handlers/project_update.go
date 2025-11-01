@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
@@ -38,21 +39,39 @@ func CreateProjectUpdate(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	projectID := vars["id"]
 
-	var isContractor bool
-	err := db.QueryRow(`
-		SELECT EXISTS(
-			SELECT 1 FROM project_contractors 
-			WHERE project_id = $1 AND contractor_id = $2
-		)
-	`, projectID, userCtx.UserID).Scan(&isContractor)
-
+	var ownerID string
+	err := db.QueryRow("SELECT owner_id FROM projects WHERE id = $1", projectID).Scan(&ownerID)
+	if err == sql.ErrNoRows {
+		respondWithError(w, http.StatusNotFound, "Project not found")
+		return
+	}
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to verify project")
 		return
 	}
 
-	if !isContractor {
-		respondWithError(w, http.StatusForbidden, "Only assigned contractors can post updates")
+	isOwner := ownerID == userCtx.UserID
+	var contractID string
+
+	if isOwner {
+		respondWithError(w, http.StatusForbidden, "Only contractors can create updates")
+		return
+	}
+
+	contractQuery := `
+		SELECT c.id
+		FROM contracts c
+		WHERE c.project_id = $1
+		  AND (c.contractor_id = $2
+		       OR c.contractor_id IN (
+		           SELECT contractor_id FROM employees WHERE user_id = $2
+		       ))
+		LIMIT 1
+	`
+	err = db.QueryRow(contractQuery, projectID, userCtx.UserID).Scan(&contractID)
+	if err != nil {
+		log.Printf("ERROR: Failed to determine contract_id for contractor: %v", err)
+		respondWithError(w, http.StatusForbidden, "No contract found for this project")
 		return
 	}
 
@@ -81,9 +100,9 @@ func CreateProjectUpdate(w http.ResponseWriter, r *http.Request) {
 	updateID := uuid.New().String()
 
 	_, err = db.Exec(`
-		INSERT INTO project_updates (id, project_id, update_type, content, created_by)
-		VALUES ($1, $2, $3, $4, $5)
-	`, updateID, projectID, updateType, content, userCtx.UserID)
+		INSERT INTO project_updates (id, project_id, update_type, content, created_by, contract_id)
+		VALUES ($1, $2, $3, $4, $5, $6)
+	`, updateID, projectID, updateType, content, userCtx.UserID, contractID)
 
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to create update")
@@ -190,17 +209,26 @@ func GetProjectUpdates(w http.ResponseWriter, r *http.Request) {
 	isOwner := ownerID == userCtx.UserID
 
 	var isContractor bool
-	db.QueryRow(`
-		SELECT EXISTS(
-			SELECT 1 FROM project_contractors 
-			WHERE project_id = $1 AND contractor_id = $2
-		)
-	`, projectID, userCtx.UserID).Scan(&isContractor)
+	var contractorContractID string
+	if !isOwner {
+		err = db.QueryRow(`
+			SELECT c.id
+			FROM contracts c
+			WHERE c.project_id = $1 AND c.contractor_id = $2
+			LIMIT 1
+		`, projectID, userCtx.UserID).Scan(&contractorContractID)
+
+		if err == nil {
+			isContractor = true
+		}
+	}
 
 	if !isOwner && !isContractor {
 		respondWithError(w, http.StatusForbidden, "Access denied")
 		return
 	}
+
+	contractFilter := r.URL.Query().Get("contract_id")
 
 	query := `
 		SELECT pu.id, pu.project_id, pu.update_type, pu.content, pu.created_by, pu.created_at, u.name
@@ -210,6 +238,17 @@ func GetProjectUpdates(w http.ResponseWriter, r *http.Request) {
 	`
 
 	args := []interface{}{projectID}
+	argIndex := 2
+
+	if isContractor {
+		query += " AND pu.contract_id = $2"
+		args = append(args, contractorContractID)
+		argIndex = 3
+	} else if contractFilter != "" {
+		query += " AND pu.contract_id = $2"
+		args = append(args, contractFilter)
+		argIndex = 3
+	}
 
 	updateTypeFilter := r.URL.Query().Get("type")
 	if updateTypeFilter != "" {
@@ -217,8 +256,9 @@ func GetProjectUpdates(w http.ResponseWriter, r *http.Request) {
 			respondWithError(w, http.StatusBadRequest, "Invalid type filter")
 			return
 		}
-		query += " AND pu.update_type = $2"
+		query += " AND pu.update_type = $" + strconv.Itoa(argIndex)
 		args = append(args, updateTypeFilter)
+		argIndex++
 	}
 
 	query += " ORDER BY pu.created_at DESC"
